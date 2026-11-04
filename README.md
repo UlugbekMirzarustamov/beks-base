@@ -50,22 +50,28 @@ Other useful commands:
 This is good for trying things out, but it only works while your laptop is running,
 and phones only allow "install" + offline mode on a secure (`https://`) website.
 
-### Proper install (free, takes 5 minutes)
+### Proper install — it's online at
 
-Put the finished app on a free static host so it has an `https://` address:
+**https://ulugbekmirzarustamov.github.io/beks-base/**
 
-1. Run `npm run build`. This creates a `dist` folder.
-2. Go to **https://app.netlify.com/drop** (free account) and **drag the `dist` folder** onto the page.
-3. You get a link like `https://ulus-base-123.netlify.app`. Open it on your phone.
-4. Install it:
-   - **iPhone (Safari):** Share button → **Add to Home Screen**.
-   - **Android (Chrome):** menu ⋮ → **Install app** / **Add to Home screen**.
+Open that link on your phone, then install it:
+- **iPhone (Safari):** Share button → **Add to Home Screen**.
+- **Android (Chrome):** menu ⋮ → **Install app** / **Add to Home screen**.
 
 Now it opens full-screen from your home screen and works offline (e.g. on the bus).
 The website only holds the *app*, never your data — your data is saved inside your phone's browser.
 
-To update the app later: `npm run build` again and drag the new `dist` folder onto your
-Netlify site's "Deploys" page.
+**Updating the app:** after changing code, save it to GitHub:
+
+```bash
+git add -A
+git commit -m "Describe what you changed"
+git push
+```
+
+GitHub then rebuilds and republishes the site by itself (see the **Actions** tab on GitHub,
+about 1 minute). The recipe for that is in `.github/workflows/deploy.yml`.
+If the tests fail, it won't publish — so a broken "safe to spend" never reaches your phone.
 
 > ⚠️ Each device (and each browser) keeps its **own** data. Your phone and laptop don't sync.
 > To move data between them, use Export on one and Import on the other (see below).
