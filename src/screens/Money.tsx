@@ -1,0 +1,812 @@
+/**
+ * 💷 MONEY — "the Chest".
+ * Tabs: Overview · Spending · Charts · Bills · Setup · Tools
+ * Also exports <ExpenseSheet> (the quick "add purchase" pop-up used by the big + button)
+ * and <SafeToSpendCard> (also shown on Home).
+ */
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { guessColumns, parseCsv, rowsToPurchases, type ColumnGuess } from '../lib/csv';
+import { addMonths, daysInMonth, formatDay, formatMonth, monthOf } from '../lib/dates';
+import { uid } from '../lib/id';
+import { barLevel, formatGBP, parseAmount, roundPennies, safeToSpend, spendingByDay, spentInMonth } from '../lib/money';
+import type { Category, CategoryIcon, Expense } from '../lib/types';
+import { useStore } from '../state/store';
+import { PixelIcon } from '../ui/icons';
+import { Bar, Empty, Field, Panel, Sheet, Tabs, useSubRoute } from '../ui/kit';
+
+/** Each category icon also gets a colour for bars and charts. */
+export const CATEGORY_COLOR: Record<CategoryIcon, string> = {
+  house: '#d64541',
+  apple: '#5fa83b',
+  bus: '#4aa3df',
+  phone: '#8e6bd6',
+  star: '#f0a020',
+  coin: '#e8c21a',
+  box: '#9a9a9a',
+};
+const ICON_CHOICES: CategoryIcon[] = ['house', 'apple', 'bus', 'phone', 'star', 'coin', 'box'];
+
+const TABS = ['overview', 'spending', 'charts', 'bills', 'setup', 'tools'] as const;
+type Tab = (typeof TABS)[number];
+
+export default function Money({ sub }: { sub?: string }) {
+  const [tab, setTab] = useSubRoute<Tab>('money', sub, TABS);
+  return (
+    <div className="screen">
+      <h1 className="screen__title">
+        <PixelIcon name="chest" size={28} /> The Chest
+      </h1>
+      <Tabs<Tab>
+        label="Money sections"
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'overview', label: 'Overview', icon: 'coin' },
+          { id: 'spending', label: 'Spending', icon: 'scroll' },
+          { id: 'charts', label: 'Charts', icon: 'calendar' },
+          { id: 'bills', label: 'Bills', icon: 'house' },
+          { id: 'setup', label: 'Budget', icon: 'gear' },
+          { id: 'tools', label: 'Tools', icon: 'globe' },
+        ]}
+      />
+      {tab === 'overview' && (
+        <div className="grid grid--2">
+          <SafeToSpendCard />
+          <CategoryBars />
+        </div>
+      )}
+      {tab === 'spending' && <SpendingList />}
+      {tab === 'charts' && <Charts />}
+      {tab === 'bills' && <Bills />}
+      {tab === 'setup' && <BudgetSetup />}
+      {tab === 'tools' && (
+        <div className="grid grid--2">
+          <Converter />
+          <CsvImport />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- helpers
+function useCategory() {
+  const { data } = useStore();
+  return (id: string): Category =>
+    data.categories.find((c) => c.id === id) ?? { id, name: 'Unknown', limit: 0, icon: 'box' };
+}
+
+// ---------------------------------------------------------------- Safe to spend
+export function SafeToSpendCard() {
+  const { data, today, openExpense } = useStore();
+  const s = safeToSpend(data.monthlyBudget, data.expenses, today);
+  const spent = roundPennies(data.monthlyBudget - s.left);
+  const level = barLevel(spent, data.monthlyBudget);
+  return (
+    <Panel title="Safe to spend today" icon="coin" className="safe">
+      <p className={`big-number ${s.perDay === 0 ? 'is-zero' : ''}`}>{formatGBP(s.perDay)}</p>
+      <p className="muted">
+        {formatGBP(Math.max(0, s.left))} left ÷ {s.daysLeft} day{s.daysLeft === 1 ? '' : 's'} left in {formatMonth(monthOf(today)).split(' ')[0]}
+      </p>
+      <Bar value={spent} max={data.monthlyBudget} level={level} label="Monthly budget used" />
+      <p className="bar-caption">
+        {formatGBP(spent)} of {formatGBP(data.monthlyBudget)} spent this month
+      </p>
+      {s.left < 0 && <p className="alert alert--over">Over budget by {formatGBP(-s.left)}. Time for cheap meals!</p>}
+      <button type="button" className="btn btn--primary btn--wide" onClick={() => openExpense()}>
+        <PixelIcon name="plus" size={18} /> Add purchase
+      </button>
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------- Category bars
+function CategoryBars() {
+  const { data, today } = useStore();
+  const month = monthOf(today);
+  return (
+    <Panel title="Categories" icon="heart">
+      <ul className="cat-bars">
+        {data.categories.map((c) => {
+          const spent = spentInMonth(data.expenses, month, c.id);
+          const level = barLevel(spent, c.limit);
+          return (
+            <li key={c.id} className="cat-bar">
+              <div className="cat-bar__row">
+                <PixelIcon name={c.icon} size={20} />
+                <span className="cat-bar__name">{c.name}</span>
+                <span className="cat-bar__nums">
+                  {formatGBP(spent)} / {formatGBP(c.limit)}
+                </span>
+              </div>
+              <Bar value={spent} max={c.limit} level={level} color={CATEGORY_COLOR[c.icon]} label={`${c.name} spending`} />
+              {level === 'warn' && <p className="bar-note bar-note--warn">! Careful — over 80% used</p>}
+              {level === 'over' && <p className="bar-note bar-note--over">!! Limit reached</p>}
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------- Add / edit purchase
+const LAST_CAT_KEY = 'ulus-last-category';
+
+/** The pop-up for adding or editing a purchase. Opened by the + button anywhere in the app. */
+export function ExpenseSheet() {
+  const { expenseSheet, closeExpense } = useStore();
+  return (
+    <Sheet open={expenseSheet.open} onClose={closeExpense} title={expenseSheet.editing ? 'Edit purchase' : 'Add purchase'}>
+      <ExpenseForm editing={expenseSheet.editing} onDone={closeExpense} />
+    </Sheet>
+  );
+}
+
+function ExpenseForm({ editing, onDone }: { editing: Expense | null; onDone: () => void }) {
+  const { data, update, toast, today } = useStore();
+  const lastCat = (() => {
+    try {
+      return localStorage.getItem(LAST_CAT_KEY);
+    } catch {
+      return null;
+    }
+  })();
+  const defaultCat = data.categories.find((c) => c.id === lastCat)?.id ?? data.categories.find((c) => c.id === 'food')?.id ?? data.categories[0]?.id ?? 'other';
+  const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
+  const [categoryId, setCategoryId] = useState(editing?.categoryId ?? defaultCat);
+  const [note, setNote] = useState(editing?.note ?? '');
+  const [date, setDate] = useState(editing?.date ?? today);
+  const [error, setError] = useState('');
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const value = parseAmount(amount);
+    if (!(value > 0)) {
+      setError('Type an amount, like 4.50');
+      return;
+    }
+    if (!date) {
+      setError('Pick a date');
+      return;
+    }
+    const cat = data.categories.find((c) => c.id === categoryId);
+    // Work out the category total BEFORE and AFTER, to warn when crossing 80% / 100%.
+    const others = data.expenses.filter((x) => x.id !== editing?.id);
+    const before = spentInMonth(others, monthOf(date), categoryId);
+    const after = roundPennies(before + value);
+
+    update((d) => {
+      if (editing) {
+        const item = d.expenses.find((x) => x.id === editing.id);
+        if (item) Object.assign(item, { amount: value, categoryId, note: note.trim(), date });
+      } else {
+        d.expenses.push({ id: uid(), amount: value, categoryId, note: note.trim(), date });
+      }
+    });
+    try {
+      localStorage.setItem(LAST_CAT_KEY, categoryId);
+    } catch {
+      /* ignore */
+    }
+    toast(editing ? 'Purchase updated' : `${formatGBP(value)} · ${cat?.name ?? ''} added`, 'pop');
+    if (cat && cat.limit > 0) {
+      if (barLevel(before, cat.limit) !== 'over' && barLevel(after, cat.limit) === 'over') toast(`${cat.name} is over its limit!`, 'error');
+      else if (barLevel(before, cat.limit) === 'ok' && barLevel(after, cat.limit) === 'warn') toast(`${cat.name} is over 80% of its limit`, 'warn');
+    }
+    onDone();
+  };
+
+  const remove = () => {
+    if (!editing || !confirm('Delete this purchase?')) return;
+    update((d) => {
+      d.expenses = d.expenses.filter((x) => x.id !== editing.id);
+    });
+    toast('Purchase deleted', 'info');
+    onDone();
+  };
+
+  return (
+    <form className="form" onSubmit={submit}>
+      <Field label="Amount (£)">
+        <input
+          className="input input--huge"
+          inputMode="decimal"
+          autoComplete="off"
+          placeholder="0.00"
+          value={amount}
+          onChange={(e) => {
+            setAmount(e.target.value);
+            setError('');
+          }}
+          data-autofocus
+          aria-invalid={Boolean(error)}
+        />
+      </Field>
+      <fieldset className="field">
+        <legend className="field__label">Category</legend>
+        <div className="chip-grid" role="radiogroup" aria-label="Category">
+          {data.categories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              role="radio"
+              aria-checked={c.id === categoryId}
+              className="chip"
+              onClick={() => setCategoryId(c.id)}
+            >
+              <PixelIcon name={c.icon} size={18} />
+              {c.name}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <div className="form__row">
+        <Field label="Note (optional)" className="grow">
+          <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Tesco" maxLength={80} />
+        </Field>
+        <Field label="Date">
+          <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} max="2100-12-31" />
+        </Field>
+      </div>
+      {error && (
+        <p className="alert alert--over" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="form__actions">
+        {editing && (
+          <button type="button" className="btn btn--danger" onClick={remove}>
+            <PixelIcon name="trash" size={18} /> Delete
+          </button>
+        )}
+        <button type="submit" className="btn btn--primary grow">
+          <PixelIcon name="check" size={18} /> Save
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------- Spending list
+function MonthPicker({ month, setMonth }: { month: string; setMonth: (m: string) => void }) {
+  return (
+    <div className="month-picker">
+      <button type="button" className="btn btn--small" onClick={() => setMonth(addMonths(month, -1))} aria-label="Previous month">
+        <PixelIcon name="arrowL" size={16} />
+      </button>
+      <span className="month-picker__label">{formatMonth(month)}</span>
+      <button type="button" className="btn btn--small" onClick={() => setMonth(addMonths(month, 1))} aria-label="Next month">
+        <PixelIcon name="arrowR" size={16} />
+      </button>
+    </div>
+  );
+}
+
+function SpendingList() {
+  const { data, today, update, openExpense, toast } = useStore();
+  const cat = useCategory();
+  const [month, setMonth] = useState(monthOf(today));
+  const [filter, setFilter] = useState('all');
+
+  const list = data.expenses
+    .filter((e) => monthOf(e.date) === month && (filter === 'all' || e.categoryId === filter))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const total = roundPennies(list.reduce((sum, e) => sum + e.amount, 0));
+  const byDay = new Map<string, Expense[]>();
+  for (const e of list) byDay.set(e.date, [...(byDay.get(e.date) ?? []), e]);
+
+  const remove = (e: Expense) => {
+    if (!confirm(`Delete ${formatGBP(e.amount)} ${e.note || cat(e.categoryId).name}?`)) return;
+    update((d) => {
+      d.expenses = d.expenses.filter((x) => x.id !== e.id);
+    });
+    toast('Purchase deleted', 'info');
+  };
+
+  return (
+    <Panel title="Spending" icon="scroll">
+      <div className="toolbar">
+        <MonthPicker month={month} setMonth={setMonth} />
+        <label className="field field--inline">
+          <span className="field__label">Category</span>
+          <select className="input" value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <option value="all">All</option>
+            {data.categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="total-line">
+        Total: <strong>{formatGBP(total)}</strong> · {list.length} purchase{list.length === 1 ? '' : 's'}
+      </p>
+      {list.length === 0 && <Empty>Nothing here yet. Tap the big + to add a purchase.</Empty>}
+      {[...byDay.entries()].map(([day, items]) => (
+        <div key={day} className="day-group">
+          <h3 className="day-group__title">{formatDay(day)}</h3>
+          <ul className="list">
+            {items.map((e) => {
+              const c = cat(e.categoryId);
+              return (
+                <li key={e.id} className="list__item">
+                  <button type="button" className="list__main" onClick={() => openExpense(e)} aria-label={`Edit ${e.note || c.name}, ${formatGBP(e.amount)}`}>
+                    <PixelIcon name={c.icon} size={22} />
+                    <span className="list__text">
+                      <span>{e.note || c.name}</span>
+                      <small className="muted">
+                        {c.name}
+                        {e.recurringId ? ' · bill' : ''}
+                      </small>
+                    </span>
+                    <span className="list__amount">{formatGBP(e.amount)}</span>
+                  </button>
+                  <button type="button" className="icon-btn" onClick={() => remove(e)} aria-label={`Delete ${e.note || c.name}`}>
+                    <PixelIcon name="trash" size={18} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------- Charts
+function Charts() {
+  const { data, today } = useStore();
+  const [month, setMonth] = useState(monthOf(today));
+  const days = spendingByDay(data.expenses, month);
+  const maxDay = Math.max(1, ...days);
+  const byCat = data.categories.map((c) => ({ c, spent: spentInMonth(data.expenses, month, c.id) }));
+  const maxCat = Math.max(1, ...byCat.map((x) => Math.max(x.spent, x.c.limit)));
+  const todayIndex = monthOf(today) === month ? Number(today.slice(8)) - 1 : -1;
+  const biggest = days.indexOf(Math.max(...days));
+
+  return (
+    <div className="grid grid--2">
+      <Panel title="By category" icon="heart" actions={<MonthPicker month={month} setMonth={setMonth} />}>
+        <ul className="hbars">
+          {byCat.map(({ c, spent }) => (
+            <li key={c.id} className="hbar">
+              <span className="hbar__label">
+                <PixelIcon name={c.icon} size={16} /> {c.name}
+              </span>
+              <span className="hbar__track">
+                <span className="hbar__fill" style={{ width: `${(spent / maxCat) * 100}%`, background: CATEGORY_COLOR[c.icon] }} />
+                {c.limit > 0 && <span className="hbar__limit" style={{ left: `${(c.limit / maxCat) * 100}%` }} title="limit" />}
+              </span>
+              <span className="hbar__value">{formatGBP(spent)}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="muted small">The upright line on each bar marks that category's limit.</p>
+      </Panel>
+      <Panel title="By day" icon="calendar">
+        <svg className="day-chart" viewBox={`0 0 ${days.length * 6} 64`} preserveAspectRatio="none" role="img" aria-label={`Spending per day in ${formatMonth(month)}`}>
+          {days.map((v, i) => {
+            const h = v > 0 ? Math.max(2, Math.round((v / maxDay) * 60)) : 0;
+            return <rect key={i} x={i * 6 + 1} y={64 - h} width={4} height={h} className={i === todayIndex ? 'day-chart__bar is-today' : 'day-chart__bar'} />;
+          })}
+        </svg>
+        <div className="day-chart__axis" aria-hidden="true">
+          <span>1</span>
+          <span>10</span>
+          <span>20</span>
+          <span>{days.length}</span>
+        </div>
+        <p className="muted small">
+          Highest day: {Math.max(...days) > 0 ? `${formatGBP(Math.max(...days))} on the ${biggest + 1}${ordinal(biggest + 1)}` : 'none yet'}
+        </p>
+      </Panel>
+    </div>
+  );
+}
+
+const ordinal = (n: number) => (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
+
+// ---------------------------------------------------------------- Recurring bills
+function Bills() {
+  const { data, update, toast, today } = useStore();
+  const cat = useCategory();
+  const [name, setName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [categoryId, setCategoryId] = useState(data.categories[0]?.id ?? 'other');
+  const [day, setDay] = useState(1);
+  const [addNow, setAddNow] = useState(false);
+  const todayDay = Number(today.slice(8));
+
+  const add = (e: FormEvent) => {
+    e.preventDefault();
+    const value = parseAmount(amount);
+    if (!name.trim() || !(value > 0)) {
+      toast('Give the bill a name and an amount', 'error');
+      return;
+    }
+    // If its day already passed this month, only add this month's payment if you ask to
+    // (you may have logged it already). Otherwise it adds itself when the day comes.
+    const passed = todayDay >= day;
+    const month = monthOf(today);
+    const [y, m] = month.split('-').map(Number);
+    const payDay = String(Math.min(day, daysInMonth(y, m))).padStart(2, '0');
+    const id = uid();
+    update((d) => {
+      d.recurring.push({ id, name: name.trim(), amount: value, categoryId, day, lastAdded: passed ? month : null });
+      if (passed && addNow) d.expenses.push({ id: uid(), amount: value, categoryId, note: name.trim(), date: `${month}-${payDay}`, recurringId: id });
+    });
+    toast(`Bill saved: ${name.trim()} on day ${day}`, 'pop');
+    setName('');
+    setAmount('');
+    setAddNow(false);
+  };
+
+  const remove = (id: string) => {
+    if (!confirm('Stop this recurring bill? (Past payments stay in your list.)')) return;
+    update((d) => {
+      d.recurring = d.recurring.filter((b) => b.id !== id);
+    });
+  };
+
+  return (
+    <div className="grid grid--2">
+      <Panel title="Recurring bills" icon="house">
+        <p className="muted small">These add themselves to your spending every month on their day.</p>
+        {data.recurring.length === 0 && <Empty>No bills yet.</Empty>}
+        <ul className="list">
+          {data.recurring.map((b) => (
+            <li key={b.id} className="list__item">
+              <div className="list__main">
+                <PixelIcon name={cat(b.categoryId).icon} size={22} />
+                <span className="list__text">
+                  <span>{b.name}</span>
+                  <small className="muted">
+                    Day {b.day} every month · {cat(b.categoryId).name}
+                  </small>
+                </span>
+                <span className="list__amount">{formatGBP(b.amount)}</span>
+              </div>
+              <button type="button" className="icon-btn" onClick={() => remove(b.id)} aria-label={`Delete bill ${b.name}`}>
+                <PixelIcon name="trash" size={18} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Panel>
+      <Panel title="Add a bill" icon="plus">
+        <form className="form" onSubmit={add}>
+          <Field label="Name">
+            <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Rent" />
+          </Field>
+          <div className="form__row">
+            <Field label="Amount (£)" className="grow">
+              <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+            </Field>
+            <Field label="Day of month">
+              <input className="input" type="number" min={1} max={31} value={day} onChange={(e) => setDay(Math.min(31, Math.max(1, Number(e.target.value) || 1)))} />
+            </Field>
+          </div>
+          <Field label="Category">
+            <select className="input" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              {data.categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {todayDay >= day && (
+            <label className="check">
+              <input type="checkbox" checked={addNow} onChange={(e) => setAddNow(e.target.checked)} />
+              <span>Day {day} has passed — also add this month's payment now</span>
+            </label>
+          )}
+          <button type="submit" className="btn btn--primary">
+            <PixelIcon name="plus" size={18} /> Save bill
+          </button>
+        </form>
+      </Panel>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- Budget setup
+function BudgetSetup() {
+  const { data, update, toast } = useStore();
+  const allocated = roundPennies(data.categories.reduce((s, c) => s + c.limit, 0));
+  const diff = roundPennies(data.monthlyBudget - allocated);
+
+  const setCat = (id: string, change: Partial<Category>) =>
+    update((d) => {
+      const c = d.categories.find((x) => x.id === id);
+      if (c) Object.assign(c, change);
+    });
+
+  const removeCat = (c: Category) => {
+    if (data.categories.length <= 1) return;
+    const used = data.expenses.filter((e) => e.categoryId === c.id).length;
+    const fallback = data.categories.find((x) => x.id !== c.id && x.id === 'other') ?? data.categories.find((x) => x.id !== c.id)!;
+    if (!confirm(`Delete "${c.name}"?${used ? ` Its ${used} purchase(s) will move to "${fallback.name}".` : ''}`)) return;
+    update((d) => {
+      d.categories = d.categories.filter((x) => x.id !== c.id);
+      for (const e of d.expenses) if (e.categoryId === c.id) e.categoryId = fallback.id;
+      for (const b of d.recurring) if (b.categoryId === c.id) b.categoryId = fallback.id;
+    });
+    toast(`Deleted ${c.name}`, 'info');
+  };
+
+  const addCat = () =>
+    update((d) => {
+      d.categories.push({ id: uid(), name: 'New category', limit: 0, icon: 'box' });
+    });
+
+  return (
+    <Panel title="Monthly budget" icon="gear">
+      <Field label="Total budget per month (£)">
+        <input
+          className="input input--big"
+          type="number"
+          min={0}
+          step={10}
+          value={data.monthlyBudget}
+          onChange={(e) => update((d) => void (d.monthlyBudget = Math.max(0, Number(e.target.value) || 0)))}
+        />
+      </Field>
+      <p className={`alert ${diff === 0 ? 'alert--ok' : 'alert--warn'}`}>
+        Category limits add up to {formatGBP(allocated)}.{' '}
+        {diff === 0 ? 'Perfect match!' : diff > 0 ? `${formatGBP(diff)} not given to any category yet.` : `That's ${formatGBP(-diff)} more than your budget.`}
+      </p>
+      <ul className="cat-edit">
+        {data.categories.map((c) => (
+          <li key={c.id} className="cat-edit__row">
+            <select
+              className="input cat-edit__icon"
+              aria-label={`Icon for ${c.name}`}
+              value={c.icon}
+              onChange={(e) => setCat(c.id, { icon: e.target.value as CategoryIcon })}
+            >
+              {ICON_CHOICES.map((i) => (
+                <option key={i} value={i}>
+                  {i}
+                </option>
+              ))}
+            </select>
+            <PixelIcon name={c.icon} size={22} />
+            <input className="input grow" aria-label="Category name" value={c.name} onChange={(e) => setCat(c.id, { name: e.target.value })} />
+            <span className="cat-edit__pound" aria-hidden="true">
+              £
+            </span>
+            <input
+              className="input cat-edit__limit"
+              aria-label={`Monthly limit for ${c.name}`}
+              type="number"
+              min={0}
+              value={c.limit}
+              onChange={(e) => setCat(c.id, { limit: Math.max(0, Number(e.target.value) || 0) })}
+            />
+            <button type="button" className="icon-btn" onClick={() => removeCat(c)} aria-label={`Delete category ${c.name}`} disabled={data.categories.length <= 1}>
+              <PixelIcon name="trash" size={18} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button type="button" className="btn" onClick={addCat}>
+        <PixelIcon name="plus" size={18} /> Add category
+      </button>
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------- £ ↔ UZS converter
+const formatUZS = (n: number) => `${Math.round(n).toLocaleString('en-GB').replace(/,/g, ' ')} so'm`;
+
+function Converter() {
+  const { data, update } = useStore();
+  const rate = data.settings.gbpToUzs;
+  const [gbp, setGbp] = useState('10');
+  const [uzs, setUzs] = useState(String(10 * rate));
+
+  // Keep the som box in sync when the rate changes (only the rate should trigger this).
+  useEffect(() => {
+    const g = parseFloat(gbp);
+    if (Number.isFinite(g)) setUzs(String(Math.round(g * rate)));
+  }, [rate]);
+
+  return (
+    <Panel title="£ ↔ UZS" icon="globe">
+      <Field label="Rate: how many so'm for £1?" hint="Type today's rate yourself (from your bank or a money app).">
+        <input
+          className="input"
+          type="number"
+          min={1}
+          value={rate}
+          onChange={(e) => update((d) => void (d.settings.gbpToUzs = Math.max(1, Number(e.target.value) || 1)))}
+        />
+      </Field>
+      <div className="form__row">
+        <Field label="Pounds (£)" className="grow">
+          <input
+            className="input input--big"
+            inputMode="decimal"
+            value={gbp}
+            onChange={(e) => {
+              setGbp(e.target.value);
+              const g = parseFloat(e.target.value.replace(',', '.'));
+              setUzs(Number.isFinite(g) ? String(Math.round(g * rate)) : '');
+            }}
+          />
+        </Field>
+        <Field label="So'm (UZS)" className="grow">
+          <input
+            className="input input--big"
+            inputMode="numeric"
+            value={uzs}
+            onChange={(e) => {
+              setUzs(e.target.value);
+              const u = parseFloat(e.target.value.replace(/\s/g, ''));
+              setGbp(Number.isFinite(u) ? (u / rate).toFixed(2) : '');
+            }}
+          />
+        </Field>
+      </div>
+      <p className="muted">
+        £{parseFloat(gbp) || 0} ≈ <strong>{formatUZS((parseFloat(gbp) || 0) * rate)}</strong>
+      </p>
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------- CSV import
+const KEYWORDS: [RegExp, string][] = [
+  [/tesco|aldi|lidl|sainsbury|asda|co-?op|morrisons|m&s|greggs|deliveroo|just eat|uber eats|mcdonald|kfc|subway|cafe|coffee|costa|starbucks|pret/i, 'food'],
+  [/stagecoach|first bus|bus|train|rail|tram|supertram|uber|bolt|taxi|trainline/i, 'transport'],
+  [/giffgaff|vodafone|ee |o2|three|lebara|voxi|smarty|lyca/i, 'phone'],
+  [/rent|accommodation|unite|letting/i, 'rent'],
+  [/cinema|odeon|cineworld|netflix|spotify|steam|playstation|xbox|game/i, 'fun'],
+];
+
+function guessCategory(text: string, valid: Set<string>): string {
+  for (const [re, id] of KEYWORDS) if (re.test(text) && valid.has(id)) return id;
+  return valid.has('other') ? 'other' : [...valid][0];
+}
+
+function CsvImport() {
+  const { data, update, toast } = useStore();
+  const [rows, setRows] = useState<string[][] | null>(null);
+  const [cols, setCols] = useState<ColumnGuess>({ date: -1, amount: -1, description: -1 });
+  const [negative, setNegative] = useState(true);
+  const [choices, setChoices] = useState<{ include: boolean; categoryId: string }[]>([]);
+  const [fileName, setFileName] = useState('');
+
+  const header = rows?.[0] ?? [];
+  const purchases = useMemo(() => (rows && cols.date >= 0 && cols.amount >= 0 ? rowsToPurchases(rows.slice(1), cols, negative) : []), [rows, cols, negative]);
+  const validCats = useMemo(() => new Set(data.categories.map((c) => c.id)), [data.categories]);
+
+  // Every time the preview changes, pre-fill choices (guess category, skip likely duplicates).
+  // Only `purchases` should trigger this, so your own ticks are not reset while you edit.
+  useEffect(() => {
+    setChoices(
+      purchases.map((p) => ({
+        include: !data.expenses.some((e) => e.date === p.date && Math.abs(e.amount - p.amount) < 0.005),
+        categoryId: guessCategory(p.description, validCats),
+      })),
+    );
+  }, [purchases]);
+
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    const parsed = parseCsv(await file.text());
+    if (parsed.length < 2) {
+      toast("That CSV looks empty", 'error');
+      return;
+    }
+    setFileName(file.name);
+    setRows(parsed);
+    setCols(guessColumns(parsed[0]));
+  };
+
+  const save = () => {
+    const chosen = purchases.map((p, i) => ({ p, c: choices[i] })).filter((x) => x.c?.include);
+    if (!chosen.length) return;
+    update((d) => {
+      for (const { p, c } of chosen) d.expenses.push({ id: uid(), amount: p.amount, categoryId: c.categoryId, note: p.description.slice(0, 80), date: p.date });
+    });
+    toast(`Imported ${chosen.length} purchase${chosen.length === 1 ? '' : 's'}`, 'pop');
+    setRows(null);
+    setFileName('');
+  };
+
+  const colSelect = (key: keyof ColumnGuess, label: string) => (
+    <Field label={label}>
+      <select className="input" value={cols[key]} onChange={(e) => setCols({ ...cols, [key]: Number(e.target.value) })}>
+        <option value={-1}>— choose —</option>
+        {header.map((h, i) => (
+          <option key={i} value={i}>
+            {h || `Column ${i + 1}`}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+
+  const count = choices.filter((c) => c.include).length;
+
+  return (
+    <Panel title="Import bank CSV" icon="scroll">
+      <p className="muted small">
+        Optional. Export a CSV from your bank app, pick it here, check the preview, then save. Nothing is saved until you press the button.
+        The file never leaves your device.
+      </p>
+      <label className="btn file-btn">
+        <PixelIcon name="scroll" size={18} /> {fileName || 'Choose CSV file'}
+        <input type="file" accept=".csv,text/csv" className="visually-hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+      </label>
+      {rows && (
+        <>
+          <div className="form__row form__row--wrap">
+            {colSelect('date', 'Date column')}
+            {colSelect('amount', 'Amount column')}
+            {colSelect('description', 'Description column')}
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={negative} onChange={(e) => setNegative(e.target.checked)} />
+            <span>Spending shows as negative numbers (−12.50). Untick if your bank shows it as positive.</span>
+          </label>
+          {purchases.length === 0 ? (
+            <Empty>No purchases found — check the columns above.</Empty>
+          ) : (
+            <div className="csv-preview" role="group" aria-label="Preview of purchases to import">
+              {purchases.map((p, i) => {
+                const c = choices[i];
+                if (!c) return null;
+                const dupe = data.expenses.some((e) => e.date === p.date && Math.abs(e.amount - p.amount) < 0.005);
+                return (
+                  <div key={i} className={`csv-row ${c.include ? '' : 'is-off'}`}>
+                    <label className="check">
+                      <input
+                        type="checkbox"
+                        checked={c.include}
+                        onChange={(e) => setChoices(choices.map((x, j) => (j === i ? { ...x, include: e.target.checked } : x)))}
+                      />
+                      <span>
+                        <strong>{formatGBP(p.amount)}</strong> {p.description || '(no description)'}
+                        <small className="muted">
+                          {' '}
+                          · {formatDay(p.date)}
+                          {dupe ? ' · maybe already added' : ''}
+                        </small>
+                      </span>
+                    </label>
+                    <select
+                      className="input input--small"
+                      aria-label="Category"
+                      value={c.categoryId}
+                      onChange={(e) => setChoices(choices.map((x, j) => (j === i ? { ...x, categoryId: e.target.value } : x)))}
+                    >
+                      {data.categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div className="form__actions">
+            <button type="button" className="btn" onClick={() => setRows(null)}>
+              Cancel
+            </button>
+            <button type="button" className="btn btn--primary grow" disabled={count === 0} onClick={save}>
+              Save {count} purchase{count === 1 ? '' : 's'}
+            </button>
+          </div>
+        </>
+      )}
+    </Panel>
+  );
+}
