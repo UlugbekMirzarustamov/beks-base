@@ -30,6 +30,14 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// The page sends us the files it already loaded (see main.tsx) so we can save them too.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'CACHE_URLS' && Array.isArray(event.data.urls)) {
+    const urls = event.data.urls.filter((u) => typeof u === 'string' && new URL(u).origin === self.location.origin);
+    event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(urls)).catch(() => {}));
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;

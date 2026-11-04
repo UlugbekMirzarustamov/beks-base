@@ -23,8 +23,20 @@ createRoot(document.getElementById('root')!).render(
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {
-      /* offline support is a bonus — the app still works without it */
-    });
+    navigator.serviceWorker
+      .register('./sw.js')
+      .then(() => navigator.serviceWorker.ready)
+      .then((reg) => {
+        // On the very first visit the app's JS/CSS loaded before the service worker
+        // existed, so hand it the list of files to save — then offline works right away.
+        const urls = performance
+          .getEntriesByType('resource')
+          .map((e) => e.name)
+          .filter((u) => u.startsWith(location.origin));
+        reg.active?.postMessage({ type: 'CACHE_URLS', urls });
+      })
+      .catch(() => {
+        /* offline support is a bonus — the app still works without it */
+      });
   });
 }

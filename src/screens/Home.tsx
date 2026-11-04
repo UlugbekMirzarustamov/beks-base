@@ -7,6 +7,7 @@ import { Cabin } from '../scene/Cabin';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Bar, Empty, Panel } from '../ui/kit';
+import { Clocks, MoodCheckIn } from './Extras';
 import { SafeToSpendCard } from './Money';
 import { TaskRow, TopThree } from './Planner';
 import { daysLeftLabel } from './Study';
@@ -38,6 +39,7 @@ export default function Home() {
         <p className="greeting">
           {greeting()}, Ulu! <span className="muted">· {formatDay(today)}</span>
         </p>
+        <Clocks />
       </div>
       <div className="grid grid--home">
         <SafeToSpendCard />
@@ -86,6 +88,13 @@ export default function Home() {
           )}
           <a href="#/planner/today" className="more-link">
             All tasks →
+          </a>
+        </Panel>
+
+        <Panel title="How are you today?" icon="heart">
+          <MoodCheckIn />
+          <a href="#/more/mood" className="more-link">
+            This week →
           </a>
         </Panel>
 

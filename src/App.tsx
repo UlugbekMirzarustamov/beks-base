@@ -123,7 +123,7 @@ export default function App() {
         {route.screen === 'money' && <Money sub={route.sub} />}
         {route.screen === 'study' && <Study sub={route.sub} />}
         {route.screen === 'planner' && <Planner sub={route.sub} />}
-        {route.screen === 'more' && <More />}
+        {route.screen === 'more' && <More sub={route.sub} />}
       </main>
 
       <button type="button" className="fab" onClick={() => openExpense()} aria-label="Add a purchase">

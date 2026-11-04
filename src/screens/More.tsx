@@ -1,5 +1,6 @@
 /**
- * ⚙️ MORE — settings, backups (Export / Import) and example-data cleanup.
+ * ⚙️ MORE — the Phase 2 extras (words, habits, mood, journal) plus settings,
+ * backups (Export / Import) and example-data cleanup.
  */
 import { useState } from 'react';
 import { backupFileName, exportJson, parseBackup } from '../lib/backup';
@@ -7,15 +8,45 @@ import { clearExampleData, emptyData, hasExampleData } from '../lib/seed';
 import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Panel, Segmented } from '../ui/kit';
+import { Panel, Segmented, Tabs, useSubRoute } from '../ui/kit';
+import { Habits, Journal, MoodCheckIn, MoodWeek, Vocab } from './Extras';
 
-export default function More() {
+const TABS = ['words', 'habits', 'mood', 'journal', 'settings'] as const;
+type Tab = (typeof TABS)[number];
+
+export default function More({ sub }: { sub?: string }) {
+  const [tab, setTab] = useSubRoute<Tab>('more', sub, TABS);
   return (
     <div className="screen">
       <h1 className="screen__title">
-        <PixelIcon name="gear" size={28} /> Settings
+        <PixelIcon name="scroll" size={28} /> The Lantern Corner
       </h1>
-      <SettingsPanel />
+      <Tabs<Tab>
+        label="More sections"
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'words', label: 'Words', icon: 'book' },
+          { id: 'habits', label: 'Habits', icon: 'check' },
+          { id: 'mood', label: 'Mood', icon: 'heart' },
+          { id: 'journal', label: 'Journal', icon: 'scroll' },
+          { id: 'settings', label: 'Settings', icon: 'gear' },
+        ]}
+      />
+      {tab === 'words' && <Vocab />}
+      {tab === 'habits' && <Habits />}
+      {tab === 'mood' && (
+        <div className="grid grid--2">
+          <Panel title="Today's mood" icon="heart">
+            <MoodCheckIn />
+          </Panel>
+          <Panel title="This week" icon="calendar">
+            <MoodWeek />
+          </Panel>
+        </div>
+      )}
+      {tab === 'journal' && <Journal />}
+      {tab === 'settings' && <SettingsPanel />}
     </div>
   );
 }
