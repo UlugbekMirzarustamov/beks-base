@@ -70,6 +70,7 @@ export function MoodCheckIn() {
     if (!current) toast(`Mood saved: ${MOODS[m - 1].label}`, 'pop');
   };
   return (
+    <>
     <div className="moods" role="radiogroup" aria-label="How do you feel today?">
       {MOODS.map((m) => (
         <button key={m.value} type="button" role="radio" aria-checked={current === m.value} className="mood-btn" onClick={() => pick(m.value)}>
@@ -78,6 +79,12 @@ export function MoodCheckIn() {
         </button>
       ))}
     </div>
+    {current && current <= 2 && (
+      <a href="#/calm" className="mood-calm">
+        <PixelIcon name="lantern" size={16} /> Rough day? Take a minute in the calm corner →
+      </a>
+    )}
+    </>
   );
 }
 

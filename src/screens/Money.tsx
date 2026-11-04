@@ -9,6 +9,7 @@ import { guessColumns, parseCsv, rowsToPurchases, type ColumnGuess } from '../li
 import { addDays, addMonths, daysBetween, daysInMonth, formatDay, formatMonth, monthOf } from '../lib/dates';
 import { uid } from '../lib/id';
 import { barLevel, convertPoundsToDollars, formatMoney, formatPounds, parseAmount, poundsToDollars, roundPennies, safeToSpend, spendingByDay, spentInMonth } from '../lib/money';
+import { moneyInsights } from '../lib/daily';
 import { sfx } from '../lib/sound';
 import type { Category, CategoryIcon, Expense, SavingsGoal } from '../lib/types';
 import { useStore } from '../state/store';
@@ -55,6 +56,7 @@ export default function Money({ sub }: { sub?: string }) {
         <div className="grid grid--2">
           <SafeToSpendCard />
           <CategoryBars />
+          <Insights />
         </div>
       )}
       {tab === 'spending' && <SpendingList />}
@@ -133,6 +135,24 @@ function CurrencyCheck() {
       </div>
       <small className="muted">Uses £{rate} per $1 — change it first in Money → Tools if your rate is different.</small>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- Insights
+function Insights() {
+  const { data, today } = useStore();
+  const tips = moneyInsights(data, today);
+  if (!tips.length) return null;
+  return (
+    <Panel title="Money insights" icon="globe">
+      <ul className="insights">
+        {tips.map((t) => (
+          <li key={t}>
+            <PixelIcon name="star" size={14} /> {t}
+          </li>
+        ))}
+      </ul>
+    </Panel>
   );
 }
 

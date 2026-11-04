@@ -10,6 +10,7 @@ import { PixelIcon } from '../ui/icons';
 import { Bar, Empty, Panel } from '../ui/kit';
 import { Clocks, MoodCheckIn } from './Extras';
 import { InstallCard } from '../ui/AppFeel';
+import { OnePercent, WindDown } from './Daily';
 import { BadgeSummary } from './Badges';
 import { coins } from '../lib/shop';
 import { SafeToSpendCard, SavingsMini } from './Money';
@@ -56,14 +57,21 @@ export default function Home() {
           <p className="greeting">
             {greeting()}, Bek! <span className="muted">· {formatDay(today)}</span>
           </p>
-          <button type="button" className="btn btn--small" onClick={() => window.dispatchEvent(new Event('beks:briefing'))}>
-            <PixelIcon name="sun" size={16} /> Today's briefing
-          </button>
+          <div className="greeting-row__buttons">
+            <button type="button" className="btn btn--small" onClick={() => window.dispatchEvent(new Event('beks:briefing'))}>
+              <PixelIcon name="sun" size={16} /> Today's briefing
+            </button>
+            <a href="#/calm" className="btn btn--small">
+              <PixelIcon name="lantern" size={16} /> I need a minute
+            </a>
+          </div>
         </div>
         <Clocks />
         <InstallCard compact />
       </div>
+      <WindDown />
       <div className="grid grid--home">
+        <OnePercent />
         <TodayClasses />
         <SafeToSpendCard />
         <WeatherCard />
@@ -226,11 +234,12 @@ function useCabinScene() {
   });
   const level = levelInfo(data.xp).level;
   const kind = windowWeather(weather);
+  const goodThings = Object.values(data.nightLogs).reduce((n, l) => n + l.good.filter((g) => g.trim()).length, 0);
 
   // Memoised so the cabin animation isn't restarted on every re-render.
   const scene = useMemo<CabinScene>(
-    () => ({ mix: data.settings.mixer, level, prayerStreak: prayer.streak, studyStreak, simba: mood, season: seasonOf(today), weather: kind, avatar: data.settings.avatar, decor: data.shop.placed }),
-    [data.settings.mixer, level, prayer.streak, studyStreak, mood, today, kind, data.settings.avatar, data.shop.placed],
+    () => ({ mix: data.settings.mixer, level, prayerStreak: prayer.streak, studyStreak, simba: mood, season: seasonOf(today), weather: kind, avatar: data.settings.avatar, decor: data.shop.placed, flowers: data.studyLog.length, jarNotes: goodThings }),
+    [data.settings.mixer, level, prayer.streak, studyStreak, mood, today, kind, data.settings.avatar, data.shop.placed, data.studyLog.length, goodThings],
   );
 
   // Simba speaks up on his own for important moods (once per mood change).

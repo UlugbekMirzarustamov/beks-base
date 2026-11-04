@@ -303,6 +303,12 @@ export interface AppData {
   quran: QuranProgress;
   /** Badge id → the day it was earned */
   badges: Record<string, string>;
+  /** "YYYY-MM-DD" → today's 1% quest and whether you did it */
+  quests: Record<string, { id: string; done: boolean }>;
+  /** Evening "YYYY-MM-DD" → bedtime "HH:MM" */
+  sleepLog: Record<string, string>;
+  /** "YYYY-MM-DD" → the mistake recalled that morning and how it went */
+  recall: Record<string, { id: string; result?: 'got' | 'again' }>;
   /** Cabin shop: items you own, which item is shown in each spot, coins spent. */
   shop: { owned: string[]; placed: Record<string, string>; spent: number };
   /** One-time updates already applied to this data (e.g. "usic-nov-2026"). */

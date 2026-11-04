@@ -5,6 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 import { pick } from '../lib/cabin';
+import { todaysQuest } from '../lib/daily';
 import { daysBetween, formatDay, UK_TZ, zonedParts } from '../lib/dates';
 import { formatMoney, safeToSpend } from '../lib/money';
 import { minsToClock, PRAYER_INFO } from '../lib/prayer';
@@ -144,6 +145,12 @@ export function MorningBriefing() {
           <li>
             <PixelIcon name="star" size={26} />
             <span>{top.length ? <>Top {top.length}: {top.join(' · ')}</> : <a href="#/planner/today" onClick={close}>Pick today's top 3 →</a>}</span>
+          </li>
+          <li className="briefing__quest">
+            <PixelIcon name="star" size={26} />
+            <span>
+              <strong>Today's 1%:</strong> {todaysQuest(data, today).text}
+            </span>
           </li>
           <li>
             <PixelIcon name="quran" size={26} />

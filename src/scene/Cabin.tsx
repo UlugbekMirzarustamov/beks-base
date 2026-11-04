@@ -101,6 +101,10 @@ export interface CabinScene {
   avatar: Avatar;
   /** Cabin-shop items on display, by spot. */
   decor: Partial<Record<ShopSlot, string>>;
+  /** Pomodoros done → flowers in the study garden outside the window. */
+  flowers: number;
+  /** Good things written in Reflect → Tonight → notes in the gratitude jar. */
+  jarNotes: number;
 }
 
 /* ---------------------------------------------------------------------------
@@ -420,6 +424,13 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   r(WX + 33, WY + 21, 1, 1, phase === 'night' || phase === 'dusk' ? '#ffd27a' : '#6a7a8a');
   // The tree changes with the seasons: orange in autumn, white in winter, blossom in spring.
   const treeColours = { autumn: ['#d9822b', '#b5541f'], winter: ['#e8eef5', '#c9d3de'], spring: ['#f2a6c8', '#7cc35a'], summer: [near, near] }[season];
+  // The study garden: one little flower outside for every Pomodoro you've finished (up to 60).
+  const flowerCols = ['#ff6b8a', '#ffd93b', '#ffffff', '#c38bff', '#ff9f43'];
+  for (let i = 0; i < Math.min(60, scene.flowers); i++) {
+    const fxp = WX + Math.floor(rand(i * 13 + 7) * WW);
+    const fyp = WY + WH - 1 - Math.floor(rand(i * 29 + 3) * 3);
+    r(fxp, fyp, 1, 1, phase === 'night' ? mix(flowerCols[i % 5], '#0b1030', 0.45) : flowerCols[i % 5]);
+  }
   r(WX + 9, WY + 19, 1, 4, '#4a2e15');
   r(WX + 7, WY + 15, 5, 4, treeColours[0]);
   r(WX + 8, WY + 17, 2, 1, treeColours[1]);
@@ -464,6 +475,14 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
     r(WX - 2, 45, 2, 1, '#d9822b'); // a few leaves blown onto the sill
     r(WX + 4, 45, 2, 1, '#b5541f');
     r(WX + 30, 45, 1, 1, '#e8c21a');
+  }
+  // The gratitude jar on the sill: a coloured note for each good thing you've written (shows up to 12).
+  if (scene.jarNotes > 0) {
+    const jx = WX + 8;
+    r(jx, 39, 6, 7, 'rgba(190,225,245,0.55)');
+    r(jx + 1, 38, 4, 1, '#b07a3e'); // cork lid
+    const noteCols = ['#ffd93b', '#ff8c6a', '#9be36a', '#9fdcff', '#f2a6c8'];
+    for (let i = 0; i < Math.min(12, scene.jarNotes); i++) r(jx + 1 + (i % 4), 45 - Math.floor(i / 4) * 2, 1, 1, noteCols[i % 5]);
   }
   // Tulips (lola) in a pot: they grow with your prayer streak and bloom red at 7+ days.
   const stage = plantStage(scene.prayerStreak);

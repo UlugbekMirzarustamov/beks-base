@@ -4,6 +4,8 @@ import { juzOfPage } from './quran';
 import { parseWeather, weatherKind } from './weather';
 import { newlyEarned } from './badges';
 import { coins, SHOP_ITEMS } from './shop';
+import { moneyInsights, todaysQuest } from './daily';
+import { addDays } from './dates';
 import { emptyData } from './seed';
 
 describe('cabin', () => {
@@ -96,5 +98,29 @@ describe('cabin shop', () => {
     d.shop.spent = 999;
     expect(coins(d)).toBe(0); // never negative
     expect(new Set(SHOP_ITEMS.map((i) => i.id)).size).toBe(SHOP_ITEMS.length);
+  });
+});
+
+describe('1% better every day', () => {
+  it('picks the same quest all day, and a red topic can be chosen', () => {
+    const d = emptyData('2026-11-04');
+    const a = todaysQuest(d, '2026-11-04');
+    expect(todaysQuest(d, '2026-11-04')).toEqual(a);
+    d.topics[0].confidence = 'red';
+    const ids = Array.from({ length: 60 }, (_, i) => todaysQuest(d, addDays('2026-11-01', i)).id);
+    expect(ids).toContain('red-topic');
+  });
+
+  it('gives money insights once there is spending', () => {
+    const d = emptyData('2026-11-20');
+    expect(moneyInsights(d, '2026-11-20')).toEqual([]);
+    d.expenses = [
+      { id: '1', amount: 40, categoryId: 'food', note: '', date: '2026-11-05' },
+      { id: '2', amount: 10, categoryId: 'fun', note: '', date: '2026-11-06' },
+      { id: '3', amount: 70, categoryId: 'food', note: '', date: '2026-10-05' },
+    ];
+    const tips = moneyInsights(d, '2026-11-20');
+    expect(tips[0]).toBe("Most of this month's money went on Food: $40.00 (80%).");
+    expect(tips[1]).toBe("You've spent $20.00 less than at this point last month. Nice!");
   });
 });

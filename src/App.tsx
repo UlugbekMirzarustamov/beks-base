@@ -13,6 +13,7 @@ import Home from './screens/Home';
 import Money, { ExpenseSheet } from './screens/Money';
 import More from './screens/More';
 import { MorningBriefing } from './screens/Briefing';
+import CalmCorner from './screens/Calm';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Reflect from './screens/Reflect';
@@ -23,7 +24,7 @@ import { Toaster } from './ui/kit';
 import { Splash } from './ui/AppFeel';
 import { SoundMixer } from './ui/SoundMixer';
 
-const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer'] as const;
+const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: { id: Screen; label: string; icon: IconName }[] = [
@@ -168,6 +169,7 @@ export default function App() {
         {route.screen === 'reflect' && <Reflect sub={route.sub} />}
         {route.screen === 'more' && <More sub={route.sub} />}
         {route.screen === 'prayer' && <PrayerPage sub={route.sub} />}
+        {route.screen === 'calm' && <CalmCorner />}
       </main>
 
       <button type="button" className="fab" onClick={() => openExpense()} aria-label="Add a purchase">
