@@ -20,6 +20,7 @@ import Study from './screens/Study';
 import { useStore, useTimer } from './state/store';
 import { PixelIcon, type IconName } from './ui/icons';
 import { Toaster } from './ui/kit';
+import { Splash } from './ui/AppFeel';
 import { SoundMixer } from './ui/SoundMixer';
 
 const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer'] as const;
@@ -50,6 +51,14 @@ export default function App() {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+  // Home-screen shortcut "Add purchase" opens #/add → open the sheet, then show Home.
+  useEffect(() => {
+    if (window.location.hash !== '#/add') return;
+    openExpense();
+    history.replaceState(null, '', '#/home');
+    setRoute(readHash());
+  }, [route, openExpense]);
+
   // When the screen (not just a sub-tab) changes: scroll to top and move focus for screen readers.
   const firstRender = useRef(true);
   useEffect(() => {
@@ -177,6 +186,7 @@ export default function App() {
 
       <ExpenseSheet />
       <MorningBriefing />
+      <Splash />
       <PrayerCall />
       <Toaster />
     </div>

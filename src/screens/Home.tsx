@@ -9,6 +9,8 @@ import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Bar, Empty, Panel } from '../ui/kit';
 import { Clocks, MoodCheckIn } from './Extras';
+import { InstallCard } from '../ui/AppFeel';
+import { BadgeSummary } from './Badges';
 import { SafeToSpendCard, SavingsMini } from './Money';
 import { classesOn, TaskRow, TopThree } from './Planner';
 import { PrayerLanterns, usePrayer } from './Prayer';
@@ -58,6 +60,7 @@ export default function Home() {
           </button>
         </div>
         <Clocks />
+        <InstallCard compact />
       </div>
       <div className="grid grid--home">
         <TodayClasses />
@@ -137,6 +140,7 @@ export default function Home() {
             <PixelIcon name="clock" size={14} /> {studiedToday} min studied today · Tasks +10 · Top 3 +15 · Pomodoro +25 · Prayer +15
           </p>
           <CabinUnlocks level={lvl.level} />
+          <BadgeSummary />
         </Panel>
       </div>
     </div>

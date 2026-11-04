@@ -696,6 +696,10 @@ export function Cabin({ scene, bubble, onPetSimba }: { scene: CabinScene; bubble
               onClick={onPetSimba}
               aria-label="Simba the cat. Tap to pet him."
             />
+            <span className="simba-name" style={{ left: `${((box.x + box.w / 2) / W) * 100}%`, top: `${(box.y / H) * 100}%` }} aria-hidden="true">
+              <PixelIcon name="cat" size={10} />
+              Simba
+            </span>
             {bubble && (
               <p className="simba-bubble" style={{ left: `${Math.min(80, Math.max(20, ((box.x + box.w / 2) / W) * 100))}%`, top: `${(box.y / H) * 100}%` }} role="status">
                 {bubble}

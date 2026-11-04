@@ -3003,7 +3003,12 @@ button.list__main {
 }
 @media (prefers-reduced-motion: no-preference) {
   .simba-bubble {
-    animation: pop 0.3s steps(4);
+    animation: bubble-in 0.3s steps(3);
+  }
+  @keyframes bubble-in {
+    from {
+      opacity: 0;
+    }
   }
 }
 
@@ -3341,5 +3346,258 @@ button.list__main {
     padding: 4px 6px;
     font-size: 11px;
     border-width: 2px;
+  }
+}
+
+/* Simba's little wooden name sign (always above him, wherever he goes) */
+.simba-name {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px;
+  transform: translate(-50%, -100%);
+  font-family: var(--font-title);
+  font-size: clamp(6px, 1.3vw, 9px);
+  white-space: nowrap;
+  color: #fff3d6;
+  background: #8a5a2e;
+  border: 2px solid #2b1d0e;
+  box-shadow: inset 0 -2px 0 #6e4522, 0 2px 0 rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+.simba-name::before,
+.simba-name::after {
+  /* two little strings it hangs from */
+  content: '';
+  position: absolute;
+  top: -5px;
+  width: 1px;
+  height: 4px;
+  background: #2b1d0e;
+}
+.simba-name::before {
+  left: 5px;
+}
+.simba-name::after {
+  right: 5px;
+}
+/* the speech bubble sits above the name sign */
+.simba-bubble {
+  transform: translate(-50%, calc(-100% - 22px));
+}
+
+/* ==========================================================================
+   Badges, title screen, install card
+   ========================================================================== */
+.badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+}
+.badge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px 8px;
+  text-align: center;
+  background: var(--panel-hi);
+  border: 2px solid var(--panel-lo);
+}
+.badge__medal {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 3px solid var(--edge);
+  box-shadow: inset 4px 4px 0 rgba(255, 255, 255, 0.45), inset -4px -4px 0 rgba(0, 0, 0, 0.25);
+}
+.badge--bronze .badge__medal {
+  background: #cd7f32;
+}
+.badge--silver .badge__medal {
+  background: #c9ced6;
+}
+.badge--gold .badge__medal {
+  background: #ffd93b;
+}
+.badge__ribbon {
+  width: 20px;
+  height: 8px;
+  margin-top: -4px;
+  background: linear-gradient(90deg, #b8322a 50%, #2a6fa8 50%);
+  border: 2px solid var(--edge);
+}
+.badge__name {
+  font-size: 14px;
+}
+.badge__how {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.badge.is-locked .badge__medal {
+  background: #4a4250;
+  filter: grayscale(1) brightness(0.6);
+}
+.badge.is-locked .badge__ribbon {
+  opacity: 0.35;
+}
+.badge.is-earned .badge__medal {
+  box-shadow: inset 4px 4px 0 rgba(255, 255, 255, 0.45), inset -4px -4px 0 rgba(0, 0, 0, 0.25), 0 0 12px rgba(255, 217, 59, 0.45);
+}
+.badge-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-weight: 600;
+}
+
+/* The title screen */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  cursor: pointer;
+  color: #f3e8d2;
+  background-color: #1a2350;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, #fff8d0 50%, transparent 51%),
+    radial-gradient(1px 1px at 80% 15%, #fff8d0 50%, transparent 51%),
+    radial-gradient(2px 2px at 65% 35%, #fff8d0aa 50%, transparent 51%),
+    radial-gradient(1px 1px at 30% 70%, #fff8d0aa 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 75%, #fff8d0 50%, transparent 51%),
+    radial-gradient(circle at 50% 115%, rgba(255, 170, 70, 0.4), transparent 55%);
+}
+.splash-screen__icon {
+  image-rendering: pixelated;
+  border: 4px solid #000;
+  box-shadow: 0 0 0 4px #ffd93b, 0 10px 0 rgba(0, 0, 0, 0.5);
+}
+.splash-screen__title {
+  font-family: var(--font-title);
+  font-size: clamp(22px, 6vw, 40px);
+  color: var(--gold);
+  text-shadow: 4px 4px 0 #6b3a12, 8px 8px 0 #000;
+  text-align: center;
+}
+.splash-screen__sub {
+  font-family: var(--font-num);
+  font-size: 24px;
+  color: #d9d0f0;
+}
+.splash-screen__bar {
+  width: min(240px, 70%);
+  height: 14px;
+  padding: 2px;
+  background: #000;
+  border: 3px solid #f3e8d2;
+}
+.splash-screen__bar span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--xp);
+}
+.splash-screen__hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #b9b2cf;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .splash-screen {
+    animation: splash-out 0.3s steps(3) 1.6s forwards;
+  }
+  .splash-screen__icon {
+    animation: hop 0.8s steps(4) 2;
+  }
+  .splash-screen__bar span {
+    animation: load 1.4s steps(10) both;
+  }
+  @keyframes load {
+    from {
+      width: 0;
+    }
+  }
+  @keyframes splash-out {
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+/* Install card */
+.install {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.install__icon {
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  border: 3px solid var(--edge);
+}
+.install__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
+}
+.install__steps {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.install__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.install--banner {
+  padding: 10px;
+  color: #2f1d0c;
+  background: #fbf1d9;
+  border: 3px solid var(--edge);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+}
+.install--banner .install__steps {
+  color: #6b5134;
+}
+.install--banner .btn--ghost {
+  color: #6b5134 !important;
+}
+.install--done {
+  font-weight: 600;
+  color: var(--grass-lo);
+}
+@media (max-width: 600px) {
+  .install {
+    flex-wrap: wrap;
+  }
+  .install__text {
+    flex-basis: calc(100% - 64px);
+  }
+  .install__actions {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .install__actions:empty {
+    display: none;
   }
 }

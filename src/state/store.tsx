@@ -16,6 +16,7 @@ import { loadData, requestPersistentStorage, saveData } from '../lib/db';
 import { uid } from '../lib/id';
 import { applyRecurring, formatMoney } from '../lib/money';
 import { createInitialData, upgrade } from '../lib/seed';
+import { newlyEarned } from '../lib/badges';
 import { unlocksAtLevel } from '../lib/cabin';
 import { buzz, playChime, sfx } from '../lib/sound';
 import type { AppData, Expense } from '../lib/types';
@@ -128,6 +129,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
     for (const e of r.added) toast(`Bill added: ${e.note} ${formatMoney(e.amount)}`, 'info');
   }, [today, loaded, toast]);
+
+  // ----- Badges: award any that were just earned (and celebrate, max 3 pop-ups at once) -----
+  useEffect(() => {
+    if (!data) return;
+    const fresh = newlyEarned(data, today);
+    if (!fresh.length) return;
+    setData((prev) => prev && { ...prev, badges: { ...prev.badges, ...Object.fromEntries(fresh.map((b) => [b.id, today])) } });
+    fresh.slice(0, 3).forEach((b) => toast(`Badge earned: ${b.name}!`, 'level'));
+    if (fresh.length > 3) toast(`…and ${fresh.length - 3} more badges! (More → Badges)`, 'level');
+  }, [data, today, toast]);
 
   const update = useCallback((change: (draft: AppData) => void) => {
     setData((prev) => {

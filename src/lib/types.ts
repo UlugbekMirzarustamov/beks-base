@@ -290,6 +290,8 @@ export interface AppData {
   /** "YYYY-MM-DD" → tasbih count that day */
   tasbih: Record<string, number>;
   quran: QuranProgress;
+  /** Badge id → the day it was earned */
+  badges: Record<string, string>;
   /** One-time updates already applied to this data (e.g. "usic-nov-2026"). */
   applied: string[];
 }

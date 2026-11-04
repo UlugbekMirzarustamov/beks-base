@@ -6,11 +6,53 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#6b4a2b",
+  "background_color": "#1a2350",
   "theme_color": "#6e4522",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add purchase",
+      "short_name": "Add $",
+      "url": "./#/add"
+    },
+    {
+      "name": "Prayer times",
+      "short_name": "Prayer",
+      "url": "./#/prayer"
+    },
+    {
+      "name": "Study timer",
+      "short_name": "Timer",
+      "url": "./#/study/timer"
+    },
+    {
+      "name": "Tonight's log",
+      "short_name": "Tonight",
+      "url": "./#/reflect/tonight"
+    }
+  ],
+  "categories": [
+    "productivity",
+    "education",
+    "lifestyle"
   ]
 }

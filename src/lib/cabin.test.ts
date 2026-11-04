@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { nextUnlock, plantStage, seasonOf, simbaMood, streak, unlockedIds } from './cabin';
 import { juzOfPage } from './quran';
 import { parseWeather, weatherKind } from './weather';
+import { newlyEarned } from './badges';
+import { emptyData } from './seed';
 
 describe('cabin', () => {
   it('unlocks furniture as you level up', () => {
@@ -66,5 +68,19 @@ describe('quran', () => {
     expect(juzOfPage(22)).toBe(2);
     expect(juzOfPage(582)).toBe(30);
     expect(juzOfPage(604)).toBe(30);
+  });
+});
+
+describe('badges', () => {
+  it('awards badges when you earn them, and only once', () => {
+    const d = emptyData('2026-11-04');
+    expect(newlyEarned(d, '2026-11-04').map((b) => b.id)).toEqual([]);
+    d.prayers['2026-11-04'] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+    const ids = newlyEarned(d, '2026-11-04').map((b) => b.id);
+    expect(ids).toContain('first-lantern');
+    expect(ids).toContain('five-lanterns');
+    expect(ids).not.toContain('steadfast'); // needs 7 days in a row
+    d.badges = Object.fromEntries(ids.map((id) => [id, '2026-11-04']));
+    expect(newlyEarned(d, '2026-11-04')).toEqual([]);
   });
 });

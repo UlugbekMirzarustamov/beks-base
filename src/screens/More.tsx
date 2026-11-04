@@ -10,9 +10,11 @@ import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 import { SoundMixer } from '../ui/SoundMixer';
+import { InstallCard } from '../ui/AppFeel';
+import { BadgeShelf } from './Badges';
 import { Habits, Journal, MoodCheckIn, MoodWeek, Vocab } from './Extras';
 
-const TABS = ['words', 'habits', 'mood', 'journal', 'settings'] as const;
+const TABS = ['badges', 'words', 'habits', 'mood', 'journal', 'settings'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function More({ sub }: { sub?: string }) {
@@ -27,6 +29,7 @@ export default function More({ sub }: { sub?: string }) {
         active={tab}
         onChange={setTab}
         tabs={[
+          { id: 'badges', label: 'Badges', icon: 'star' },
           { id: 'words', label: 'Words', icon: 'book' },
           { id: 'habits', label: 'Habits', icon: 'check' },
           { id: 'mood', label: 'Mood', icon: 'heart' },
@@ -34,6 +37,7 @@ export default function More({ sub }: { sub?: string }) {
           { id: 'settings', label: 'Settings', icon: 'gear' },
         ]}
       />
+      {tab === 'badges' && <BadgeShelf />}
       {tab === 'words' && <Vocab />}
       {tab === 'habits' && <Habits />}
       {tab === 'mood' && (
@@ -140,9 +144,7 @@ export function SettingsPanel() {
 
       <Panel title="About" icon="scroll">
         <p>Bek's Base · private by default. No accounts, no bank connection, no tracking. Works offline once opened.</p>
-        <p className="muted small">
-          Install it: on iPhone open in Safari → Share → "Add to Home Screen". On Android Chrome → menu ⋮ → "Install app".
-        </p>
+        <InstallCard />
       </Panel>
     </div>
   );

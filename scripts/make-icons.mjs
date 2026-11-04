@@ -1,6 +1,6 @@
 /**
  * Makes the app icons (public/icon-192.png and public/icon-512.png) from a
- * 16×16 pixel drawing below — a little treasure chest on grass under a sky.
+ * 16×16 pixel drawing below — Bek's cabin at night.
  * Uses only Node's built-in zlib to write PNG files, so no extra packages.
  *
  * Run with:  npm run icons
@@ -9,36 +9,38 @@ import { writeFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 
 const COLORS = {
-  s: [79, 168, 234], // sky
-  S: [140, 205, 245], // light sky
-  g: [95, 168, 59], // grass
-  G: [63, 122, 38], // dark grass
-  d: [122, 82, 48], // dirt
-  k: [43, 29, 14], // outline
-  n: [176, 122, 62], // wood
-  N: [110, 69, 34], // dark wood
-  y: [255, 217, 59], // gold
-  w: [255, 255, 255],
+  n: [26, 35, 80], // night sky
+  s: [255, 248, 208], // star
+  m: [244, 241, 222], // moon
+  k: [201, 201, 214], // chimney smoke
+  c: [140, 140, 140], // chimney stone
+  r: [158, 59, 47], // roof
+  R: [110, 42, 34], // roof edge
+  w: [176, 122, 62], // oak wall
+  y: [255, 210, 122], // warm lit window
+  o: [90, 58, 29], // door
+  g: [63, 122, 38], // grass
+  G: [47, 90, 29], // dark grass
 };
 
-// 16×16 picture. Each letter is one pixel.
+// 16×16 picture: Bek's cabin at night, windows glowing, smoke from the chimney, a crescent moon.
 const ART = [
-  'ssssssssssssssss',
-  'sssSSSssssssssss',
-  'ssSSSSSsssssywss',
-  'sssssssssssyyyss',
-  'ssssssssssssyyss',
-  'ssskkkkkkkkkksss',
-  'ssskNNNNNNNNksss',
-  'ssskNNNNNNNNksss',
-  'ssskkkkyykkkksss',
-  'ssskknnyynnkksss',
-  'ssskknnnnnnkksss',
-  'ssskNNNNNNNNksss',
-  'gggkkkkkkkkkkggg',
-  'gGggGgggGggGggGg',
-  'dddddddddddddddd',
-  'dddddddddddddddd',
+  'nnnnnnnnnnnnnnnn',
+  'nnsnnnnnnnnnmmnn',
+  'nnnnnnnnnnnmmnnn',
+  'nnnnnnnnnkknnnnn',
+  'nnnnnnnnnnkknnsn',
+  'nnnnnnnrrnncnnnn',
+  'nnnnnnrrrrncnnnn',
+  'nnnnnrrrrrrcnnnn',
+  'nnnnrrrrrrrrnnnn',
+  'nnnrrrrrrrrrrnnn',
+  'nnRRRRRRRRRRRRnn',
+  'nnnwwwwwwwwwwnnn',
+  'nnnwyywoowyywnnn',
+  'nnnwyywoowyywnnn',
+  'gggwwwwoowwwwggg',
+  'GGGGGGGGGGGGGGGG',
 ];
 
 function crc32(buf) {
@@ -70,7 +72,7 @@ function png(size) {
     raw[y * (size * 3 + 1)] = 0; // filter: none
     for (let x = 0; x < size; x++) {
       const ch = ART[Math.floor(y / scale)][Math.floor(x / scale)];
-      const [r, g, b] = COLORS[ch] ?? COLORS.s;
+      const [r, g, b] = COLORS[ch] ?? COLORS.n;
       const i = y * (size * 3 + 1) + 1 + x * 3;
       raw[i] = r;
       raw[i + 1] = g;

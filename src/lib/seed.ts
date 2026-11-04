@@ -119,6 +119,7 @@ export function emptyData(today: string): AppData {
     goals: [],
     tasbih: {},
     quran: { page: 0, dailyGoal: 4, log: {}, khatms: 0 },
+    badges: {},
     applied: [],
   };
 }
