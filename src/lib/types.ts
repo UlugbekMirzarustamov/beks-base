@@ -218,6 +218,16 @@ export interface QuranProgress {
   khatms: number;
 }
 
+/** How Bek's blocky character looks in the cabin (all colours are #rrggbb). */
+export interface Avatar {
+  skin: string;
+  hair: string;
+  shirt: string;
+  pants: string;
+  /** Wear a doppi (Uzbek skullcap). */
+  doppi: boolean;
+}
+
 /** Sound mixer: each channel 0 (off) … 8 (loudest). */
 export interface Mixer {
   rain: number;
@@ -234,6 +244,7 @@ export interface Settings {
   mixer: Mixer;
   /** Little sound effects (clicks, bells, purrs). */
   sfx: boolean;
+  avatar: Avatar;
   prayer: PrayerSettings;
   /** How many Uzbek so'm for $1 — typed in by hand. */
   usdToUzs: number;

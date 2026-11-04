@@ -72,6 +72,10 @@ export function simbaMood(s: { prayerDue: boolean; studying: boolean; overBudget
   return 'sleep';
 }
 
+/** What Bek is doing in each of Simba's moods (they hang out together). */
+export type BekPose = 'stand' | 'book' | 'pray' | 'think' | 'tea';
+export const BEK_POSE: Record<SimbaMood, BekPose> = { sleep: 'stand', study: 'book', prayer: 'pray', worried: 'think', cosy: 'tea' };
+
 export const SIMBA_LINES: Record<SimbaMood, string[]> = {
   prayer: ["It's {prayer} time, Bek. I saved you a spot on the mat.", 'Mrrp! The lantern is waiting for you.', 'Five minutes for {prayer}? I’ll keep it warm.'],
   study: ['Shh… I’m studying too.', 'You focus. I’ll guard the books.', 'One more page, Bek. You’ve got this.'],

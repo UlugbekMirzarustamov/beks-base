@@ -2,7 +2,7 @@
  * ⚙️ MORE — words, habits, mood, journal, plus settings,
  * backups (Export / Import) and example-data cleanup.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { backupFileName, exportJson, parseBackup } from '../lib/backup';
 import { createInitialData, upgrade } from '../lib/seed';
 import type { Settings } from '../lib/types';
@@ -11,6 +11,8 @@ import { PixelIcon } from '../ui/icons';
 import { Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 import { SoundMixer } from '../ui/SoundMixer';
 import { InstallCard } from '../ui/AppFeel';
+import { BEK_H, BEK_W, drawBek } from '../scene/Cabin';
+import type { BekPose } from '../lib/cabin';
 import { BadgeShelf } from './Badges';
 import { Habits, Journal, MoodCheckIn, MoodWeek, Vocab } from './Extras';
 
@@ -114,6 +116,8 @@ export function SettingsPanel() {
         <SoundMixer />
       </Panel>
 
+      <AvatarEditor />
+
       <Panel title="Backups" icon="chest">
         <p>
           Your data lives <strong>only on this device</strong>, in this browser. Export a backup now and then (e.g. every Sunday) and keep the file
@@ -147,5 +151,91 @@ export function SettingsPanel() {
         <InstallCard />
       </Panel>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- your character
+const SWATCHES: Record<'skin' | 'hair' | 'shirt' | 'pants', { value: string; name: string }[]> = {
+  skin: [
+    { value: '#f3d2b3', name: 'light' },
+    { value: '#e0b48a', name: 'medium light' },
+    { value: '#c68e5e', name: 'medium' },
+    { value: '#8d5a3b', name: 'dark' },
+  ],
+  hair: [
+    { value: '#1a1410', name: 'black' },
+    { value: '#2b1d14', name: 'dark brown' },
+    { value: '#5a3a1d', name: 'brown' },
+    { value: '#8a5a2e', name: 'light brown' },
+  ],
+  shirt: [
+    { value: '#3f8f5a', name: 'green' },
+    { value: '#2a6fa8', name: 'blue' },
+    { value: '#b8322a', name: 'red' },
+    { value: '#e08a2a', name: 'orange' },
+    { value: '#7a4fa3', name: 'purple' },
+    { value: '#2f2f38', name: 'black' },
+    { value: '#f3ead2', name: 'white' },
+  ],
+  pants: [
+    { value: '#2f3e66', name: 'navy' },
+    { value: '#1f1f24', name: 'black' },
+    { value: '#5a3a1d', name: 'brown' },
+    { value: '#4a5a3a', name: 'olive' },
+  ],
+};
+const POSES: { value: BekPose; label: string }[] = [
+  { value: 'stand', label: 'Hanging out' },
+  { value: 'book', label: 'Studying' },
+  { value: 'pray', label: 'Praying' },
+  { value: 'think', label: 'Thinking' },
+  { value: 'tea', label: 'Tea time' },
+];
+
+/** Make Bek (the little character in the cabin) look like you. */
+function AvatarEditor() {
+  const { data, update } = useStore();
+  const look = data.settings.avatar;
+  const [pose, setPose] = useState<BekPose>('stand');
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const ctx = ref.current?.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, BEK_W + 4, BEK_H + 2);
+    drawBek(ctx, 2, 1, pose, look);
+  }, [look, pose]);
+  const set = (change: Partial<typeof look>) => update((d) => void (d.settings.avatar = { ...d.settings.avatar, ...change }));
+
+  return (
+    <Panel title="Your character" icon="house">
+      <div className="avatar-editor">
+        <canvas ref={ref} width={BEK_W + 4} height={BEK_H + 2} className="avatar-editor__preview" role="img" aria-label={`Bek, ${pose}`} />
+        <div className="avatar-editor__options">
+          {(Object.keys(SWATCHES) as (keyof typeof SWATCHES)[]).map((part) => (
+            <div key={part} className="swatches" role="radiogroup" aria-label={part}>
+              <span className="field__label">{part === 'pants' ? 'Trousers' : part[0].toUpperCase() + part.slice(1)}</span>
+              {SWATCHES[part].map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={look[part] === c.value}
+                  aria-label={c.name}
+                  className="swatch"
+                  style={{ background: c.value }}
+                  onClick={() => set({ [part]: c.value })}
+                />
+              ))}
+            </div>
+          ))}
+          <label className="check">
+            <input type="checkbox" checked={look.doppi} onChange={(e) => set({ doppi: e.target.checked })} />
+            <span>Wear a doppi</span>
+          </label>
+        </div>
+      </div>
+      <Segmented label="Preview pose" value={pose} onChange={setPose} options={POSES} />
+      <p className="muted small">Bek lives in the cabin next to Simba and changes what he's doing with your day. Tap him on Home!</p>
+    </Panel>
   );
 }

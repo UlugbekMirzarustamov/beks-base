@@ -17,9 +17,9 @@ import { PrayerLanterns, usePrayer } from './Prayer';
 import { useWeather, WeatherCard, windowWeather } from '../ui/Weather';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { nextUnlock, pick, seasonOf, simbaMood, SIMBA_LINES, SIMBA_PETS, streak, UNLOCKS } from '../lib/cabin';
-import { barLevel, safeToSpend, spentInMonth } from '../lib/money';
+import { barLevel, formatMoney, safeToSpend, spentInMonth } from '../lib/money';
 import { buzz, sfx } from '../lib/sound';
-import { PRAYER_INFO } from '../lib/prayer';
+import { PRAYER_INFO, PRAYERS } from '../lib/prayer';
 import { monthOf } from '../lib/dates';
 import { useTimer } from '../state/store';
 import { skyAt, type CabinScene } from '../scene/Cabin';
@@ -35,7 +35,7 @@ function greeting(): string {
 
 export default function Home() {
   const { data, today } = useStore();
-  const { scene, bubble, petSimba } = useCabinScene();
+  const { scene, bubble, petSimba, bekLine, tapBek } = useCabinScene();
   const lvl = levelInfo(data.xp);
   const upcoming = data.tests.filter((t) => t.date >= today).sort((a, b) => a.date.localeCompare(b.date));
   const nextTest = upcoming[0];
@@ -49,7 +49,7 @@ export default function Home() {
       <PrayerLanterns />
       <div className="home__top">
         <div className="home__scene">
-          <Cabin scene={scene} bubble={bubble} onPetSimba={petSimba} />
+          <Cabin scene={scene} bubble={bubble} onPetSimba={petSimba} bekBubble={bekLine} onTapBek={tapBek} />
         </div>
         <div className="greeting-row">
           <p className="greeting">
@@ -223,8 +223,8 @@ function useCabinScene() {
 
   // Memoised so the cabin animation isn't restarted on every re-render.
   const scene = useMemo<CabinScene>(
-    () => ({ mix: data.settings.mixer, level, prayerStreak: prayer.streak, studyStreak, simba: mood, season: seasonOf(today), weather: kind }),
-    [data.settings.mixer, level, prayer.streak, studyStreak, mood, today, kind],
+    () => ({ mix: data.settings.mixer, level, prayerStreak: prayer.streak, studyStreak, simba: mood, season: seasonOf(today), weather: kind, avatar: data.settings.avatar }),
+    [data.settings.mixer, level, prayer.streak, studyStreak, mood, today, kind, data.settings.avatar],
   );
 
   // Simba speaks up on his own for important moods (once per mood change).
@@ -245,7 +245,28 @@ function useCabinScene() {
     timerRef.current = setTimeout(() => setPetLine(null), 3500);
   };
 
-  return { scene, bubble: petLine ?? autoLine, petSimba };
+  // Tap Bek → a quick, honest "how's my day" line (rotates through a few).
+  const [bekLine, setBekLine] = useState<string | null>(null);
+  const bekTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const bekTurn = useRef(0);
+  useEffect(() => () => clearTimeout(bekTimer.current), []);
+  const tapBek = () => {
+    sfx('tick');
+    const lit = PRAYERS.filter((p) => data.prayers[today]?.includes(p)).length;
+    const nowMins = zonedParts(new Date(), UK_TZ).hour * 60 + zonedParts(new Date(), UK_TZ).minute;
+    const nextClass = classesOn(data, today).find((c) => toMinutes(c.start) > nowMins);
+    const lines = [
+      `${lit}/5 lanterns lit today. ${lit === 5 ? 'Alhamdulillah!' : 'Keep going!'}`,
+      `${formatMoney(safeToSpend(data.monthlyBudget, data.expenses, today).perDay)} safe to spend today.`,
+      nextClass ? `Next: ${nextClass.name} at ${nextClass.start}${nextClass.room ? ` in ${nextClass.room}` : ''}.` : 'No more classes today!',
+      pick(['Bismillah, let’s do this.', 'Small steps every day.', 'Far from home, but doing great.', 'One Pomodoro, then tea?']),
+    ];
+    setBekLine(lines[bekTurn.current++ % lines.length]);
+    clearTimeout(bekTimer.current);
+    bekTimer.current = setTimeout(() => setBekLine(null), 4000);
+  };
+
+  return { scene, bubble: petLine ?? autoLine, petSimba, bekLine, tapBek };
 }
 
 /** What you've unlocked in the cabin, and what's next. */

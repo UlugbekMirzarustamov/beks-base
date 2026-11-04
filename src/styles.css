@@ -3601,3 +3601,51 @@ button.list__main {
     display: none;
   }
 }
+
+/* ---------- Bek ---------- */
+.simba-name--bek {
+  background: #2f6b3a;
+  box-shadow: inset 0 -2px 0 #1f4a28, 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+.simba-bubble--bek {
+  background: #e8f6dc;
+}
+.avatar-editor {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.avatar-editor__preview {
+  flex-shrink: 0;
+  width: 96px;
+  height: 152px;
+  image-rendering: pixelated;
+  background: repeating-linear-gradient(180deg, #a0703f 0 10px, #7d5530 10px 11px);
+  border: 4px solid var(--edge);
+}
+.avatar-editor__options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.swatches .field__label {
+  width: 100%;
+}
+.swatch {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  border: 3px solid var(--edge);
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.3);
+}
+.swatch[aria-checked='true'] {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}

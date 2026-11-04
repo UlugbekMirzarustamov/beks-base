@@ -77,6 +77,7 @@ export function emptyData(today: string): AppData {
       sound: 'off',
       mixer: { rain: 0, fire: 0, wind: 0 },
       sfx: true,
+      avatar: { skin: '#e0b48a', hair: '#2b1d14', shirt: '#3f8f5a', pants: '#2f3e66', doppi: true },
       prayer: { asr: 'hanafi', offsets: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, call: true },
       usdToUzs: 12500,
       gbpPerUsd: 0.76,

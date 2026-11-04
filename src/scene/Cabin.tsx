@@ -16,8 +16,8 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { UK_TZ, zonedParts } from '../lib/dates';
-import { plantStage, unlockedIds, type Season, type SimbaMood } from '../lib/cabin';
-import type { Mixer } from '../lib/types';
+import { BEK_POSE, plantStage, unlockedIds, type BekPose, type Season, type SimbaMood } from '../lib/cabin';
+import type { Avatar, Mixer } from '../lib/types';
 import type { WeatherKind } from '../lib/weather';
 import { PixelIcon, type IconName } from '../ui/icons';
 
@@ -97,6 +97,79 @@ export interface CabinScene {
   season: Season;
   /** Real weather right now (null = unknown/offline → just the time-of-day sky). */
   weather: WeatherKind | null;
+  avatar: Avatar;
+}
+
+/* ---------------------------------------------------------------------------
+ * Bek: an original blocky pixel character (8×17) who hangs out with Simba.
+ * Letters: h hair · d doppi · w doppi pattern · s/a skin · e eyes · m mouth
+ *          t shirt · T shirt shade · p trousers · P trouser shade · b boots
+ *          K book · C cup of tea
+ * ------------------------------------------------------------------------- */
+const BEK_HEAD_HAIR = ['.hhhhhh.', '.hhhhhh.'];
+const BEK_HEAD_DOPPI = ['.dddddd.', '.dwddwd.'];
+const BEK_FACE = ['.hssssh.', '.sesses.', '.ssssss.', '.ssmmss.'];
+const BEK_BODY: Record<BekPose, string[]> = {
+  stand: ['tttttttt', 'tTttttTt', 'tTttttTt', 'tTttttTt', 'tTttttTt', 'aTttttTa'],
+  book: ['tttttttt', 'tTttttTt', 'tTttttTt', '.TaKKaT.', '.tKKKKt.', '.tttttt.'],
+  pray: ['tttttttt', 'tTttttTt', 'tTaaaaTt', '.tttttt.', '.tttttt.', '.tttttt.'],
+  think: ['.ttttttt', '.TttttTt', '.TttttTt', '.TttttTt', '.TttttTt', '.TttttTa'],
+  tea: ['tttttttt', 'tTttttTt', 'tTttttTt', 'tTttttTt', 'tTttttTt', 'aTttttTC'],
+};
+const BEK_LEGS = ['..pppp..', '..pppp..', '..pPPp..', '..pPPp..', '..bbbb..'];
+export const BEK_W = 8;
+export const BEK_H = 17;
+
+/** Draw Bek with his top-left corner at (x, y). Used by the cabin and the character editor preview. */
+export function drawBek(ctx: CanvasRenderingContext2D, x: number, y: number, pose: BekPose, look: Avatar, blink = false) {
+  const colours: Record<string, string> = {
+    h: look.hair,
+    d: '#1c1c1c',
+    w: '#f3ead2',
+    s: look.skin,
+    a: look.skin,
+    e: blink ? look.skin : '#2b1d0e',
+    m: mix(look.skin, '#7a2a1a', 0.5),
+    t: look.shirt,
+    T: mix(look.shirt, '#000000', 0.28),
+    p: look.pants,
+    P: mix(look.pants, '#000000', 0.3),
+    b: '#3b2512',
+    K: '#c0392b',
+    C: '#f3ead2',
+  };
+  const rows = [...(look.doppi ? BEK_HEAD_DOPPI : BEK_HEAD_HAIR), ...BEK_FACE, ...BEK_BODY[pose], ...BEK_LEGS];
+  rows.forEach((row, yy) =>
+    [...row].forEach((ch, xx) => {
+      if (ch === '.') return;
+      ctx.fillStyle = colours[ch];
+      ctx.fillRect(x + xx, y + yy, 1, 1);
+    }),
+  );
+  if (pose === 'think') {
+    // left hand scratching his head
+    ctx.fillStyle = look.skin;
+    ctx.fillRect(x - 1, y + 3, 1, 2);
+    ctx.fillStyle = look.shirt;
+    ctx.fillRect(x - 1, y + 5, 1, 2);
+  }
+}
+
+/** Where Bek stands (top-left, scene pixels) — always right next to Simba. */
+function bekSpot(W: number, mood: SimbaMood): { x: number; y: number } {
+  const { C, fireX } = layout(W);
+  switch (mood) {
+    case 'study':
+      return { x: 2, y: 84 - BEK_H }; // reading by the bookshelf
+    case 'prayer':
+      return { x: 66 + C, y: 88 - BEK_H }; // standing on the prayer mat
+    case 'worried':
+      return { x: 58, y: 84 - BEK_H }; // next to the chest, scratching his head
+    case 'cosy':
+      return { x: fireX + 16, y: 84 - BEK_H }; // a piyola of tea by the fire
+    default:
+      return { x: 93 + C, y: 88 - BEK_H }; // hanging out by sleeping Simba
+  }
 }
 
 /** Simba's spot in scene pixels for each mood (used to draw him and to place his tap area). */
@@ -512,6 +585,12 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
     }
   }
 
+  // ---------- Bek ----------
+  const bek = bekSpot(W, scene.simba);
+  const pose = BEK_POSE[scene.simba];
+  drawBek(ctx, bek.x, bek.y, pose, scene.avatar, motion && frame % 40 === 0);
+  if (pose === 'tea' && motion) r(bek.x + 7, bek.y + 9 - ((frame >> 1) % 4), 1, 1, 'rgba(255,255,255,0.55)'); // steam from his tea
+
   // ---------- Telescope (the Reflect station), pointing at the window ----------
   for (let i = 0; i <= 12; i++) {
     r(tx + 7 - Math.round(i * 0.45), 67 + i, 1, 1, '#4a2e15'); // left leg
@@ -612,7 +691,19 @@ function stations(W: number): Station[] {
   ];
 }
 
-export function Cabin({ scene, bubble, onPetSimba }: { scene: CabinScene; bubble?: string | null; onPetSimba?: () => void }) {
+export function Cabin({
+  scene,
+  bubble,
+  onPetSimba,
+  bekBubble,
+  onTapBek,
+}: {
+  scene: CabinScene;
+  bubble?: string | null;
+  onPetSimba?: () => void;
+  bekBubble?: string | null;
+  onTapBek?: () => void;
+}) {
   const boxRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLCanvasElement>(null);
   const [W, setW] = useState(BASE_W);
@@ -703,6 +794,31 @@ export function Cabin({ scene, bubble, onPetSimba }: { scene: CabinScene; bubble
             {bubble && (
               <p className="simba-bubble" style={{ left: `${Math.min(80, Math.max(20, ((box.x + box.w / 2) / W) * 100))}%`, top: `${(box.y / H) * 100}%` }} role="status">
                 {bubble}
+              </p>
+            )}
+          </>
+        );
+      })()}
+      {(() => {
+        const b = bekSpot(W, scene.simba);
+        // Only his upper body is the tap area, so the prayer mat underneath stays tappable.
+        const box = { x: b.x - 1, y: b.y, w: BEK_W + 2, h: 11 };
+        const cx = ((box.x + box.w / 2) / W) * 100;
+        return (
+          <>
+            <button
+              type="button"
+              className="simba"
+              style={{ left: `${(box.x / W) * 100}%`, top: `${(box.y / H) * 100}%`, width: `${(box.w / W) * 100}%`, height: `${(box.h / H) * 100}%` }}
+              onClick={onTapBek}
+              aria-label="Bek (that's you!). Tap for how your day is going."
+            />
+            <span className="simba-name simba-name--bek" style={{ left: `${cx}%`, top: `${(box.y / H) * 100}%` }} aria-hidden="true">
+              Bek
+            </span>
+            {bekBubble && (
+              <p className="simba-bubble simba-bubble--bek" style={{ left: `${Math.min(80, Math.max(20, cx))}%`, top: `${(box.y / H) * 100}%` }} role="status">
+                {bekBubble}
               </p>
             )}
           </>
