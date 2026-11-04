@@ -22,13 +22,15 @@ export type CategoryIcon = 'house' | 'apple' | 'bus' | 'phone' | 'star' | 'coin'
 
 export interface Category extends Base {
   name: string;
-  /** Monthly limit in pounds. */
+  /** Monthly limit in US dollars. */
   limit: number;
   icon: CategoryIcon;
 }
 
 export interface Expense extends Base {
-  amount: number; // pounds, always positive
+  amount: number; // US dollars, always positive
+  /** If it was paid in pounds: what it cost in £ (the dollar amount was worked out from it). */
+  paidGbp?: number;
   categoryId: string;
   note: string;
   date: string; // YYYY-MM-DD
@@ -207,8 +209,14 @@ export interface Settings {
   sound: 'off' | 'rain' | 'fire';
   mixer: Mixer;
   prayer: PrayerSettings;
-  /** How many Uzbek som for £1 — typed in by hand. */
-  gbpToUzs: number;
+  /** How many Uzbek so'm for $1 — typed in by hand. */
+  usdToUzs: number;
+  /** How many pounds for $1 (e.g. 0.76) — used when you pay in £. Typed in by hand. */
+  gbpPerUsd: number;
+  /** false = old amounts may still be in pounds; the Money screen asks once. */
+  currencyChecked: boolean;
+  /** Old setting from when the app used pounds (so'm per £1). Only read when upgrading. */
+  gbpToUzs?: number;
   pomodoroWork: number;
   pomodoroBreak: number;
 }

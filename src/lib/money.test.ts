@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { applyRecurring, barLevel, parseAmount, safeToSpend, spendingByDay, spentInMonth } from './money';
+import { applyRecurring, barLevel, convertPoundsToDollars, formatMoney, parseAmount, poundsToDollars, safeToSpend, spendingByDay, spentInMonth } from './money';
+import { emptyData } from './seed';
 import type { Expense, RecurringBill } from './types';
 
 const exp = (amount: number, date: string, categoryId = 'food'): Expense => ({ id: date + amount, amount, date, categoryId, note: '' });
 
 describe('safeToSpend', () => {
   it('splits the whole budget over the whole month on the 1st', () => {
-    // November has 30 days. £600 / 30 days = £20 a day.
+    // November has 30 days. $600 / 30 days = $20 a day.
     const r = safeToSpend(600, [], '2026-11-01');
     expect(r.daysLeft).toBe(30);
     expect(r.left).toBe(600);
@@ -15,7 +16,7 @@ describe('safeToSpend', () => {
 
   it('counts today as a day left, and subtracts this month only', () => {
     const expenses = [exp(100, '2026-11-02'), exp(50, '2026-11-03'), exp(999, '2026-10-31')];
-    // Nov 3rd → 28 days left (3rd…30th). £650 − £150 = £500. 500 / 28 = 17.857… → £17.85 (rounded down)
+    // Nov 3rd → 28 days left (3rd…30th). $650 − $150 = $500. 500 / 28 = 17.857… → $17.85 (rounded down)
     const r = safeToSpend(650, expenses, '2026-11-03');
     expect(r.daysLeft).toBe(28);
     expect(r.left).toBe(500);
@@ -68,6 +69,7 @@ describe('budget helpers', () => {
   it('parses typed amounts', () => {
     expect(parseAmount('4.5')).toBe(4.5);
     expect(parseAmount('£12')).toBe(12);
+    expect(parseAmount('$7.25')).toBe(7.25);
     expect(parseAmount('3,20')).toBe(3.2);
     expect(parseAmount('abc')).toBeNaN();
     expect(parseAmount('')).toBeNaN();
@@ -97,5 +99,26 @@ describe('applyRecurring', () => {
     const late = { ...rent, day: 31 };
     const r = applyRecurring([late], [], '2026-11-30', makeId);
     expect(r.added[0].date).toBe('2026-11-30');
+  });
+});
+
+describe('dollars', () => {
+  it('shows money in US dollars', () => {
+    expect(formatMoney(1234.5)).toBe('$1,234.50');
+  });
+
+  it('turns pounds paid into dollars', () => {
+    // £4.50 when £0.75 buys $1 → $6.00
+    expect(poundsToDollars(4.5, 0.75)).toBe(6);
+  });
+
+  it('converts old pound amounts once, keeping what was paid in £', () => {
+    const d = emptyData('2026-11-04');
+    d.monthlyBudget = 650;
+    d.expenses = [{ id: 'a', amount: 3, categoryId: 'food', note: '', date: '2026-11-04' }];
+    const out = convertPoundsToDollars(d, 0.75);
+    expect(out.monthlyBudget).toBe(867);
+    expect(out.expenses[0]).toMatchObject({ amount: 4, paidGbp: 3 });
+    expect(out.settings.currencyChecked).toBe(true);
   });
 });

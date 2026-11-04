@@ -59,6 +59,17 @@ describe('upgrading saved data', () => {
     expect(on('2026-11-07')).toEqual([]); // Saturday
   });
 
+  it('asks about old pound amounts only if there is money data from before', () => {
+    expect(createInitialData(TODAY).settings.currencyChecked).toBe(true);
+    const old = emptyData(TODAY);
+    old.monthlyBudget = 650; // the old £ default
+    old.settings.gbpToUzs = 17000; // your own so'm-per-£ rate
+    const up = upgrade(old, TODAY);
+    expect(up.settings.currencyChecked).toBe(false);
+    expect(up.settings.usdToUzs).toBe(Math.round(17000 * up.settings.gbpPerUsd));
+    expect(upgrade(up, TODAY)).toEqual(up); // only happens once
+  });
+
   it('turns the old sound setting into mixer levels', () => {
     const data = emptyData(TODAY);
     data.settings.sound = 'fire';

@@ -9,7 +9,7 @@
  */
 import { useEffect, useState, type FormEvent } from 'react';
 import { addDays, clockIn, formatDay, startOfWeek, TASHKENT_TZ, UK_TZ, weekdayOf, WEEKDAYS, zonedParts } from '../lib/dates';
-import { formatGBP } from '../lib/money';
+import { formatMoney } from '../lib/money';
 import { uid } from '../lib/id';
 import type { Habit, Mood, Reflection, VocabWord } from '../lib/types';
 import { XP } from '../lib/xp';
@@ -447,7 +447,7 @@ export function WeekReflect() {
         <ul className="week-stats">
           <li>
             <PixelIcon name="coin" size={20} />
-            <span className="week-stats__num">{formatGBP(stats.spent)}</span>
+            <span className="week-stats__num">{formatMoney(stats.spent)}</span>
             <span>spent</span>
           </li>
           <li>

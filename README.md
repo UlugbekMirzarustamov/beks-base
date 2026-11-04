@@ -6,6 +6,7 @@ A cozy, blocky pixel-art home base for life as an international student:
 and sealed letters to future you), **prayer** (the Prayer mat: Sheffield prayer times,
 five lanterns a day, a call to prayer when you open the app, qibla compass),
 your **USIC timetable** day by day, a rain/fire/wind **sound mixer**,
+money in **US dollars** (with a $ / £ switch when you pay in pounds),
 plus words, habits, mood and a journal.
 
 - No accounts, no bank connection, no tracking. **Your data stays on your device.**

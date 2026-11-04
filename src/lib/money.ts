@@ -2,12 +2,24 @@
  * Money maths. These are plain functions (no React) so they are easy to test.
  */
 import { daysInMonth, monthOf } from './dates';
-import type { Expense, RecurringBill } from './types';
+import type { AppData, Expense, RecurringBill } from './types';
 
-/** "£1,234.50" */
-export function formatGBP(n: number): string {
+/**
+ * All money in the app is in US dollars (that's what Bek's bank account uses).
+ * Purchases paid in pounds are converted to dollars when they're added.
+ * formatMoney(1234.5) → "$1,234.50"
+ */
+export function formatMoney(n: number): string {
+  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
+/** "£4.50" — only used to show what was actually paid in pounds. */
+export function formatPounds(n: number): string {
   return n.toLocaleString('en-GB', { style: 'currency', currency: 'GBP' });
 }
+
+/** Pounds → dollars, given how many pounds one dollar buys (e.g. 0.76). */
+export const poundsToDollars = (gbp: number, gbpPerUsd: number) => roundPennies(gbp / gbpPerUsd);
 
 /** Round to pennies, to avoid 0.1 + 0.2 = 0.30000000000000004 problems. */
 export const roundPennies = (n: number) => Math.round(n * 100) / 100;
@@ -99,9 +111,25 @@ export function applyRecurring(
   return { bills: newBills, expenses: [...expenses, ...added], added };
 }
 
-/** Parse what someone typed as money: "4.5", "£4.50", "4,50" → 4.5. Returns NaN if it isn't a number. */
+/** Parse what someone typed as money: "4.5", "$4.50", "£4.50", "4,50" → 4.5. Returns NaN if it isn't a number. */
 export function parseAmount(text: string): number {
-  const cleaned = text.trim().replace(/[£\s]/g, '').replace(',', '.');
+  const cleaned = text.trim().replace(/[$£\s]/g, '').replace(',', '.');
   if (!/^(\d+\.?\d*|\.\d+)$/.test(cleaned)) return NaN;
   return roundPennies(Number(cleaned));
+}
+
+/**
+ * One-time fix after switching the app to dollars: amounts that were typed in
+ * as pounds are converted to dollars. Each purchase keeps the original pounds in `paidGbp`.
+ */
+export function convertPoundsToDollars(d: AppData, gbpPerUsd: number): AppData {
+  const usd = (gbp: number) => poundsToDollars(gbp, gbpPerUsd);
+  return {
+    ...d,
+    monthlyBudget: Math.round(usd(d.monthlyBudget)),
+    categories: d.categories.map((c) => ({ ...c, limit: Math.round(usd(c.limit)) })),
+    expenses: d.expenses.map((e) => ({ ...e, amount: usd(e.amount), paidGbp: e.paidGbp ?? e.amount })),
+    recurring: d.recurring.map((b) => ({ ...b, amount: usd(b.amount) })),
+    settings: { ...d.settings, currencyChecked: true },
+  };
 }

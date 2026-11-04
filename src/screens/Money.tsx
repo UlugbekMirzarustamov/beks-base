@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { guessColumns, parseCsv, rowsToPurchases, type ColumnGuess } from '../lib/csv';
 import { addMonths, daysInMonth, formatDay, formatMonth, monthOf } from '../lib/dates';
 import { uid } from '../lib/id';
-import { barLevel, formatGBP, parseAmount, roundPennies, safeToSpend, spendingByDay, spentInMonth } from '../lib/money';
+import { barLevel, convertPoundsToDollars, formatMoney, formatPounds, parseAmount, poundsToDollars, roundPennies, safeToSpend, spendingByDay, spentInMonth } from '../lib/money';
 import type { Category, CategoryIcon, Expense } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
@@ -84,19 +84,52 @@ export function SafeToSpendCard() {
   const level = barLevel(spent, data.monthlyBudget);
   return (
     <Panel title="Safe to spend today" icon="coin" className="safe">
-      <p className={`big-number ${s.perDay === 0 ? 'is-zero' : ''}`}>{formatGBP(s.perDay)}</p>
+      {!data.settings.currencyChecked && <CurrencyCheck />}
+      <p className={`big-number ${s.perDay === 0 ? 'is-zero' : ''}`}>{formatMoney(s.perDay)}</p>
       <p className="muted">
-        {formatGBP(Math.max(0, s.left))} left ÷ {s.daysLeft} day{s.daysLeft === 1 ? '' : 's'} left in {formatMonth(monthOf(today)).split(' ')[0]}
+        {formatMoney(Math.max(0, s.left))} left ÷ {s.daysLeft} day{s.daysLeft === 1 ? '' : 's'} left in {formatMonth(monthOf(today)).split(' ')[0]}
       </p>
       <Bar value={spent} max={data.monthlyBudget} level={level} label="Monthly budget used" />
       <p className="bar-caption">
-        {formatGBP(spent)} of {formatGBP(data.monthlyBudget)} spent this month
+        {formatMoney(spent)} of {formatMoney(data.monthlyBudget)} spent this month
       </p>
-      {s.left < 0 && <p className="alert alert--over">Over budget by {formatGBP(-s.left)}. Time for cheap meals!</p>}
+      {s.left < 0 && <p className="alert alert--over">Over budget by {formatMoney(-s.left)}. Time for cheap meals!</p>}
       <button type="button" className="btn btn--primary btn--wide" onClick={() => openExpense()}>
         <PixelIcon name="plus" size={18} /> Add purchase
       </button>
     </Panel>
+  );
+}
+
+/**
+ * Shown once after the switch to dollars: were the amounts typed in before in pounds?
+ * Nothing is converted unless you say so.
+ */
+function CurrencyCheck() {
+  const { data, update, replaceAll, toast } = useStore();
+  const rate = data.settings.gbpPerUsd;
+  return (
+    <div className="currency-check" role="status">
+      <p>
+        <strong>Money is now shown in US dollars.</strong> Were the amounts you typed in before (budget, purchases, bills) in pounds?
+      </p>
+      <div className="form__actions">
+        <button
+          type="button"
+          className="btn btn--primary grow"
+          onClick={() => {
+            replaceAll(convertPoundsToDollars(data, rate));
+            toast('Converted your £ amounts to $', 'pop');
+          }}
+        >
+          Yes — convert £ to $
+        </button>
+        <button type="button" className="btn grow" onClick={() => update((d) => void (d.settings.currencyChecked = true))}>
+          No, they're dollars
+        </button>
+      </div>
+      <small className="muted">Uses £{rate} per $1 — change it first in Money → Tools if your rate is different.</small>
+    </div>
   );
 }
 
@@ -116,7 +149,7 @@ function CategoryBars() {
                 <PixelIcon name={c.icon} size={20} />
                 <span className="cat-bar__name">{c.name}</span>
                 <span className="cat-bar__nums">
-                  {formatGBP(spent)} / {formatGBP(c.limit)}
+                  {formatMoney(spent)} / {formatMoney(c.limit)}
                 </span>
               </div>
               <Bar value={spent} max={c.limit} level={level} color={CATEGORY_COLOR[c.icon]} label={`${c.name} spending`} />
@@ -132,6 +165,7 @@ function CategoryBars() {
 
 // ---------------------------------------------------------------- Add / edit purchase
 const LAST_CAT_KEY = 'ulus-last-category';
+const LAST_CUR_KEY = 'beks-last-currency';
 
 /** The pop-up for adding or editing a purchase. Opened by the + button anywhere in the app. */
 export function ExpenseSheet() {
@@ -154,7 +188,17 @@ function ExpenseForm({ editing, onDone }: { editing: Expense | null; onDone: () 
     }
   })();
   const defaultCat = data.categories.find((c) => c.id === lastCat)?.id ?? data.categories.find((c) => c.id === 'food')?.id ?? data.categories[0]?.id ?? 'other';
-  const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
+  const rate = data.settings.gbpPerUsd;
+  const lastCur = (() => {
+    try {
+      return localStorage.getItem(LAST_CUR_KEY) === 'GBP' ? 'GBP' : 'USD';
+    } catch {
+      return 'USD';
+    }
+  })();
+  // Paid in pounds? Then we save the dollar value and remember the pounds too.
+  const [cur, setCur] = useState<'USD' | 'GBP'>(editing ? (editing.paidGbp != null ? 'GBP' : 'USD') : lastCur);
+  const [amount, setAmount] = useState(editing ? String(editing.paidGbp ?? editing.amount) : '');
   const [categoryId, setCategoryId] = useState(editing?.categoryId ?? defaultCat);
   const [note, setNote] = useState(editing?.note ?? '');
   const [date, setDate] = useState(editing?.date ?? today);
@@ -162,8 +206,9 @@ function ExpenseForm({ editing, onDone }: { editing: Expense | null; onDone: () 
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const value = parseAmount(amount);
-    if (!(value > 0)) {
+    const typed = parseAmount(amount);
+    const value = cur === 'GBP' ? poundsToDollars(typed, rate) : typed; // always saved in dollars
+    if (!(typed > 0)) {
       setError('Type an amount, like 4.50');
       return;
     }
@@ -180,17 +225,18 @@ function ExpenseForm({ editing, onDone }: { editing: Expense | null; onDone: () 
     update((d) => {
       if (editing) {
         const item = d.expenses.find((x) => x.id === editing.id);
-        if (item) Object.assign(item, { amount: value, categoryId, note: note.trim(), date });
+        if (item) Object.assign(item, { amount: value, categoryId, note: note.trim(), date, paidGbp: cur === 'GBP' ? typed : undefined });
       } else {
-        d.expenses.push({ id: uid(), amount: value, categoryId, note: note.trim(), date });
+        d.expenses.push({ id: uid(), amount: value, categoryId, note: note.trim(), date, ...(cur === 'GBP' ? { paidGbp: typed } : {}) });
       }
     });
     try {
+      localStorage.setItem(LAST_CUR_KEY, cur);
       localStorage.setItem(LAST_CAT_KEY, categoryId);
     } catch {
       /* ignore */
     }
-    toast(editing ? 'Purchase updated' : `${formatGBP(value)} · ${cat?.name ?? ''} added`, 'pop');
+    toast(editing ? 'Purchase updated' : `${formatMoney(value)}${cur === 'GBP' ? ` (${formatPounds(typed)})` : ''} · ${cat?.name ?? ''} added`, 'pop');
     if (cat && cat.limit > 0) {
       if (barLevel(before, cat.limit) !== 'over' && barLevel(after, cat.limit) === 'over') toast(`${cat.name} is over its limit!`, 'error');
       else if (barLevel(before, cat.limit) === 'ok' && barLevel(after, cat.limit) === 'warn') toast(`${cat.name} is over 80% of its limit`, 'warn');
@@ -209,21 +255,39 @@ function ExpenseForm({ editing, onDone }: { editing: Expense | null; onDone: () 
 
   return (
     <form className="form" onSubmit={submit}>
-      <Field label="Amount (£)">
-        <input
-          className="input input--huge"
-          inputMode="decimal"
-          autoComplete="off"
-          placeholder="0.00"
-          value={amount}
-          onChange={(e) => {
-            setAmount(e.target.value);
-            setError('');
-          }}
-          data-autofocus
-          aria-invalid={Boolean(error)}
-        />
-      </Field>
+      <div className="field">
+        <span className="field__label" id="amount-label">
+          Amount
+        </span>
+        <div className="amount-row">
+          <div className="cur-toggle" role="radiogroup" aria-label="Paid in">
+            {(['USD', 'GBP'] as const).map((c) => (
+              <button key={c} type="button" role="radio" aria-checked={cur === c} className="cur-toggle__btn" onClick={() => setCur(c)}>
+                {c === 'USD' ? '$' : '£'}
+              </button>
+            ))}
+          </div>
+          <input
+            className="input input--huge"
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="0.00"
+            aria-labelledby="amount-label"
+            value={amount}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              setError('');
+            }}
+            data-autofocus
+            aria-invalid={Boolean(error)}
+          />
+        </div>
+        {cur === 'GBP' && parseAmount(amount) > 0 && (
+          <span className="field__hint">
+            = <strong>{formatMoney(poundsToDollars(parseAmount(amount), rate))}</strong> at £{rate} per $1 (change the rate in Money → Tools)
+          </span>
+        )}
+      </div>
       <fieldset className="field">
         <legend className="field__label">Category</legend>
         <div className="chip-grid" role="radiogroup" aria-label="Category">
@@ -299,7 +363,7 @@ function SpendingList() {
   for (const e of list) byDay.set(e.date, [...(byDay.get(e.date) ?? []), e]);
 
   const remove = async (e: Expense) => {
-    if (!(await ask(`Delete ${formatGBP(e.amount)} ${e.note || cat(e.categoryId).name}?`))) return;
+    if (!(await ask(`Delete ${formatMoney(e.amount)} ${e.note || cat(e.categoryId).name}?`))) return;
     update((d) => {
       d.expenses = d.expenses.filter((x) => x.id !== e.id);
     });
@@ -323,7 +387,7 @@ function SpendingList() {
         </label>
       </div>
       <p className="total-line">
-        Total: <strong>{formatGBP(total)}</strong> · {list.length} purchase{list.length === 1 ? '' : 's'}
+        Total: <strong>{formatMoney(total)}</strong> · {list.length} purchase{list.length === 1 ? '' : 's'}
       </p>
       {list.length === 0 && <Empty>Nothing here yet. Tap the big + to add a purchase.</Empty>}
       {[...byDay.entries()].map(([day, items]) => (
@@ -334,7 +398,7 @@ function SpendingList() {
               const c = cat(e.categoryId);
               return (
                 <li key={e.id} className="list__item">
-                  <button type="button" className="list__main" onClick={() => openExpense(e)} aria-label={`Edit ${e.note || c.name}, ${formatGBP(e.amount)}`}>
+                  <button type="button" className="list__main" onClick={() => openExpense(e)} aria-label={`Edit ${e.note || c.name}, ${formatMoney(e.amount)}`}>
                     <PixelIcon name={c.icon} size={22} />
                     <span className="list__text">
                       <span>{e.note || c.name}</span>
@@ -343,7 +407,10 @@ function SpendingList() {
                         {e.recurringId ? ' · bill' : ''}
                       </small>
                     </span>
-                    <span className="list__amount">{formatGBP(e.amount)}</span>
+                    <span className="list__amount">
+                      {formatMoney(e.amount)}
+                      {e.paidGbp != null && <small className="list__paid">{formatPounds(e.paidGbp)}</small>}
+                    </span>
                   </button>
                   <button type="button" className="icon-btn" onClick={() => remove(e)} aria-label={`Delete ${e.note || c.name}`}>
                     <PixelIcon name="trash" size={18} />
@@ -382,7 +449,7 @@ function Charts() {
                 <span className="hbar__fill" style={{ width: `${(spent / maxCat) * 100}%`, background: CATEGORY_COLOR[c.icon] }} />
                 {c.limit > 0 && <span className="hbar__limit" style={{ left: `${(c.limit / maxCat) * 100}%` }} title="limit" />}
               </span>
-              <span className="hbar__value">{formatGBP(spent)}</span>
+              <span className="hbar__value">{formatMoney(spent)}</span>
             </li>
           ))}
         </ul>
@@ -402,7 +469,7 @@ function Charts() {
           <span>{days.length}</span>
         </div>
         <p className="muted small">
-          Highest day: {Math.max(...days) > 0 ? `${formatGBP(Math.max(...days))} on the ${biggest + 1}${ordinal(biggest + 1)}` : 'none yet'}
+          Highest day: {Math.max(...days) > 0 ? `${formatMoney(Math.max(...days))} on the ${biggest + 1}${ordinal(biggest + 1)}` : 'none yet'}
         </p>
       </Panel>
     </div>
@@ -470,7 +537,7 @@ function Bills() {
                     Day {b.day} every month · {cat(b.categoryId).name}
                   </small>
                 </span>
-                <span className="list__amount">{formatGBP(b.amount)}</span>
+                <span className="list__amount">{formatMoney(b.amount)}</span>
               </div>
               <button type="button" className="icon-btn" onClick={() => remove(b.id)} aria-label={`Delete bill ${b.name}`}>
                 <PixelIcon name="trash" size={18} />
@@ -485,7 +552,7 @@ function Bills() {
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Rent" />
           </Field>
           <div className="form__row">
-            <Field label="Amount (£)" className="grow">
+            <Field label="Amount ($)" className="grow">
               <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
             </Field>
             <Field label="Day of month">
@@ -549,7 +616,7 @@ function BudgetSetup() {
 
   return (
     <Panel title="Monthly budget" icon="gear">
-      <Field label="Total budget per month (£)">
+      <Field label="Total budget per month ($)">
         <input
           className="input input--big"
           type="number"
@@ -560,8 +627,8 @@ function BudgetSetup() {
         />
       </Field>
       <p className={`alert ${diff === 0 ? 'alert--ok' : 'alert--warn'}`}>
-        Category limits add up to {formatGBP(allocated)}.{' '}
-        {diff === 0 ? 'Perfect match!' : diff > 0 ? `${formatGBP(diff)} not given to any category yet.` : `That's ${formatGBP(-diff)} more than your budget.`}
+        Category limits add up to {formatMoney(allocated)}.{' '}
+        {diff === 0 ? 'Perfect match!' : diff > 0 ? `${formatMoney(diff)} not given to any category yet.` : `That's ${formatMoney(-diff)} more than your budget.`}
       </p>
       <ul className="cat-edit">
         {data.categories.map((c) => (
@@ -581,7 +648,7 @@ function BudgetSetup() {
             <PixelIcon name={c.icon} size={22} />
             <input className="input grow" aria-label="Category name" value={c.name} onChange={(e) => setCat(c.id, { name: e.target.value })} />
             <span className="cat-edit__pound" aria-hidden="true">
-              £
+              $
             </span>
             <input
               className="input cat-edit__limit"
@@ -604,61 +671,63 @@ function BudgetSetup() {
   );
 }
 
-// ---------------------------------------------------------------- £ ↔ UZS converter
+// ---------------------------------------------------------------- $ ↔ £ ↔ so'm converter
 const formatUZS = (n: number) => `${Math.round(n).toLocaleString('en-GB').replace(/,/g, ' ')} so'm`;
+
+type Currency = 'usd' | 'gbp' | 'uzs';
 
 function Converter() {
   const { data, update } = useStore();
-  const rate = data.settings.gbpToUzs;
-  const [gbp, setGbp] = useState('10');
-  const [uzs, setUzs] = useState(String(10 * rate));
-
-  // Keep the som box in sync when the rate changes (only the rate should trigger this).
-  useEffect(() => {
-    const g = parseFloat(gbp);
-    if (Number.isFinite(g)) setUzs(String(Math.round(g * rate)));
-  }, [rate]);
+  const { gbpPerUsd, usdToUzs } = data.settings;
+  // Everything is worked out from one dollar amount; you can type in any of the three boxes.
+  const [usd, setUsd] = useState(10);
+  const [editing, setEditing] = useState<{ cur: Currency; text: string } | null>(null);
+  const valueOf: Record<Currency, number> = { usd, gbp: usd * gbpPerUsd, uzs: usd * usdToUzs };
+  const shown = (cur: Currency) =>
+    editing?.cur === cur ? editing.text : cur === 'uzs' ? String(Math.round(valueOf.uzs)) : (Math.round(valueOf[cur] * 100) / 100).toString();
+  const type = (cur: Currency, text: string) => {
+    setEditing({ cur, text });
+    const n = parseFloat(text.replace(/[\s,]/g, '').replace(/^[$£]/, ''));
+    if (Number.isFinite(n)) setUsd(cur === 'usd' ? n : cur === 'gbp' ? n / gbpPerUsd : n / usdToUzs);
+  };
+  const box = (cur: Currency, label: string) => (
+    <Field label={label} className="grow">
+      <input className="input input--big" inputMode="decimal" value={shown(cur)} onChange={(e) => type(cur, e.target.value)} onBlur={() => setEditing(null)} />
+    </Field>
+  );
 
   return (
-    <Panel title="£ ↔ UZS" icon="globe">
-      <Field label="Rate: how many so'm for £1?" hint="Type today's rate yourself (from your bank or a money app).">
-        <input
-          className="input"
-          type="number"
-          min={1}
-          value={rate}
-          onChange={(e) => update((d) => void (d.settings.gbpToUzs = Math.max(1, Number(e.target.value) || 1)))}
-        />
-      </Field>
-      <div className="form__row">
-        <Field label="Pounds (£)" className="grow">
+    <Panel title="Converter" icon="globe">
+      <div className="form__row form__row--wrap">
+        {box('usd', 'Dollars ($)')}
+        {box('gbp', 'Pounds (£)')}
+        {box('uzs', "So'm (UZS)")}
+      </div>
+      <p className="muted">
+        {formatMoney(usd)} = <strong>{formatPounds(valueOf.gbp)}</strong> = <strong>{formatUZS(valueOf.uzs)}</strong>
+      </p>
+      <p className="field__label">Today's rates (type them in yourself, from your bank or a money app)</p>
+      <div className="form__row form__row--wrap">
+        <Field label="£ for $1" className="grow" hint="Used when you add a purchase paid in £.">
           <input
-            className="input input--big"
-            inputMode="decimal"
-            value={gbp}
-            onChange={(e) => {
-              setGbp(e.target.value);
-              const g = parseFloat(e.target.value.replace(',', '.'));
-              setUzs(Number.isFinite(g) ? String(Math.round(g * rate)) : '');
-            }}
+            className="input"
+            type="number"
+            step="0.01"
+            min={0.01}
+            value={gbpPerUsd}
+            onChange={(e) => update((d) => void (d.settings.gbpPerUsd = Math.max(0.01, Number(e.target.value) || 0.01)))}
           />
         </Field>
-        <Field label="So'm (UZS)" className="grow">
+        <Field label="so'm for $1" className="grow">
           <input
-            className="input input--big"
-            inputMode="numeric"
-            value={uzs}
-            onChange={(e) => {
-              setUzs(e.target.value);
-              const u = parseFloat(e.target.value.replace(/\s/g, ''));
-              setGbp(Number.isFinite(u) ? (u / rate).toFixed(2) : '');
-            }}
+            className="input"
+            type="number"
+            min={1}
+            value={usdToUzs}
+            onChange={(e) => update((d) => void (d.settings.usdToUzs = Math.max(1, Number(e.target.value) || 1)))}
           />
         </Field>
       </div>
-      <p className="muted">
-        £{parseFloat(gbp) || 0} ≈ <strong>{formatUZS((parseFloat(gbp) || 0) * rate)}</strong>
-      </p>
     </Panel>
   );
 }
@@ -776,7 +845,7 @@ function CsvImport() {
                         onChange={(e) => setChoices(choices.map((x, j) => (j === i ? { ...x, include: e.target.checked } : x)))}
                       />
                       <span>
-                        <strong>{formatGBP(p.amount)}</strong> {p.description || '(no description)'}
+                        <strong>{formatMoney(p.amount)}</strong> {p.description || '(no description)'}
                         <small className="muted">
                           {' '}
                           · {formatDay(p.date)}

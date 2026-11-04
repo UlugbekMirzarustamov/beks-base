@@ -76,7 +76,7 @@ export function rowsToPurchases(rows: string[][], cols: ColumnGuess, spendingIsN
   const out: CsvPurchase[] = [];
   for (const row of rows) {
     const date = parseBankDate(row[cols.date] ?? '');
-    const raw = Number((row[cols.amount] ?? '').replace(/[£,\s]/g, ''));
+    const raw = Number((row[cols.amount] ?? '').replace(/[$£,\s]/g, ''));
     if (!date || !Number.isFinite(raw) || raw === 0) continue;
     const spent = spendingIsNegative ? -raw : raw;
     if (spent <= 0) continue; // income / refunds

@@ -160,7 +160,7 @@ export default function App() {
 
       <button type="button" className="fab" onClick={() => openExpense()} aria-label="Add a purchase">
         <span aria-hidden="true">+</span>
-        <small aria-hidden="true">£</small>
+        <small aria-hidden="true">$</small>
       </button>
 
       <nav className="tabbar" aria-label="Main">

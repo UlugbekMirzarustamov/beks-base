@@ -14,7 +14,7 @@ import { normalize } from '../lib/backup';
 import { todayUK } from '../lib/dates';
 import { loadData, requestPersistentStorage, saveData } from '../lib/db';
 import { uid } from '../lib/id';
-import { applyRecurring, formatGBP } from '../lib/money';
+import { applyRecurring, formatMoney } from '../lib/money';
 import { createInitialData, upgrade } from '../lib/seed';
 import { playChime } from '../lib/sound';
 import type { AppData, Expense } from '../lib/types';
@@ -122,7 +122,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         priorities: newDay ? { date: today, items: ['', '', ''], done: [false, false, false] } : prev.priorities,
       },
     );
-    for (const e of r.added) toast(`Bill added: ${e.note} ${formatGBP(e.amount)}`, 'info');
+    for (const e of r.added) toast(`Bill added: ${e.note} ${formatMoney(e.amount)}`, 'info');
   }, [today, loaded, toast]);
 
   const update = useCallback((change: (draft: AppData) => void) => {

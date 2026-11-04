@@ -10,17 +10,17 @@ import { uid } from './id';
 import { TIMETABLES } from './timetable';
 import type { AppData, Category, Flashcard, Topic } from './types';
 
-/** The budget the app starts with (you said £600–700, so £650). Editable in Money → Setup. */
-export const DEFAULT_BUDGET = 650;
+/** The budget the app starts with, in US dollars (about £650). Editable in Money → Budget. */
+export const DEFAULT_BUDGET = 850;
 
 const CATEGORIES: Category[] = [
-  { id: 'rent', name: 'Rent', limit: 350, icon: 'house' },
-  { id: 'food', name: 'Food', limit: 140, icon: 'apple' },
-  { id: 'transport', name: 'Transport', limit: 30, icon: 'bus' },
-  { id: 'phone', name: 'Phone', limit: 15, icon: 'phone' },
-  { id: 'fun', name: 'Fun', limit: 40, icon: 'star' },
-  { id: 'savings', name: 'Savings', limit: 50, icon: 'coin' },
-  { id: 'other', name: 'Other', limit: 25, icon: 'box' },
+  { id: 'rent', name: 'Rent', limit: 460, icon: 'house' },
+  { id: 'food', name: 'Food', limit: 185, icon: 'apple' },
+  { id: 'transport', name: 'Transport', limit: 40, icon: 'bus' },
+  { id: 'phone', name: 'Phone', limit: 20, icon: 'phone' },
+  { id: 'fun', name: 'Fun', limit: 50, icon: 'star' },
+  { id: 'savings', name: 'Savings', limit: 65, icon: 'coin' },
+  { id: 'other', name: 'Other', limit: 30, icon: 'box' },
 ];
 
 const PHYSICS_TOPICS = [
@@ -77,7 +77,9 @@ export function emptyData(today: string): AppData {
       sound: 'off',
       mixer: { rain: 0, fire: 0, wind: 0 },
       prayer: { asr: 'hanafi', offsets: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, call: true },
-      gbpToUzs: 16000,
+      usdToUzs: 12500,
+      gbpPerUsd: 0.76,
+      currencyChecked: true,
       pomodoroWork: 25,
       pomodoroBreak: 5,
     },
@@ -127,7 +129,9 @@ export function createInitialData(today: string): AppData {
  * run again and again:
  *  1. removes any old "(example)" items the app used to add — your own items stay;
  *  2. adds each school timetable (lib/timetable.ts) once;
- *  3. turns the old single "sound" setting into mixer levels.
+ *  3. turns the old single "sound" setting into mixer levels;
+ *  4. switches money to US dollars (the Money screen then asks once whether
+ *     old amounts were in pounds — nothing is converted without asking).
  */
 export function upgrade(data: AppData, today: string): AppData {
   const d = hasExampleData(data) ? clearExampleData(data, today) : data;
@@ -135,15 +139,30 @@ export function upgrade(data: AppData, today: string): AppData {
   const out: AppData = missing.length
     ? { ...d, sessions: [...d.sessions, ...missing.flatMap((id) => TIMETABLES[id]())], applied: [...d.applied, ...missing] }
     : d;
-  if (!out.applied.includes('mixer')) {
-    const { sound } = out.settings;
-    return {
-      ...out,
-      applied: [...out.applied, 'mixer'],
-      settings: { ...out.settings, sound: 'off', mixer: { rain: sound === 'rain' ? 4 : 0, fire: sound === 'fire' ? 4 : 0, wind: 0 } },
+  let result = out;
+  if (!result.applied.includes('mixer')) {
+    const { sound } = result.settings;
+    result = {
+      ...result,
+      applied: [...result.applied, 'mixer'],
+      settings: { ...result.settings, sound: 'off', mixer: { rain: sound === 'rain' ? 4 : 0, fire: sound === 'fire' ? 4 : 0, wind: 0 } },
     };
   }
-  return out;
+  if (!result.applied.includes('usd')) {
+    const s = result.settings;
+    const hasMoney = result.expenses.length > 0 || result.recurring.length > 0 || result.monthlyBudget !== DEFAULT_BUDGET;
+    result = {
+      ...result,
+      applied: [...result.applied, 'usd'],
+      settings: {
+        ...s,
+        // Keep your own so'm rate, turned into "per dollar".
+        usdToUzs: s.gbpToUzs && s.gbpToUzs !== 16000 ? Math.round(s.gbpToUzs * s.gbpPerUsd) : s.usdToUzs,
+        currencyChecked: !hasMoney,
+      },
+    };
+  }
+  return result;
 }
 
 /** True if any example items are still in the data. */
