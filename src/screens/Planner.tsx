@@ -9,7 +9,7 @@ import type { Task, Weekday } from '../lib/types';
 import { XP } from '../lib/xp';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Empty, Field, Panel, Tabs, useSubRoute } from '../ui/kit';
+import { Empty, Field, Panel, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
 const TABS = ['today', 'week', 'timetable'] as const;
 type Tab = (typeof TABS)[number];
@@ -118,11 +118,12 @@ export function useToggleTask() {
 }
 
 export function TaskRow({ task }: { task: Task }) {
+  const ask = useConfirm();
   const { today, update } = useStore();
   const toggle = useToggleTask();
   const days = task.due ? daysBetween(today, task.due) : null;
-  const remove = () => {
-    if (!confirm(`Delete "${task.title}"?`)) return;
+  const remove = async () => {
+    if (!(await ask(`Delete "${task.title}"?`))) return;
     update((d) => {
       d.tasks = d.tasks.filter((x) => x.id !== task.id);
     });
@@ -142,6 +143,7 @@ export function TaskRow({ task }: { task: Task }) {
 const byDue = (a: Task, b: Task) => (a.due ?? '9999').localeCompare(b.due ?? '9999');
 
 function Tasks() {
+  const ask = useConfirm();
   const { data, update, toast } = useStore();
   const [title, setTitle] = useState('');
   const [due, setDue] = useState('');
@@ -158,8 +160,8 @@ function Tasks() {
     setTitle('');
     setDue('');
   };
-  const clearDone = () => {
-    if (!confirm(`Remove ${done.length} finished task(s)?`)) return;
+  const clearDone = async () => {
+    if (!(await ask(`Remove ${done.length} finished task(s)?`, { ok: 'Remove' }))) return;
     update((d) => {
       d.tasks = d.tasks.filter((t) => !t.done);
     });
@@ -229,6 +231,7 @@ function freeGaps(busy: Block[]): Block[] {
 const duration = (mins: number) => (mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`);
 
 function Week() {
+  const ask = useConfirm();
   const { data, today, update, toast } = useStore();
   const [weekStart, setWeekStart] = useState(startOfWeek(today));
   const [selected, setSelected] = useState(weekdayOf(today));
@@ -248,8 +251,8 @@ function Week() {
     toast('Study block added', 'pop');
     setForm({ ...form, title: '' });
   };
-  const removeBlock = (id: string, title: string) => {
-    if (!confirm(`Delete study block "${title}"?`)) return;
+  const removeBlock = async (id: string, title: string) => {
+    if (!(await ask(`Delete study block "${title}"?`))) return;
     update((d) => {
       d.studyBlocks = d.studyBlocks.filter((b) => b.id !== id);
     });
@@ -371,6 +374,7 @@ function Week() {
 
 // ---------------------------------------------------------------- Weekly timetable
 function Timetable() {
+  const ask = useConfirm();
   const { data, update, toast } = useStore();
   const [form, setForm] = useState({ day: 0 as Weekday, start: '09:00', end: '10:00', name: '', room: '' });
 
@@ -390,8 +394,8 @@ function Timetable() {
     toast(`${form.name.trim()} added on ${WEEKDAYS_LONG[form.day]}s`, 'pop');
     setForm({ ...form, name: '', room: '' });
   };
-  const remove = (id: string, name: string) => {
-    if (!confirm(`Remove ${name} from your timetable?`)) return;
+  const remove = async (id: string, name: string) => {
+    if (!(await ask(`Remove ${name} from your timetable?`, { ok: 'Remove' }))) return;
     update((d) => {
       d.timetable = d.timetable.filter((c) => c.id !== id);
     });

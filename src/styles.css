@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Ulu's Base — "cozy pixel cabin" styles
+   Bek's Base — "cozy pixel cabin" styles
    Square corners only. Chunky borders + inset shadows = wooden/stone windows.
    Colours are CSS variables, so day/night mode just swaps them.
    ========================================================================== */
@@ -2004,4 +2004,94 @@ button.list__main {
 .journal-body {
   min-height: 300px;
   line-height: 1.5;
+}
+
+/* ---------- Reflect ---------- */
+.week-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.week-stats li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: var(--panel-hi);
+  border: 2px solid var(--panel-lo);
+}
+.week-stats__num {
+  font-family: var(--font-num);
+  font-size: 26px;
+  line-height: 1;
+  min-width: 3.2em;
+}
+.confirm__text {
+  font-size: 18px;
+}
+
+/* ---------- Full-screen focus timer ---------- */
+.focus {
+  position: fixed;
+  inset: 0;
+  z-index: 50; /* above everything except toasts (so XP still pops up) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  text-align: center;
+  color: #f3e8d2;
+  background-color: #17141f;
+  background-image:
+    radial-gradient(circle at 50% 110%, rgba(255, 165, 58, 0.28), transparent 60%),
+    conic-gradient(#1c1826 25%, transparent 0 50%, #1c1826 0 75%, transparent 0);
+  background-size: auto, 32px 32px;
+}
+.focus:focus {
+  outline: none;
+}
+.focus--break {
+  background-image:
+    radial-gradient(circle at 50% 110%, rgba(79, 168, 234, 0.3), transparent 60%),
+    conic-gradient(#1c1826 25%, transparent 0 50%, #1c1826 0 75%, transparent 0);
+}
+.focus__mode {
+  font-family: var(--font-title);
+  font-size: clamp(14px, 3vw, 22px);
+  color: var(--lantern);
+  text-shadow: 3px 3px 0 #000;
+}
+.focus--break .focus__mode {
+  color: var(--sky);
+}
+.focus__subject {
+  font-size: 20px;
+  font-weight: 600;
+  max-width: 30ch;
+}
+.focus__time {
+  font-family: var(--font-num);
+  font-size: clamp(110px, 34vw, 300px);
+  line-height: 0.8;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 6px 6px 0 #000;
+}
+.focus__bar {
+  width: min(560px, 100%);
+}
+.focus__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  width: min(560px, 100%);
+}
+.focus__tip {
+  color: #b9a98f;
+  font-size: 15px;
 }

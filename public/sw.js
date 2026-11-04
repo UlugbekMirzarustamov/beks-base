@@ -1,5 +1,5 @@
 /**
- * Service worker = the bit that makes Ulu's Base work OFFLINE.
+ * Service worker = the bit that makes Bek's Base work OFFLINE.
  *
  * Strategy:
  *  - Pages (navigation): try the network first so you get updates, fall back to
@@ -10,7 +10,7 @@
  * Your DATA is not stored here — that's in IndexedDB. This only stores the app itself.
  * Bump VERSION to force phones to drop the old cached files.
  */
-const VERSION = 'ulus-base-v1';
+const VERSION = 'ulus-base-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

@@ -97,9 +97,9 @@ export default function App() {
         Skip to content
       </a>
       <header className="topbar">
-        <a href="#/home" className="brand" aria-label="Ulu's Base, go home">
+        <a href="#/home" className="brand" aria-label="Bek's Base, go home">
           <PixelIcon name="house" size={22} />
-          <span>ULU'S BASE</span>
+          <span>BEK'S BASE</span>
         </a>
         <div className="topbar__right">
           <MiniTimer />

@@ -2,14 +2,14 @@
  * 📚 STUDY — "the Bookshelf".
  * Tabs: Tests · Topics · Mistakes · Cards · Timer
  */
-import { useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { daysBetween, formatDay, startOfWeek } from '../lib/dates';
 import { uid } from '../lib/id';
 import type { Confidence, Flashcard, Mistake, Test, Topic } from '../lib/types';
 import { XP } from '../lib/xp';
 import { useStore, useTimer } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useSubRoute } from '../ui/kit';
+import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
 const TABS = ['tests', 'topics', 'mistakes', 'cards', 'timer'] as const;
 type Tab = (typeof TABS)[number];
@@ -52,6 +52,7 @@ export function daysLeftLabel(days: number): string {
 }
 
 function Tests() {
+  const ask = useConfirm();
   const { data, update, today, toast } = useStore();
   const [editing, setEditing] = useState<Test | null>(null);
   const [name, setName] = useState('');
@@ -88,8 +89,8 @@ function Tests() {
     toast(editing ? 'Test updated' : 'Test added', 'pop');
     clear();
   };
-  const remove = (t: Test) => {
-    if (!confirm(`Delete "${t.name}"?`)) return;
+  const remove = async (t: Test) => {
+    if (!(await ask(`Delete "${t.name}"?`))) return;
     update((d) => {
       d.tests = d.tests.filter((x) => x.id !== t.id);
     });
@@ -177,6 +178,7 @@ const RAG: { value: Exclude<Confidence, null>; label: string }[] = [
 ];
 
 function Topics() {
+  const ask = useConfirm();
   const { data, update, gainXp, toast } = useStore();
   const [subjectId, setSubjectId] = useState(data.subjects[0]?.id ?? '');
   const [newTopic, setNewTopic] = useState('');
@@ -215,21 +217,25 @@ function Topics() {
     setRenaming(null);
   };
 
-  const remove = (t: Topic) => {
-    if (!confirm(`Delete topic "${t.name}"?`)) return;
+  const remove = async (t: Topic) => {
+    if (!(await ask(`Delete topic "${t.name}"?`))) return;
     update((d) => {
       d.topics = d.topics.filter((x) => x.id !== t.id);
     });
   };
 
-  const addSubject = () => {
-    const name = prompt('New subject name (e.g. English):')?.trim();
+  // null = the "new subject" box is hidden
+  const [newSubject, setNewSubject] = useState<string | null>(null);
+  const addSubject = (e: FormEvent) => {
+    e.preventDefault();
+    const name = newSubject?.trim();
     if (!name) return;
     const id = uid();
     update((d) => {
       d.subjects.push({ id, name });
     });
     setSubjectId(id);
+    setNewSubject(null);
     toast(`Added ${name}`, 'pop');
   };
 
@@ -237,10 +243,18 @@ function Topics() {
     <Panel title="Topic checklist" icon="book">
       <div className="toolbar">
         <Segmented label="Subject" value={subjectId} onChange={setSubjectId} options={data.subjects.map((s) => ({ value: s.id, label: s.name }))} />
-        <button type="button" className="btn btn--small" onClick={addSubject}>
+        <button type="button" className="btn btn--small" onClick={() => setNewSubject(newSubject === null ? '' : null)} aria-expanded={newSubject !== null}>
           + Subject
         </button>
       </div>
+      {newSubject !== null && (
+        <form className="form__row" onSubmit={addSubject}>
+          <input className="input grow" aria-label="New subject name" placeholder="e.g. English" value={newSubject} onChange={(e) => setNewSubject(e.target.value)} autoFocus />
+          <button type="submit" className="btn btn--primary">
+            Add
+          </button>
+        </form>
+      )}
       <div className="rag-summary" aria-label="Confidence summary">
         <span className="rag-pill rag-pill--green">{counts.green} green</span>
         <span className="rag-pill rag-pill--amber">{counts.amber} amber</span>
@@ -315,6 +329,7 @@ function topicOptions(data: ReturnType<typeof useStore>['data']) {
 }
 
 function Mistakes() {
+  const ask = useConfirm();
   const { data, update, gainXp } = useStore();
   const [show, setShow] = useState<'review' | 'all'>('review');
   const [sheet, setSheet] = useState<{ open: boolean; editing: Mistake | null }>({ open: false, editing: null });
@@ -330,8 +345,8 @@ function Mistakes() {
     });
     if (!reviewAgain) gainXp(XP.mistakeReviewed, 'mistake reviewed');
   };
-  const remove = (m: Mistake) => {
-    if (!confirm('Delete this mistake?')) return;
+  const remove = async (m: Mistake) => {
+    if (!(await ask('Delete this mistake?'))) return;
     update((d) => {
       d.mistakes = d.mistakes.filter((x) => x.id !== m.id);
     });
@@ -471,6 +486,7 @@ function makeDeck(cards: Flashcard[]): string[] {
 }
 
 function Cards() {
+  const ask = useConfirm();
   const { data, update, gainXp } = useStore();
   const [deck, setDeck] = useState(() => makeDeck(data.flashcards));
   const [index, setIndex] = useState(0);
@@ -513,8 +529,8 @@ function Cards() {
       const c = d.flashcards.find((x) => x.id === id);
       if (c) Object.assign(c, change);
     });
-  const remove = (c: Flashcard) => {
-    if (!confirm(`Delete card "${c.front}"?`)) return;
+  const remove = async (c: Flashcard) => {
+    if (!(await ask(`Delete card "${c.front}"?`))) return;
     update((d) => {
       d.flashcards = d.flashcards.filter((x) => x.id !== c.id);
     });
@@ -585,6 +601,71 @@ function Cards() {
 }
 
 // ---------------------------------------------------------------- Pomodoro timer
+const FOCUS_TIPS = ['Phone face down. You\'ve got this.', 'One thing at a time.', 'Stuck? Write the question in your Mistake notebook later.', 'Sip some water.'];
+
+/** Big full-screen countdown: nothing else on screen while you study. Esc or "Exit" closes it. */
+function FocusScreen({ onExit }: { onExit: () => void }) {
+  const { data } = useStore();
+  const { timer, secondsLeft, running, start, pause, skip } = useTimer();
+  const ref = useRef<HTMLDivElement>(null);
+  const total = (timer.mode === 'work' ? data.settings.pomodoroWork : data.settings.pomodoroBreak) * 60;
+  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+  const ss = String(secondsLeft % 60).padStart(2, '0');
+  const subject = data.subjects.find((x) => x.id === timer.subjectId)?.name ?? 'Other';
+  const [tip] = useState(() => FOCUS_TIPS[Math.floor(Math.random() * FOCUS_TIPS.length)]);
+
+  useEffect(() => {
+    ref.current?.focus();
+    const onKey = (e: globalThis.KeyboardEvent) => e.key === 'Escape' && onExit();
+    // Leaving the browser's own full screen (e.g. swipe/Esc) also closes this view.
+    const onFullscreen = () => !document.fullscreenElement && onExit();
+    window.addEventListener('keydown', onKey);
+    document.addEventListener('fullscreenchange', onFullscreen);
+    // Keep the screen awake while studying (where the browser supports it).
+    let lock: WakeLockSentinel | null = null;
+    navigator.wakeLock
+      ?.request('screen')
+      .then((l) => (lock = l))
+      .catch(() => {});
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('fullscreenchange', onFullscreen);
+      lock?.release().catch(() => {});
+    };
+  }, [onExit]);
+
+  return (
+    <div ref={ref} className={`focus focus--${timer.mode}`} role="dialog" aria-modal="true" aria-label="Full-screen focus timer" tabIndex={-1}>
+      <p className="focus__mode">{timer.mode === 'work' ? 'FOCUS' : 'BREAK'}</p>
+      <p className="focus__subject">{timer.mode === 'work' ? subject : 'Stretch, breathe, look away from the screen'}</p>
+      <p className="focus__time" role="timer" aria-live="off">
+        {mm}:{ss}
+      </p>
+      <div className="focus__bar">
+        <Bar value={total - secondsLeft} max={total} label="Time passed" color={timer.mode === 'work' ? 'var(--lantern)' : 'var(--sky)'} />
+      </div>
+      <div className="focus__actions">
+        {running ? (
+          <button type="button" className="btn grow" onClick={pause}>
+            Pause
+          </button>
+        ) : (
+          <button type="button" className="btn btn--primary grow" onClick={start}>
+            {secondsLeft < total ? 'Resume' : timer.mode === 'work' ? 'Start focus' : 'Start break'}
+          </button>
+        )}
+        <button type="button" className="btn" onClick={skip}>
+          Skip
+        </button>
+        <button type="button" className="btn" onClick={onExit}>
+          Exit full screen
+        </button>
+      </div>
+      <p className="focus__tip">{tip}</p>
+    </div>
+  );
+}
+
 function Timer() {
   const { data, update, today } = useStore();
   const { timer, secondsLeft, running, start, pause, reset, skip, setSubject } = useTimer();
@@ -606,8 +687,26 @@ function Timer() {
   const setLen = (key: 'pomodoroWork' | 'pomodoroBreak', v: number) =>
     update((d) => void (d.settings[key] = Math.min(120, Math.max(1, Math.round(v) || 1))));
 
+  // Pressing Start opens the full-screen focus view (and real browser full screen where allowed).
+  const [focusOpen, setFocusOpen] = useState(false);
+  const openFocus = () => {
+    setFocusOpen(true);
+    document.documentElement.requestFullscreen?.().catch(() => {
+      /* not allowed (e.g. iPhone) — the in-app full-screen view still covers everything */
+    });
+  };
+  const closeFocus = useCallback(() => {
+    setFocusOpen(false);
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  }, []);
+  const startFocus = () => {
+    start();
+    openFocus();
+  };
+
   return (
     <div className="grid grid--2">
+      {focusOpen && <FocusScreen onExit={closeFocus} />}
       <Panel title="Pomodoro" icon="clock" className={`timer timer--${timer.mode}`}>
         <p className="timer__mode">{timer.mode === 'work' ? 'FOCUS' : 'BREAK'}</p>
         <p className="timer__time" role="timer" aria-live="off">
@@ -626,11 +725,16 @@ function Timer() {
         </Field>
         <div className="form__actions">
           {running ? (
-            <button type="button" className="btn grow" onClick={pause}>
-              Pause
-            </button>
+            <>
+              <button type="button" className="btn grow" onClick={pause}>
+                Pause
+              </button>
+              <button type="button" className="btn btn--primary" onClick={openFocus}>
+                Full screen
+              </button>
+            </>
           ) : (
-            <button type="button" className="btn btn--primary grow" onClick={start}>
+            <button type="button" className="btn btn--primary grow" onClick={startFocus}>
               {secondsLeft < total ? 'Resume' : 'Start'}
             </button>
           )}

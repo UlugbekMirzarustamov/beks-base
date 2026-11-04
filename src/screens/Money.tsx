@@ -12,7 +12,7 @@ import { barLevel, formatGBP, parseAmount, roundPennies, safeToSpend, spendingBy
 import type { Category, CategoryIcon, Expense } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Bar, Empty, Field, Panel, Sheet, Tabs, useSubRoute } from '../ui/kit';
+import { Bar, Empty, Field, Panel, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
 /** Each category icon also gets a colour for bars and charts. */
 export const CATEGORY_COLOR: Record<CategoryIcon, string> = {
@@ -144,6 +144,7 @@ export function ExpenseSheet() {
 }
 
 function ExpenseForm({ editing, onDone }: { editing: Expense | null; onDone: () => void }) {
+  const ask = useConfirm();
   const { data, update, toast, today } = useStore();
   const lastCat = (() => {
     try {
@@ -197,8 +198,8 @@ function ExpenseForm({ editing, onDone }: { editing: Expense | null; onDone: () 
     onDone();
   };
 
-  const remove = () => {
-    if (!editing || !confirm('Delete this purchase?')) return;
+  const remove = async () => {
+    if (!editing || !(await ask('Delete this purchase?'))) return;
     update((d) => {
       d.expenses = d.expenses.filter((x) => x.id !== editing.id);
     });
@@ -284,6 +285,7 @@ function MonthPicker({ month, setMonth }: { month: string; setMonth: (m: string)
 }
 
 function SpendingList() {
+  const ask = useConfirm();
   const { data, today, update, openExpense, toast } = useStore();
   const cat = useCategory();
   const [month, setMonth] = useState(monthOf(today));
@@ -296,8 +298,8 @@ function SpendingList() {
   const byDay = new Map<string, Expense[]>();
   for (const e of list) byDay.set(e.date, [...(byDay.get(e.date) ?? []), e]);
 
-  const remove = (e: Expense) => {
-    if (!confirm(`Delete ${formatGBP(e.amount)} ${e.note || cat(e.categoryId).name}?`)) return;
+  const remove = async (e: Expense) => {
+    if (!(await ask(`Delete ${formatGBP(e.amount)} ${e.note || cat(e.categoryId).name}?`))) return;
     update((d) => {
       d.expenses = d.expenses.filter((x) => x.id !== e.id);
     });
@@ -411,6 +413,7 @@ const ordinal = (n: number) => (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 &
 
 // ---------------------------------------------------------------- Recurring bills
 function Bills() {
+  const ask = useConfirm();
   const { data, update, toast, today } = useStore();
   const cat = useCategory();
   const [name, setName] = useState('');
@@ -444,8 +447,8 @@ function Bills() {
     setAddNow(false);
   };
 
-  const remove = (id: string) => {
-    if (!confirm('Stop this recurring bill? (Past payments stay in your list.)')) return;
+  const remove = async (id: string) => {
+    if (!(await ask('Stop this recurring bill? (Past payments stay in your list.)', { ok: 'Stop bill' }))) return;
     update((d) => {
       d.recurring = d.recurring.filter((b) => b.id !== id);
     });
@@ -515,6 +518,7 @@ function Bills() {
 
 // ---------------------------------------------------------------- Budget setup
 function BudgetSetup() {
+  const ask = useConfirm();
   const { data, update, toast } = useStore();
   const allocated = roundPennies(data.categories.reduce((s, c) => s + c.limit, 0));
   const diff = roundPennies(data.monthlyBudget - allocated);
@@ -525,11 +529,11 @@ function BudgetSetup() {
       if (c) Object.assign(c, change);
     });
 
-  const removeCat = (c: Category) => {
+  const removeCat = async (c: Category) => {
     if (data.categories.length <= 1) return;
     const used = data.expenses.filter((e) => e.categoryId === c.id).length;
     const fallback = data.categories.find((x) => x.id !== c.id && x.id === 'other') ?? data.categories.find((x) => x.id !== c.id)!;
-    if (!confirm(`Delete "${c.name}"?${used ? ` Its ${used} purchase(s) will move to "${fallback.name}".` : ''}`)) return;
+    if (!(await ask(`Delete "${c.name}"?${used ? ` Its ${used} purchase(s) will move to "${fallback.name}".` : ''}`))) return;
     update((d) => {
       d.categories = d.categories.filter((x) => x.id !== c.id);
       for (const e of d.expenses) if (e.categoryId === c.id) e.categoryId = fallback.id;

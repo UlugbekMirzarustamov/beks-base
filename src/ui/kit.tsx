@@ -2,7 +2,7 @@
  * Small reusable building blocks: wooden panels, pixel health bars, tabs,
  * pop-up sheets and toasts. Styling lives in styles.css.
  */
-import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useStore, type ToastKind } from '../state/store';
 import { PixelIcon, type IconName } from './icons';
 
@@ -139,6 +139,54 @@ export function Sheet(props: { open: boolean; onClose: () => void; title: string
         </div>
       )}
     </dialog>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * "Are you sure?" window.
+ * We don't use the browser's confirm() because some browsers and in-app web
+ * views block it (it silently answers "no", so Delete buttons did nothing).
+ *
+ *   const ask = useConfirm();
+ *   if (!(await ask('Delete this task?'))) return;
+ * ------------------------------------------------------------------------- */
+interface ConfirmOptions {
+  /** Text on the "yes" button. */
+  ok?: string;
+  /** Red "yes" button (for deleting). Default true. */
+  danger?: boolean;
+}
+type Ask = (message: string, options?: ConfirmOptions) => Promise<boolean>;
+const ConfirmContext = createContext<Ask>(async () => false);
+
+export const useConfirm = () => useContext(ConfirmContext);
+
+export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const [request, setRequest] = useState<{ message: string; ok: string; danger: boolean; resolve: (yes: boolean) => void } | null>(null);
+  const ask = useCallback<Ask>(
+    (message, options = {}) =>
+      new Promise((resolve) => setRequest({ message, ok: options.ok ?? 'Delete', danger: options.danger ?? true, resolve })),
+    [],
+  );
+  const answer = (yes: boolean) => {
+    request?.resolve(yes);
+    setRequest(null);
+  };
+  return (
+    <ConfirmContext.Provider value={ask}>
+      {children}
+      <Sheet open={request !== null} onClose={() => answer(false)} title="Are you sure?">
+        <p className="confirm__text">{request?.message}</p>
+        <div className="form__actions">
+          <button type="button" className="btn grow" onClick={() => answer(false)} data-autofocus>
+            Cancel
+          </button>
+          <button type="button" className={`btn grow ${request?.danger ? 'btn--danger' : 'btn--primary'}`} onClick={() => answer(true)}>
+            {request?.ok}
+          </button>
+        </div>
+      </Sheet>
+    </ConfirmContext.Provider>
   );
 }
 

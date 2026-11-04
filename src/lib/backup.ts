@@ -11,7 +11,7 @@ export function exportJson(data: AppData, now: Date = new Date()): string {
   return JSON.stringify({ app: 'ulus-base', exportedAt: now.toISOString(), data }, null, 2);
 }
 
-export const backupFileName = (today: string) => `ulus-base-backup-${today}.json`;
+export const backupFileName = (today: string) => `beks-base-backup-${today}.json`;
 
 /**
  * Turn a backup file's text back into AppData.
@@ -23,12 +23,12 @@ export function parseBackup(text: string, today: string): AppData {
   try {
     parsed = JSON.parse(text);
   } catch {
-    throw new Error("That file isn't valid JSON. Pick a file exported from Ulu's Base.");
+    throw new Error("That file isn't valid JSON. Pick a file exported from Bek's Base.");
   }
   const obj = parsed as { app?: string; data?: unknown };
   const data = (obj && obj.app === 'ulus-base' ? obj.data : parsed) as Partial<AppData> | undefined;
   if (!data || typeof data !== 'object' || data.version !== 1 || !Array.isArray(data.expenses)) {
-    throw new Error("That doesn't look like an Ulu's Base backup.");
+    throw new Error("That doesn't look like a Bek's Base backup.");
   }
   return normalize(data, today);
 }

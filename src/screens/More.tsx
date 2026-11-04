@@ -1,5 +1,5 @@
 /**
- * ⚙️ MORE — the Phase 2 extras (words, habits, mood, journal) plus settings,
+ * ⚙️ MORE — reflect, words, habits, mood, journal, plus settings,
  * backups (Export / Import) and example-data cleanup.
  */
 import { useState } from 'react';
@@ -8,10 +8,10 @@ import { clearExampleData, emptyData, hasExampleData } from '../lib/seed';
 import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Panel, Segmented, Tabs, useSubRoute } from '../ui/kit';
-import { Habits, Journal, MoodCheckIn, MoodWeek, Vocab } from './Extras';
+import { Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Habits, Journal, MoodCheckIn, MoodWeek, Reflect, Vocab } from './Extras';
 
-const TABS = ['words', 'habits', 'mood', 'journal', 'settings'] as const;
+const TABS = ['reflect', 'words', 'habits', 'mood', 'journal', 'settings'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function More({ sub }: { sub?: string }) {
@@ -26,6 +26,7 @@ export default function More({ sub }: { sub?: string }) {
         active={tab}
         onChange={setTab}
         tabs={[
+          { id: 'reflect', label: 'Reflect', icon: 'star' },
           { id: 'words', label: 'Words', icon: 'book' },
           { id: 'habits', label: 'Habits', icon: 'check' },
           { id: 'mood', label: 'Mood', icon: 'heart' },
@@ -33,6 +34,7 @@ export default function More({ sub }: { sub?: string }) {
           { id: 'settings', label: 'Settings', icon: 'gear' },
         ]}
       />
+      {tab === 'reflect' && <Reflect />}
       {tab === 'words' && <Vocab />}
       {tab === 'habits' && <Habits />}
       {tab === 'mood' && (
@@ -52,6 +54,7 @@ export default function More({ sub }: { sub?: string }) {
 }
 
 export function SettingsPanel() {
+  const ask = useConfirm();
   const { data, update, replaceAll, toast, today } = useStore();
   const [importError, setImportError] = useState('');
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) => update((d) => void (d.settings[key] = value));
@@ -74,7 +77,7 @@ export function SettingsPanel() {
     setImportError('');
     try {
       const restored = parseBackup(await file.text(), today);
-      if (!confirm('Replace ALL current data with this backup? (Tip: export first if unsure.)')) return;
+      if (!(await ask('Replace ALL current data with this backup? (Tip: export first if unsure.)', { ok: 'Replace', danger: false }))) return;
       replaceAll(restored);
       toast('Backup restored!', 'pop');
     } catch (e) {
@@ -82,15 +85,15 @@ export function SettingsPanel() {
     }
   };
 
-  const clearExamples = () => {
-    if (!confirm('Remove all example items? Your own items stay.')) return;
+  const clearExamples = async () => {
+    if (!(await ask('Remove all example items? Your own items stay.', { ok: 'Clear examples', danger: false }))) return;
     replaceAll(clearExampleData(data, today));
     toast('Example data cleared', 'info');
   };
 
-  const resetAll = () => {
-    if (!confirm('Delete EVERYTHING and start fresh? This cannot be undone.')) return;
-    if (!confirm('Really sure? Maybe export a backup first.')) return;
+  const resetAll = async () => {
+    if (!(await ask('Delete EVERYTHING and start fresh? This cannot be undone.'))) return;
+    if (!(await ask('Really sure? Maybe export a backup first.', { ok: 'Yes, delete all' }))) return;
     replaceAll(emptyData(today));
     toast('Fresh start!', 'info');
   };
@@ -162,7 +165,7 @@ export function SettingsPanel() {
       </Panel>
 
       <Panel title="About" icon="scroll">
-        <p>Ulu's Base · private by default. No accounts, no bank connection, no tracking. Works offline once opened.</p>
+        <p>Bek's Base · private by default. No accounts, no bank connection, no tracking. Works offline once opened.</p>
         <p className="muted small">
           Install it: on iPhone open in Safari → Share → "Add to Home Screen". On Android Chrome → menu ⋮ → "Install app".
         </p>

@@ -1,5 +1,5 @@
 /**
- * All the data shapes used by Ulu's Base.
+ * All the data shapes used by Bek's Base.
  *
  * Everything lives in ONE big `AppData` object that is saved to IndexedDB.
  * That keeps Export/Import simple: the backup file is just this object as JSON.
@@ -143,6 +143,15 @@ export interface Note extends Base {
 /** 1 = awful … 5 = great */
 export type Mood = 1 | 2 | 3 | 4 | 5;
 
+/** A weekly look back. Saved under the Monday of that week ("YYYY-MM-DD"). */
+export interface Reflection {
+  wentWell: string;
+  hard: string;
+  learned: string;
+  next: string;
+  updated: string; // ISO timestamp
+}
+
 // ---------- Settings & the whole thing ----------
 export interface Settings {
   /** 'auto' follows UK time (night 19:00–07:00). */
@@ -184,4 +193,6 @@ export interface AppData {
   /** "YYYY-MM-DD" → mood */
   moods: Record<string, Mood>;
   notes: Note[];
+  /** Monday "YYYY-MM-DD" → that week's reflection */
+  reflections: Record<string, Reflection>;
 }

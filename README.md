@@ -1,4 +1,4 @@
-# Ulu's Base 🏠
+# Bek's Base 🏠
 
 A cozy, blocky pixel-art home base for life as an international student:
 **money** (the Chest), **study** (the Bookshelf), **planning** (the Crafting table),
@@ -78,7 +78,7 @@ Your data lives only in the browser on that device. If you clear browser data, l
 or uninstall the app, it's gone — unless you have a backup.
 
 **Make a backup:** More → Settings → **Export backup**.
-It downloads a file like `ulus-base-backup-2026-11-04.json`. Keep it somewhere safe:
+It downloads a file like `beks-base-backup-2026-11-04.json`. Keep it somewhere safe:
 Google Drive, iCloud, or email it to yourself.
 
 **Restore a backup:** More → Settings → **Import backup** → pick the file.

@@ -12,11 +12,14 @@ import '@fontsource/pixelify-sans/600.css';
 import './styles.css';
 import App from './App';
 import { StoreProvider } from './state/store';
+import { ConfirmProvider } from './ui/kit';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <StoreProvider>
-      <App />
+      <ConfirmProvider>
+        <App />
+      </ConfirmProvider>
     </StoreProvider>
   </StrictMode>,
 );

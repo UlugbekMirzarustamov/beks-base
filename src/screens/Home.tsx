@@ -1,7 +1,7 @@
 /**
  * 🏠 HOME — the cabin, plus everything important at a glance.
  */
-import { addDays, daysBetween, formatDay, UK_TZ, zonedParts } from '../lib/dates';
+import { addDays, daysBetween, formatDay, startOfWeek, UK_TZ, weekdayOf, zonedParts } from '../lib/dates';
 import { levelInfo } from '../lib/xp';
 import { Cabin } from '../scene/Cabin';
 import { useStore } from '../state/store';
@@ -31,13 +31,13 @@ export default function Home() {
 
   return (
     <div className="screen home">
-      <h1 className="visually-hidden">Ulu's Base — Home</h1>
+      <h1 className="visually-hidden">Bek's Base — Home</h1>
       <div className="home__top">
         <div className="home__scene">
           <Cabin rain={data.settings.sound === 'rain'} />
         </div>
         <p className="greeting">
-          {greeting()}, Ulu! <span className="muted">· {formatDay(today)}</span>
+          {greeting()}, Bek! <span className="muted">· {formatDay(today)}</span>
         </p>
         <Clocks />
       </div>
@@ -97,6 +97,15 @@ export default function Home() {
             This week →
           </a>
         </Panel>
+
+        {weekdayOf(today) >= 4 && !data.reflections[startOfWeek(today)]?.wentWell && (
+          <Panel title="Week's nearly done" icon="scroll">
+            <p>Take 3 minutes to look back: what went well, what was hard, what to try next week.</p>
+            <a href="#/more/reflect" className="btn btn--primary">
+              Reflect on my week
+            </a>
+          </Panel>
+        )}
 
         <Panel title={`Level ${lvl.level}`} icon="star" className="level-card">
           <Bar value={lvl.into} max={lvl.needed} label="XP towards next level" color="var(--xp)" />

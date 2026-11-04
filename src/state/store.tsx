@@ -276,7 +276,7 @@ function TimerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
     const ss = String(secondsLeft % 60).padStart(2, '0');
-    document.title = running ? `${mm}:${ss} ${timer.mode === 'work' ? 'Study' : 'Break'} · Ulu's Base` : "Ulu's Base";
+    document.title = running ? `${mm}:${ss} ${timer.mode === 'work' ? 'Study' : 'Break'} · Bek's Base` : "Bek's Base";
   }, [running, secondsLeft, timer.mode]);
 
   const value: TimerValue = {

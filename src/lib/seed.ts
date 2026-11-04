@@ -101,6 +101,7 @@ export function emptyData(today: string): AppData {
     habitLog: {},
     moods: {},
     notes: [],
+    reflections: {},
   };
 }
 
