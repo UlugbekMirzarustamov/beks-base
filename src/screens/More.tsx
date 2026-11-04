@@ -1,5 +1,5 @@
 /**
- * ⚙️ MORE — reflect, words, habits, mood, journal, plus settings,
+ * ⚙️ MORE — words, habits, mood, journal, plus settings,
  * backups (Export / Import) and example-data cleanup.
  */
 import { useState } from 'react';
@@ -9,9 +9,9 @@ import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
-import { Habits, Journal, MoodCheckIn, MoodWeek, Reflect, Vocab } from './Extras';
+import { Habits, Journal, MoodCheckIn, MoodWeek, Vocab } from './Extras';
 
-const TABS = ['reflect', 'words', 'habits', 'mood', 'journal', 'settings'] as const;
+const TABS = ['words', 'habits', 'mood', 'journal', 'settings'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function More({ sub }: { sub?: string }) {
@@ -26,7 +26,6 @@ export default function More({ sub }: { sub?: string }) {
         active={tab}
         onChange={setTab}
         tabs={[
-          { id: 'reflect', label: 'Reflect', icon: 'star' },
           { id: 'words', label: 'Words', icon: 'book' },
           { id: 'habits', label: 'Habits', icon: 'check' },
           { id: 'mood', label: 'Mood', icon: 'heart' },
@@ -34,7 +33,6 @@ export default function More({ sub }: { sub?: string }) {
           { id: 'settings', label: 'Settings', icon: 'gear' },
         ]}
       />
-      {tab === 'reflect' && <Reflect />}
       {tab === 'words' && <Vocab />}
       {tab === 'habits' && <Habits />}
       {tab === 'mood' && (

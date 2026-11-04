@@ -102,6 +102,8 @@ export function emptyData(today: string): AppData {
     moods: {},
     notes: [],
     reflections: {},
+    nightLogs: {},
+    letters: [],
   };
 }
 
@@ -161,13 +163,24 @@ export function createInitialData(today: string): AppData {
   d.vocab = [
     { id: uid(), word: 'Resultant (example)', meaning: 'The single force that has the same effect as all the forces together.', sentence: 'The resultant force is 5 N to the right.', subjectId: 'physics', ...ex },
   ];
+  d.letters = [
+    {
+      id: uid(),
+      title: 'To Bek, one week from now (example)',
+      body: "If you're reading this, you made it through another week in Sheffield. Proud of you. Now go and drink some water.",
+      written: today,
+      openOn: addDays(today, 7),
+      opened: false,
+      ...ex,
+    },
+  ];
   d.notes = [{ id: uid(), title: 'Welcome to your base! (example)', body: 'This is your journal. Write anything here — it stays only on this device.', updated: new Date().toISOString(), ...ex }];
   return d;
 }
 
 /** True if any example items are still in the data. */
 export function hasExampleData(d: AppData): boolean {
-  const lists = [d.expenses, d.recurring, d.tests, d.mistakes, d.tasks, d.timetable, d.studyBlocks, d.vocab, d.notes, d.topics, d.flashcards];
+  const lists = [d.expenses, d.recurring, d.tests, d.mistakes, d.tasks, d.timetable, d.studyBlocks, d.vocab, d.notes, d.topics, d.flashcards, d.letters];
   return Boolean(d.priorities.example) || lists.some((list) => list.some((item) => item.example));
 }
 
@@ -187,6 +200,7 @@ export function clearExampleData(d: AppData, today: string): AppData {
     notes: keep(d.notes),
     topics: keep(d.topics),
     flashcards: keep(d.flashcards),
+    letters: keep(d.letters),
     priorities: d.priorities.example ? { date: today, items: ['', '', ''], done: [false, false, false] } : d.priorities,
   };
 }

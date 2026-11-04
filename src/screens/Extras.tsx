@@ -5,7 +5,7 @@
  *  - <Habits>        sleep / exercise / calling family tracker
  *  - <Vocab>         English words for physics & maths, in your own words
  *  - <Journal>       notes / journal
- *  - <Reflect>       weekly look back, with that week's numbers
+ *  - <WeekReflect>   weekly look back, with that week's numbers (Reflect → Week)
  */
 import { useEffect, useState, type FormEvent } from 'react';
 import { addDays, clockIn, formatDay, startOfWeek, TASHKENT_TZ, UK_TZ, weekdayOf, WEEKDAYS, zonedParts } from '../lib/dates';
@@ -405,7 +405,7 @@ function weekStats(data: ReturnType<typeof useStore>['data'], monday: string) {
   };
 }
 
-export function Reflect() {
+export function WeekReflect() {
   const { data, update, today } = useStore();
   const thisMonday = startOfWeek(today);
   const [monday, setMonday] = useState(thisMonday);

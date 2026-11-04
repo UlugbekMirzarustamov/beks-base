@@ -2,7 +2,8 @@
 
 A cozy, blocky pixel-art home base for life as an international student:
 **money** (the Chest), **study** (the Bookshelf), **planning** (the Crafting table),
-plus words, habits, mood and a journal.
+**reflecting** (the Telescope: nightly log, weekly look back, your own night sky of stars,
+and sealed letters to future you), plus words, habits, mood and a journal.
 
 - No accounts, no bank connection, no tracking. **Your data stays on your device.**
 - Works offline and can be installed on your phone like an app (a "PWA").
@@ -120,7 +121,7 @@ src/
   state/store.tsx the app's memory: data, auto-save, XP, toasts, Pomodoro timer
   ui/           reusable pixel pieces (panels, bars, tabs, pop-ups, icons)
   scene/        the canvas cabin on the Home screen
-  screens/      Home, Money, Study, Planner, More (+ Extras for phase 2)
+  screens/      Home, Money, Study, Planner, Reflect, More (+ Extras)
   styles.css    all the styling (colours at the top)
 public/
   sw.js         service worker = offline support

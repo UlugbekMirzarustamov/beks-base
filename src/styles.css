@@ -262,8 +262,8 @@ canvas {
 }
 
 .main {
-  max-width: 1080px;
-  margin: 0 auto;
+  /* Full width: no empty bands at the sides, on any screen size. */
+  width: 100%;
   padding: 16px 16px 0;
 }
 .main:focus {
@@ -469,7 +469,8 @@ canvas {
   box-shadow: inset 0 -4px 0 var(--oak-lo);
 }
 .tab[aria-selected='true'],
-.segmented__btn[aria-checked='true'] {
+.segmented__btn[aria-checked='true'],
+.segmented__btn[aria-pressed='true'] {
   background: #fff3d6;
   box-shadow: inset 0 4px 0 rgba(0, 0, 0, 0.12);
   color: #2f1d0c;
@@ -481,7 +482,8 @@ canvas {
   box-shadow: inset 0 -4px 0 #2b2018;
 }
 :root[data-theme='night'] .tab[aria-selected='true'],
-:root[data-theme='night'] .segmented__btn[aria-checked='true'] {
+:root[data-theme='night'] .segmented__btn[aria-checked='true'],
+:root[data-theme='night'] .segmented__btn[aria-pressed='true'] {
   background: var(--lantern);
   color: #1b1208;
 }
@@ -1035,7 +1037,7 @@ button.list__main {
   bottom: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--wood-bar);
@@ -1138,9 +1140,7 @@ button.list__main {
   gap: 10px;
 }
 .home__scene {
-  /* As wide as possible, but never taller than ~60% of the screen (keeps the 160:96 shape). */
-  width: min(100%, calc(60vh * 160 / 96));
-  margin: 0 auto;
+  width: 100%;
   border: 4px solid var(--edge);
   box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4);
   background: #000;
@@ -1156,9 +1156,13 @@ button.list__main {
   color: #e2cfa8;
 }
 .cabin {
+  /* Always full width. On wide screens the height is capped and the room is
+     simply drawn WIDER (more wall, more decorations) instead of stretched. */
   position: relative;
   width: 100%;
   aspect-ratio: 160 / 96;
+  max-height: 62vh;
+  min-height: 200px;
 }
 .cabin__canvas {
   width: 100%;
@@ -1194,9 +1198,22 @@ button.list__main {
   border: 2px solid #000;
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.5);
 }
+.station--sign-bottom .station__sign {
+  top: auto;
+  bottom: 0;
+  transform: translate(-50%, 75%);
+}
 @media (prefers-reduced-motion: no-preference) {
   .station__sign {
     animation: bob 2.4s steps(2) infinite;
+  }
+  .station--sign-bottom .station__sign {
+    animation-name: bob-low;
+  }
+  @keyframes bob-low {
+    50% {
+      transform: translate(-50%, calc(75% - 3px));
+    }
   }
   .station:nth-of-type(2) .station__sign {
     animation-delay: -0.8s;
@@ -2094,4 +2111,221 @@ button.list__main {
 .focus__tip {
   color: #b9a98f;
   font-size: 15px;
+}
+
+/* ==========================================================================
+   Reflect — the Telescope
+   ========================================================================== */
+@media (max-width: 420px) {
+  .tabbar__link {
+    font-size: 11px;
+  }
+}
+.tonight__echo {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 217, 59, 0.18);
+  border-left: 4px solid var(--gold);
+}
+.good-things {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.good-thing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Your sky */
+.sky {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+  border: 4px solid var(--edge);
+  background-color: #0b1030;
+  background-image:
+    radial-gradient(1px 1px at 12% 22%, #fff8d066 50%, transparent 51%),
+    radial-gradient(1px 1px at 37% 64%, #fff8d055 50%, transparent 51%),
+    radial-gradient(1px 1px at 58% 12%, #fff8d066 50%, transparent 51%),
+    radial-gradient(1px 1px at 81% 47%, #fff8d055 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 83%, #fff8d044 50%, transparent 51%),
+    linear-gradient(180deg, #0b1030 0%, #1a2357 70%, #2a2f6a 100%);
+}
+.sky::after {
+  /* pixel hills along the bottom */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22px;
+  background: repeating-linear-gradient(90deg, #142619 0 16px, #1f3b2a 16px 32px);
+  clip-path: polygon(0 60%, 8% 30%, 16% 55%, 26% 20%, 38% 50%, 50% 25%, 62% 55%, 74% 15%, 86% 45%, 100% 25%, 100% 100%, 0 100%);
+}
+.sky__lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.sky__lines line {
+  stroke: #9fdcff;
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  opacity: 0.55;
+}
+.sky__moon {
+  position: absolute;
+  right: 18px;
+  top: 14px;
+  width: 22px;
+  height: 22px;
+  background: #f4f1de;
+  box-shadow: inset -8px -4px 0 #d9d3b5;
+}
+.sky__dust {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #fff8d033;
+  transform: translate(-50%, -50%);
+}
+.sky__star {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  border: 0;
+  background: #ffe27a;
+  /* a little 4-point pixel star */
+  clip-path: polygon(50% 0, 64% 36%, 100% 50%, 64% 64%, 50% 100%, 36% 64%, 0 50%, 36% 36%);
+  filter: drop-shadow(0 0 3px #ffd93b);
+}
+.sky__star.is-big {
+  width: 22px;
+  height: 22px;
+  background: #fff3b0;
+}
+.sky__star.is-picked {
+  background: #ffffff;
+  width: 22px;
+  height: 22px;
+}
+.sky__star:focus-visible {
+  outline: none;
+  filter: drop-shadow(0 0 0 #fff) drop-shadow(0 0 4px var(--focus));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sky__star {
+    animation: twinkle 2.6s steps(2) infinite;
+  }
+  .sky__star:nth-of-type(3n) {
+    animation-delay: -0.9s;
+  }
+  .sky__star:nth-of-type(3n + 1) {
+    animation-delay: -1.7s;
+  }
+  @keyframes twinkle {
+    50% {
+      opacity: 0.65;
+    }
+  }
+}
+.sky__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  color: #e2cfa8;
+  font-weight: 600;
+}
+.sky__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.sky__stats strong {
+  font-family: var(--font-num);
+  font-size: 26px;
+}
+.night-read {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.night-read__line {
+  font-size: 20px;
+  font-weight: 600;
+}
+.night-read__good {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.night-read__good li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Letters */
+.letters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.letter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #fbf1d9;
+  color: #2f1d0c;
+  border: 3px solid var(--edge);
+  box-shadow: inset -4px -4px 0 #e2cfa8;
+}
+.letter__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.letter__head .grow {
+  display: flex;
+  flex-direction: column;
+}
+.letter__head .muted {
+  color: #6b5134;
+}
+.letter__seal {
+  font-style: italic;
+  color: #9a2a24;
+}
+.letter--ready {
+  background: #fff3b0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .letter--ready .picon {
+    animation: hop 0.8s steps(3) infinite;
+  }
+}
+.letter__body {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  padding: 8px;
+  background: #fffaf0;
+  border-left: 4px solid var(--red);
 }

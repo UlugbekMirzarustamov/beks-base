@@ -13,12 +13,13 @@ import Home from './screens/Home';
 import Money, { ExpenseSheet } from './screens/Money';
 import More from './screens/More';
 import Planner from './screens/Planner';
+import Reflect from './screens/Reflect';
 import Study from './screens/Study';
 import { useStore, useTimer } from './state/store';
 import { PixelIcon, type IconName } from './ui/icons';
 import { Toaster } from './ui/kit';
 
-const SCREENS = ['home', 'money', 'study', 'planner', 'more'] as const;
+const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: { id: Screen; label: string; icon: IconName }[] = [
@@ -26,6 +27,7 @@ const NAV: { id: Screen; label: string; icon: IconName }[] = [
   { id: 'money', label: 'Money', icon: 'chest' },
   { id: 'study', label: 'Study', icon: 'shelf' },
   { id: 'planner', label: 'Planner', icon: 'table' },
+  { id: 'reflect', label: 'Reflect', icon: 'telescope' },
   { id: 'more', label: 'More', icon: 'gear' },
 ];
 
@@ -123,6 +125,7 @@ export default function App() {
         {route.screen === 'money' && <Money sub={route.sub} />}
         {route.screen === 'study' && <Study sub={route.sub} />}
         {route.screen === 'planner' && <Planner sub={route.sub} />}
+        {route.screen === 'reflect' && <Reflect sub={route.sub} />}
         {route.screen === 'more' && <More sub={route.sub} />}
       </main>
 

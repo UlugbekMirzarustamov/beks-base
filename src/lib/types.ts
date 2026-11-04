@@ -143,6 +143,24 @@ export interface Note extends Base {
 /** 1 = awful … 5 = great */
 export type Mood = 1 | 2 | 3 | 4 | 5;
 
+/** Tonight's quick log under the telescope: one line, good things, a plan. */
+export interface NightLog {
+  line: string; // today in one sentence
+  good: string[]; // always 3
+  tomorrow: string;
+  /** XP already given for this night (so editing doesn't give it twice). */
+  rewarded?: boolean;
+}
+
+/** A sealed letter to future you. It can only be read on/after `openOn`. */
+export interface Letter extends Base {
+  title: string;
+  body: string;
+  written: string; // YYYY-MM-DD
+  openOn: string; // YYYY-MM-DD
+  opened: boolean;
+}
+
 /** A weekly look back. Saved under the Monday of that week ("YYYY-MM-DD"). */
 export interface Reflection {
   wentWell: string;
@@ -195,4 +213,7 @@ export interface AppData {
   notes: Note[];
   /** Monday "YYYY-MM-DD" → that week's reflection */
   reflections: Record<string, Reflection>;
+  /** "YYYY-MM-DD" → that night's log (each one is a star in your sky) */
+  nightLogs: Record<string, NightLog>;
+  letters: Letter[];
 }

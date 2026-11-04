@@ -101,7 +101,7 @@ export default function Home() {
         {weekdayOf(today) >= 4 && !data.reflections[startOfWeek(today)]?.wentWell && (
           <Panel title="Week's nearly done" icon="scroll">
             <p>Take 3 minutes to look back: what went well, what was hard, what to try next week.</p>
-            <a href="#/more/reflect" className="btn btn--primary">
+            <a href="#/reflect/week" className="btn btn--primary">
               Reflect on my week
             </a>
           </Panel>
