@@ -13,7 +13,7 @@ import Home from './screens/Home';
 import Money, { ExpenseSheet } from './screens/Money';
 import More from './screens/More';
 import { MorningBriefing } from './screens/Briefing';
-import CalmCorner from './screens/Calm';
+import CalmCorner, { JarOverlay } from './screens/Calm';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Reflect from './screens/Reflect';
@@ -188,6 +188,7 @@ export default function App() {
 
       <ExpenseSheet />
       <MorningBriefing />
+      <JarOverlay />
       <Splash />
       <PrayerCall />
       <Toaster />

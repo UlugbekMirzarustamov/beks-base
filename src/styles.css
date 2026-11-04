@@ -3865,3 +3865,166 @@ button.list__main {
     overflow-wrap: break-word;
   }
 }
+
+/* ==========================================================================
+   The big gratitude jar (full screen, background blurred)
+   ========================================================================== */
+.jar-spot:hover,
+.jar-spot:focus-visible {
+  border-color: var(--gold);
+}
+.jar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  color: #fff3d6;
+  background: rgba(14, 10, 26, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .jar-overlay {
+    background: rgba(14, 10, 26, 0.88);
+  }
+}
+.jar-overlay__title {
+  font-family: var(--font-title);
+  font-size: clamp(14px, 4vw, 20px);
+  color: var(--gold);
+  text-shadow: 3px 3px 0 #000;
+}
+.jar-overlay__hint {
+  font-size: 15px;
+  color: #e2d8f5;
+  text-align: center;
+}
+.jar-overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.big-jar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+.big-jar__lid {
+  width: 128px;
+  height: 22px;
+  background: #b07a3e;
+  border: 4px solid #2b1d0e;
+  box-shadow: inset 0 -5px 0 #8a5a2e, inset 0 4px 0 #d29a57;
+}
+.big-jar__glass {
+  position: relative;
+  display: block;
+  width: min(220px, 62vw);
+  height: min(270px, 42vh);
+  overflow: hidden;
+  background: rgba(190, 225, 245, 0.18);
+  border: 5px solid #e8f6ff;
+  border-top-width: 3px;
+  box-shadow: inset 14px 0 0 rgba(255, 255, 255, 0.18), inset -6px 0 0 rgba(0, 0, 0, 0.12), 0 0 40px rgba(255, 217, 59, 0.25);
+}
+.big-jar__note {
+  position: absolute;
+  width: 26%;
+  height: 12%;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  box-shadow: inset -4px -3px 0 rgba(0, 0, 0, 0.12);
+}
+.jar-card {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: min(360px, calc(100vw - 48px));
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 26px 22px 18px;
+  color: #2f1d0c;
+  border: 4px solid #2b1d0e;
+  box-shadow: inset -6px -6px 0 rgba(0, 0, 0, 0.12), 0 12px 0 rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -62%);
+  pointer-events: none;
+}
+.jar-card__fold {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(225deg, #1a1226 50%, rgba(0, 0, 0, 0.18) 50%);
+}
+.jar-card__text {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  overflow-wrap: break-word;
+}
+.jar-card__date {
+  font-family: var(--font-num);
+  font-size: 20px;
+  text-align: right;
+  color: #6b5134;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .jar-overlay {
+    animation: jar-fade 0.25s steps(4);
+  }
+  .jar-card {
+    animation: note-pop 0.55s steps(7);
+  }
+  .big-jar.is-shake-a {
+    animation: jar-shake-a 0.4s steps(6);
+  }
+  .big-jar.is-shake-b {
+    animation: jar-shake-b 0.4s steps(6);
+  }
+  @keyframes jar-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  /* the note flies up out of the jar, unfolds, and settles in the middle */
+  @keyframes note-pop {
+    0% {
+      transform: translate(-50%, 10%) scale(0.15) rotate(-12deg);
+      opacity: 0;
+    }
+    55% {
+      transform: translate(-50%, -75%) scale(1.06) rotate(3deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -62%) scale(1) rotate(0);
+    }
+  }
+  @keyframes jar-shake-a {
+    25% { transform: rotate(-4deg); }
+    50% { transform: rotate(4deg); }
+    75% { transform: rotate(-2deg); }
+  }
+  @keyframes jar-shake-b {
+    25% { transform: rotate(4deg); }
+    50% { transform: rotate(-4deg); }
+    75% { transform: rotate(2deg); }
+  }
+}

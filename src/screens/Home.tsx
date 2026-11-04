@@ -11,6 +11,7 @@ import { Bar, Empty, Panel } from '../ui/kit';
 import { Clocks, MoodCheckIn } from './Extras';
 import { InstallCard } from '../ui/AppFeel';
 import { OnePercent, WindDown } from './Daily';
+import { openJar } from './Calm';
 import { BadgeSummary } from './Badges';
 import { coins } from '../lib/shop';
 import { SafeToSpendCard, SavingsMini } from './Money';
@@ -51,7 +52,7 @@ export default function Home() {
       <PrayerLanterns />
       <div className="home__top">
         <div className="home__scene">
-          <Cabin scene={scene} bubble={bubble} onPetSimba={petSimba} bekBubble={bekLine} onTapBek={tapBek} />
+          <Cabin scene={scene} bubble={bubble} onPetSimba={petSimba} bekBubble={bekLine} onTapBek={tapBek} onOpenJar={openJar} />
         </div>
         <div className="greeting-row">
           <p className="greeting">

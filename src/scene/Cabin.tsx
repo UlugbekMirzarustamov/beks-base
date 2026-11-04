@@ -311,6 +311,11 @@ function bekSpot(W: number, mood: SimbaMood): { x: number; y: number } {
   return { x: 4, y: 90 - h };
 }
 
+/** Where the gratitude jar sits on the windowsill (scene pixels, top-left of the lid). */
+function jarSpot(W: number) {
+  return { x: layout(W).win.x + 7, y: 37 };
+}
+
 /** Simba's spot in scene pixels for each mood (used to draw him and to place his tap area). */
 function simbaSpot(W: number, mood: SimbaMood): { x: number; y: number; sitting: boolean } {
   const { C, fireX } = layout(W);
@@ -477,12 +482,13 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
     r(WX + 30, 45, 1, 1, '#e8c21a');
   }
   // The gratitude jar on the sill: a coloured note for each good thing you've written (shows up to 12).
-  if (scene.jarNotes > 0) {
-    const jx = WX + 8;
-    r(jx, 39, 6, 7, 'rgba(190,225,245,0.55)');
-    r(jx + 1, 38, 4, 1, '#b07a3e'); // cork lid
+  {
+    const { x: jx, y: jy } = jarSpot(W);
+    r(jx, jy + 1, 7, 8, 'rgba(190,225,245,0.55)');
+    r(jx, jy + 1, 1, 8, 'rgba(255,255,255,0.7)'); // glass shine
+    r(jx + 1, jy, 5, 1, '#b07a3e'); // cork lid
     const noteCols = ['#ffd93b', '#ff8c6a', '#9be36a', '#9fdcff', '#f2a6c8'];
-    for (let i = 0; i < Math.min(12, scene.jarNotes); i++) r(jx + 1 + (i % 4), 45 - Math.floor(i / 4) * 2, 1, 1, noteCols[i % 5]);
+    for (let i = 0; i < Math.min(15, scene.jarNotes); i++) r(jx + 1 + (i % 5), jy + 8 - Math.floor(i / 5) * 2, 1, 1, noteCols[i % 5]);
   }
   // Tulips (lola) in a pot: they grow with your prayer streak and bloom red at 7+ days.
   const stage = plantStage(scene.prayerStreak);
@@ -870,12 +876,14 @@ export function Cabin({
   onPetSimba,
   bekBubble,
   onTapBek,
+  onOpenJar,
 }: {
   scene: CabinScene;
   bubble?: string | null;
   onPetSimba?: () => void;
   bekBubble?: string | null;
   onTapBek?: () => void;
+  onOpenJar?: () => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLCanvasElement>(null);
@@ -970,6 +978,18 @@ export function Cabin({
               </p>
             )}
           </>
+        );
+      })()}
+      {(() => {
+        const j = jarSpot(W);
+        return (
+          <button
+            type="button"
+            className="simba jar-spot"
+            style={{ left: `${((j.x - 2) / W) * 100}%`, top: `${((j.y - 2) / H) * 100}%`, width: `${(11 / W) * 100}%`, height: `${(12 / H) * 100}%` }}
+            onClick={onOpenJar}
+            aria-label={`Gratitude jar with ${scene.jarNotes} notes. Tap to open.`}
+          />
         );
       })()}
       {(() => {
