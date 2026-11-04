@@ -16,7 +16,8 @@ import { loadData, requestPersistentStorage, saveData } from '../lib/db';
 import { uid } from '../lib/id';
 import { applyRecurring, formatMoney } from '../lib/money';
 import { createInitialData, upgrade } from '../lib/seed';
-import { playChime } from '../lib/sound';
+import { unlocksAtLevel } from '../lib/cabin';
+import { buzz, playChime, sfx } from '../lib/sound';
 import type { AppData, Expense } from '../lib/types';
 import { levelInfo, XP } from '../lib/xp';
 
@@ -98,6 +99,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toast = useCallback((text: string, kind: ToastKind = 'info') => {
+    // Each kind of pop-up has its own little sound (if "Little sounds" is on).
+    const sound = ({ pop: 'pop', xp: 'chime', level: 'levelup' } as const)[kind as 'pop' | 'xp' | 'level'];
+    if (sound) sfx(sound);
     const id = uid();
     setToasts((list) => [...list.slice(-3), { id, text, kind }]);
     setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), kind === 'error' ? 5000 : 2600);
@@ -141,7 +145,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setData((prev) => (prev ? { ...prev, xp: Math.max(0, prev.xp + amount) } : prev));
       if (amount > 0) {
         toast(`+${amount} XP${reason ? ' · ' + reason : ''}`, 'xp');
-        if (levelInfo(after).level > levelInfo(before).level) toast(`LEVEL UP! You are now level ${levelInfo(after).level}`, 'level');
+        const newLevel = levelInfo(after).level;
+        if (newLevel > levelInfo(before).level) {
+          toast(`LEVEL UP! You are now level ${newLevel}`, 'level');
+          for (const u of unlocksAtLevel(newLevel)) toast(`New in your cabin: ${u.name}!`, 'level');
+        }
       }
     },
     [toast],
@@ -258,13 +266,14 @@ function TimerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!running || secondsLeft > 0) return;
     playChime();
-    navigator.vibrate?.(200);
+    buzz(200);
     if (timer.mode === 'work') {
       const minutes = data.settings.pomodoroWork;
       update((d) => {
         d.studyLog.push({ id: uid(), subjectId: timer.subjectId, minutes, date: today });
       });
       gainXp(XP.pomodoro, `${minutes} min studied`);
+      setTimeout(() => sfx('kettle'), 900); // time to put the kettle on
       setTimer((t) => ({ ...t, mode: 'break', endsAt: null, remaining: breakSecs }));
     } else {
       toast('Break over — ready for another round?', 'info');

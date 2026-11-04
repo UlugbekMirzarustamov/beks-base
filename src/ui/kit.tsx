@@ -3,6 +3,7 @@
  * pop-up sheets and toasts. Styling lives in styles.css.
  */
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { sfx } from '../lib/sound';
 import { useStore, type ToastKind } from '../state/store';
 import { PixelIcon, type IconName } from './icons';
 
@@ -69,7 +70,10 @@ export function Tabs<T extends string>(props: { tabs: TabDef<T>[]; active: T; on
           aria-selected={t.id === props.active}
           tabIndex={t.id === props.active ? 0 : -1}
           className="tab"
-          onClick={() => props.onChange(t.id)}
+          onClick={() => {
+            sfx('tick');
+            props.onChange(t.id);
+          }}
         >
           {t.icon && <PixelIcon name={t.icon} size={18} />}
           {t.label}

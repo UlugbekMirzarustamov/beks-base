@@ -7,11 +7,12 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { isNightUK } from './lib/dates';
-import { applyMixer } from './lib/sound';
+import { applyMixer, setSfxEnabled, sfx } from './lib/sound';
 import { levelInfo } from './lib/xp';
 import Home from './screens/Home';
 import Money, { ExpenseSheet } from './screens/Money';
 import More from './screens/More';
+import { MorningBriefing } from './screens/Briefing';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Reflect from './screens/Reflect';
@@ -85,6 +86,8 @@ export default function App() {
     return () => window.removeEventListener('pointerdown', begin);
   }, [rain, fire, wind]);
   const soundOn = rain + fire + wind > 0;
+  const sfxOn = data.settings.sfx;
+  useEffect(() => setSfxEnabled(sfxOn), [sfxOn]);
 
   // The sound button opens a small mixer panel; Esc or a tap outside closes it.
   const [mixerOpen, setMixerOpen] = useState(false);
@@ -155,7 +158,7 @@ export default function App() {
         {route.screen === 'planner' && <Planner sub={route.sub} />}
         {route.screen === 'reflect' && <Reflect sub={route.sub} />}
         {route.screen === 'more' && <More sub={route.sub} />}
-        {route.screen === 'prayer' && <PrayerPage />}
+        {route.screen === 'prayer' && <PrayerPage sub={route.sub} />}
       </main>
 
       <button type="button" className="fab" onClick={() => openExpense()} aria-label="Add a purchase">
@@ -165,7 +168,7 @@ export default function App() {
 
       <nav className="tabbar" aria-label="Main">
         {NAV.map((n) => (
-          <a key={n.id} href={`#/${n.id}`} className="tabbar__link" aria-current={route.screen === n.id ? 'page' : undefined}>
+          <a key={n.id} href={`#/${n.id}`} className="tabbar__link" aria-current={route.screen === n.id ? 'page' : undefined} onClick={() => sfx('tick')}>
             <PixelIcon name={n.icon} size={24} />
             <span>{n.label}</span>
           </a>
@@ -173,6 +176,7 @@ export default function App() {
       </nav>
 
       <ExpenseSheet />
+      <MorningBriefing />
       <PrayerCall />
       <Toaster />
     </div>

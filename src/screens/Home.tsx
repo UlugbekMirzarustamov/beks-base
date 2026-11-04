@@ -9,9 +9,18 @@ import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Bar, Empty, Panel } from '../ui/kit';
 import { Clocks, MoodCheckIn } from './Extras';
-import { SafeToSpendCard } from './Money';
+import { SafeToSpendCard, SavingsMini } from './Money';
 import { classesOn, TaskRow, TopThree } from './Planner';
-import { PrayerLanterns } from './Prayer';
+import { PrayerLanterns, usePrayer } from './Prayer';
+import { useWeather, WeatherCard, windowWeather } from '../ui/Weather';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { nextUnlock, pick, seasonOf, simbaMood, SIMBA_LINES, SIMBA_PETS, streak, UNLOCKS } from '../lib/cabin';
+import { barLevel, safeToSpend, spentInMonth } from '../lib/money';
+import { buzz, sfx } from '../lib/sound';
+import { PRAYER_INFO } from '../lib/prayer';
+import { monthOf } from '../lib/dates';
+import { useTimer } from '../state/store';
+import { skyAt, type CabinScene } from '../scene/Cabin';
 import { daysLeftLabel } from './Study';
 
 function greeting(): string {
@@ -24,6 +33,7 @@ function greeting(): string {
 
 export default function Home() {
   const { data, today } = useStore();
+  const { scene, bubble, petSimba } = useCabinScene();
   const lvl = levelInfo(data.xp);
   const upcoming = data.tests.filter((t) => t.date >= today).sort((a, b) => a.date.localeCompare(b.date));
   const nextTest = upcoming[0];
@@ -37,16 +47,23 @@ export default function Home() {
       <PrayerLanterns />
       <div className="home__top">
         <div className="home__scene">
-          <Cabin mix={data.settings.mixer} />
+          <Cabin scene={scene} bubble={bubble} onPetSimba={petSimba} />
         </div>
-        <p className="greeting">
-          {greeting()}, Bek! <span className="muted">· {formatDay(today)}</span>
-        </p>
+        <div className="greeting-row">
+          <p className="greeting">
+            {greeting()}, Bek! <span className="muted">· {formatDay(today)}</span>
+          </p>
+          <button type="button" className="btn btn--small" onClick={() => window.dispatchEvent(new Event('beks:briefing'))}>
+            <PixelIcon name="sun" size={16} /> Today's briefing
+          </button>
+        </div>
         <Clocks />
       </div>
       <div className="grid grid--home">
         <TodayClasses />
         <SafeToSpendCard />
+        <WeatherCard />
+        <SavingsMini />
 
         <Panel title="Next test" icon="calendar">
           {nextTest ? (
@@ -117,8 +134,9 @@ export default function Home() {
             {lvl.into} / {lvl.needed} XP to level {lvl.level + 1}
           </p>
           <p className="muted small">
-            <PixelIcon name="clock" size={14} /> {studiedToday} min studied today · Tasks +10 · Top 3 +15 · Pomodoro +25
+            <PixelIcon name="clock" size={14} /> {studiedToday} min studied today · Tasks +10 · Top 3 +15 · Pomodoro +25 · Prayer +15
           </p>
+          <CabinUnlocks level={lvl.level} />
         </Panel>
       </div>
     </div>
@@ -171,5 +189,84 @@ function TodayClasses() {
         Whole week →
       </a>
     </Panel>
+  );
+}
+
+/**
+ * Works out everything the cabin shows: Simba's mood, streaks, unlocks, season
+ * and real weather. Also handles petting Simba (a purr + something cute).
+ */
+function useCabinScene() {
+  const { data, today } = useStore();
+  const prayer = usePrayer();
+  const { running, timer } = useTimer();
+  const weather = useWeather();
+
+  const month = monthOf(today);
+  const overBudget =
+    safeToSpend(data.monthlyBudget, data.expenses, today).left < 0 ||
+    data.categories.some((c) => c.limit > 0 && barLevel(spentInMonth(data.expenses, month, c.id), c.limit) === 'over');
+  const studyStreak = streak((d) => data.studyLog.some((s) => s.date === d), today);
+  const mood = simbaMood({
+    prayerDue: Boolean(prayer.dueNow),
+    studying: running && timer.mode === 'work',
+    overBudget,
+    starLit: Boolean(data.nightLogs[today]?.rewarded),
+    night: skyAt(new Date()).phase === 'night',
+  });
+  const level = levelInfo(data.xp).level;
+  const kind = windowWeather(weather);
+
+  // Memoised so the cabin animation isn't restarted on every re-render.
+  const scene = useMemo<CabinScene>(
+    () => ({ mix: data.settings.mixer, level, prayerStreak: prayer.streak, studyStreak, simba: mood, season: seasonOf(today), weather: kind }),
+    [data.settings.mixer, level, prayer.streak, studyStreak, mood, today, kind],
+  );
+
+  // Simba speaks up on his own for important moods (once per mood change).
+  const prayerName = prayer.dueNow ? PRAYER_INFO[prayer.dueNow.name].name : '';
+  const autoLine = useMemo(
+    () => (mood === 'prayer' || mood === 'study' || mood === 'worried' ? pick(SIMBA_LINES[mood]).replace('{prayer}', prayerName) : null),
+    [mood, prayerName],
+  );
+  const [petLine, setPetLine] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+  const petSimba = () => {
+    sfx('purr');
+    buzz([10, 30, 10]);
+    const pool = mood === 'cosy' || mood === 'sleep' ? [...SIMBA_PETS, ...SIMBA_LINES[mood]] : SIMBA_PETS;
+    setPetLine(pick(pool));
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setPetLine(null), 3500);
+  };
+
+  return { scene, bubble: petLine ?? autoLine, petSimba };
+}
+
+/** What you've unlocked in the cabin, and what's next. */
+function CabinUnlocks({ level }: { level: number }) {
+  const next = nextUnlock(level);
+  const got = UNLOCKS.filter((u) => u.level <= level);
+  return (
+    <div className="unlocks">
+      <p className="field__label">
+        Cabin: {got.length}/{UNLOCKS.length} unlocked
+      </p>
+      {got.length > 0 && (
+        <ul className="unlocks__got">
+          {got.map((u) => (
+            <li key={u.id} title={u.description}>
+              {u.name}
+            </li>
+          ))}
+        </ul>
+      )}
+      {next && (
+        <p className="small">
+          Next at <strong>Lv {next.level}</strong>: {next.name} — <span className="muted">{next.description}</span>
+        </p>
+      )}
+    </div>
   );
 }

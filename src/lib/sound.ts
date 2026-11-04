@@ -159,3 +159,111 @@ export function playChime(): void {
     osc.stop(t + 0.32);
   });
 }
+
+/* ===========================================================================
+ * Little sound effects — soft, quiet and short, all made in code.
+ * Turned on/off with Settings → "Little sounds".
+ * ======================================================================== */
+export type Sfx = 'tick' | 'pop' | 'coin' | 'chime' | 'levelup' | 'bell' | 'twinkle' | 'purr' | 'kettle' | 'bead';
+
+let sfxOn = true;
+export const setSfxEnabled = (on: boolean) => {
+  sfxOn = on;
+};
+
+/** One soft note: a pitch that fades out. */
+function note(ac: AudioContext, freq: number, start: number, length: number, volume: number, type: OscillatorType = 'sine', glideTo?: number) {
+  const osc = ac.createOscillator();
+  const g = ac.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, start);
+  if (glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, start + length);
+  g.gain.setValueAtTime(0.0001, start);
+  g.gain.exponentialRampToValueAtTime(volume, start + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, start + length);
+  osc.connect(g).connect(ac.destination);
+  osc.start(start);
+  osc.stop(start + length + 0.05);
+}
+
+/** A short burst of filtered noise (for clicks, purrs, steam). */
+function hiss(ac: AudioContext, start: number, length: number, volume: number, filterType: BiquadFilterType, freq: number, wobbleHz = 0) {
+  const src = ac.createBufferSource();
+  src.buffer = noise(ac, length + 0.1, filterType === 'lowpass' ? 'brown' : 'white');
+  const f = ac.createBiquadFilter();
+  f.type = filterType;
+  f.frequency.value = freq;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, start);
+  g.gain.exponentialRampToValueAtTime(volume, start + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, start + length);
+  let out: AudioNode = g;
+  if (wobbleHz) {
+    // a purr is a rumble that pulses ~25 times a second
+    const am = ac.createGain();
+    am.gain.value = 0.5;
+    const lfo = ac.createOscillator();
+    lfo.frequency.value = wobbleHz;
+    const depth = ac.createGain();
+    depth.gain.value = 0.5;
+    lfo.connect(depth).connect(am.gain);
+    g.connect(am);
+    out = am;
+    lfo.start(start);
+    lfo.stop(start + length + 0.1);
+  }
+  src.connect(f).connect(g);
+  out.connect(ac.destination);
+  src.start(start);
+  src.stop(start + length + 0.1);
+}
+
+export function sfx(name: Sfx): void {
+  if (!sfxOn) return;
+  const ac = audio();
+  if (!ac || ac.state !== 'running') return; // never start sound without a tap first
+  const t = ac.currentTime + 0.01;
+  switch (name) {
+    case 'tick': // soft UI tap
+      note(ac, 1400, t, 0.03, 0.025);
+      break;
+    case 'pop': // something added
+      note(ac, 320, t, 0.09, 0.07, 'sine', 900);
+      break;
+    case 'coin': // money into the jar
+      note(ac, 988, t, 0.08, 0.04, 'triangle');
+      note(ac, 1319, t + 0.07, 0.25, 0.04, 'triangle');
+      break;
+    case 'chime': // XP
+      note(ac, 880, t, 0.3, 0.035, 'triangle');
+      note(ac, 1320, t + 0.05, 0.3, 0.02, 'sine');
+      break;
+    case 'levelup':
+      [523, 659, 784, 1047].forEach((f, i) => note(ac, f, t + i * 0.11, 0.25, 0.04, 'triangle'));
+      break;
+    case 'bell': // a lantern lit / tasbih round done — warm and long
+      note(ac, 523, t, 1.8, 0.06);
+      note(ac, 1046, t, 1.2, 0.025);
+      note(ac, 1569, t, 0.8, 0.012);
+      break;
+    case 'twinkle': // a star lit
+      [1568, 2093, 2637, 3136].forEach((f, i) => note(ac, f, t + i * 0.07, 0.35, 0.02));
+      break;
+    case 'purr':
+      hiss(ac, t, 1.3, 0.35, 'lowpass', 180, 24);
+      break;
+    case 'kettle': // break time: a gentle rising whistle with a little steam
+      note(ac, 1500, t, 0.9, 0.015, 'sine', 2300);
+      hiss(ac, t, 0.9, 0.03, 'bandpass', 3000);
+      break;
+    case 'bead': // a wooden tasbih bead
+      hiss(ac, t, 0.03, 0.08, 'highpass', 2500);
+      note(ac, 820, t, 0.05, 0.03, 'triangle');
+      break;
+  }
+}
+
+/** A tiny phone vibration — only after you've tapped the page (browsers block it otherwise). */
+export function buzz(pattern: number | number[]): void {
+  if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(pattern);
+}

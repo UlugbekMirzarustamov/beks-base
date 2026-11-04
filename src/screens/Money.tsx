@@ -6,10 +6,11 @@
  */
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { guessColumns, parseCsv, rowsToPurchases, type ColumnGuess } from '../lib/csv';
-import { addMonths, daysInMonth, formatDay, formatMonth, monthOf } from '../lib/dates';
+import { addDays, addMonths, daysBetween, daysInMonth, formatDay, formatMonth, monthOf } from '../lib/dates';
 import { uid } from '../lib/id';
 import { barLevel, convertPoundsToDollars, formatMoney, formatPounds, parseAmount, poundsToDollars, roundPennies, safeToSpend, spendingByDay, spentInMonth } from '../lib/money';
-import type { Category, CategoryIcon, Expense } from '../lib/types';
+import { sfx } from '../lib/sound';
+import type { Category, CategoryIcon, Expense, SavingsGoal } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Bar, Empty, Field, Panel, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
@@ -26,7 +27,7 @@ export const CATEGORY_COLOR: Record<CategoryIcon, string> = {
 };
 const ICON_CHOICES: CategoryIcon[] = ['house', 'apple', 'bus', 'phone', 'star', 'coin', 'box'];
 
-const TABS = ['overview', 'spending', 'charts', 'bills', 'setup', 'tools'] as const;
+const TABS = ['overview', 'spending', 'savings', 'charts', 'bills', 'setup', 'tools'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function Money({ sub }: { sub?: string }) {
@@ -43,6 +44,7 @@ export default function Money({ sub }: { sub?: string }) {
         tabs={[
           { id: 'overview', label: 'Overview', icon: 'coin' },
           { id: 'spending', label: 'Spending', icon: 'scroll' },
+          { id: 'savings', label: 'Savings', icon: 'gift' },
           { id: 'charts', label: 'Charts', icon: 'calendar' },
           { id: 'bills', label: 'Bills', icon: 'house' },
           { id: 'setup', label: 'Budget', icon: 'gear' },
@@ -56,6 +58,7 @@ export default function Money({ sub }: { sub?: string }) {
         </div>
       )}
       {tab === 'spending' && <SpendingList />}
+      {tab === 'savings' && <Savings />}
       {tab === 'charts' && <Charts />}
       {tab === 'bills' && <Bills />}
       {tab === 'setup' && <BudgetSetup />}
@@ -880,6 +883,185 @@ function CsvImport() {
           </div>
         </>
       )}
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------- Savings jars
+const GOAL_ICONS: SavingsGoal['icon'][] = ['plane', 'house', 'book', 'gift', 'heart', 'star', 'coin'];
+
+export const savedIn = (g: SavingsGoal) => roundPennies(g.deposits.reduce((sum, d) => sum + d.amount, 0));
+
+/** A pixel jar that fills up with coins. */
+export function Jar({ pct, small = false }: { pct: number; small?: boolean }) {
+  const fill = Math.max(0, Math.min(100, pct));
+  return (
+    <span className={`jar ${small ? 'jar--small' : ''} ${fill >= 100 ? 'is-full' : ''}`} aria-hidden="true">
+      <span className="jar__lid" />
+      <span className="jar__body">
+        <span className="jar__fill" style={{ height: `${fill}%` }} />
+      </span>
+    </span>
+  );
+}
+
+/** "At your pace you'll get there around …" from how fast you've been saving. */
+function eta(g: SavingsGoal, today: string): string | null {
+  const saved = savedIn(g);
+  const left = g.target - saved;
+  if (left <= 0 || saved <= 0) return null;
+  const weeks = Math.max(1, daysBetween(g.created, today) / 7);
+  const perWeek = saved / weeks;
+  return formatDay(addDays(today, Math.ceil((left / perWeek) * 7)));
+}
+
+function GoalCard({ goal }: { goal: SavingsGoal }) {
+  const { data, update, today, toast, gainXp } = useStore();
+  const ask = useConfirm();
+  const [amount, setAmount] = useState('');
+  const [countIt, setCountIt] = useState(true);
+  const saved = savedIn(goal);
+  const pct = goal.target > 0 ? (saved / goal.target) * 100 : 0;
+  const savingsCat = data.categories.find((c) => c.id === 'savings') ?? data.categories.find((c) => /saving/i.test(c.name));
+  const when = eta(goal, today);
+
+  const move = (sign: 1 | -1) => {
+    const value = parseAmount(amount);
+    if (!(value > 0)) {
+      toast('Type an amount first, like 20', 'error');
+      return;
+    }
+    const delta = sign * value;
+    const after = roundPennies(saved + delta);
+    const reachedNow = !goal.reached && after >= goal.target;
+    update((d) => {
+      const g = d.goals.find((x) => x.id === goal.id);
+      if (!g) return;
+      g.deposits.push({ id: uid(), date: today, amount: delta, note: '' });
+      if (reachedNow) g.reached = today;
+      // Putting money in the jar also counts towards this month's Savings budget (if you want).
+      if (sign > 0 && countIt && savingsCat) d.expenses.push({ id: uid(), amount: value, categoryId: savingsCat.id, note: `Jar: ${goal.name}`, date: today });
+    });
+    if (sign > 0) sfx('coin');
+    toast(sign > 0 ? `${formatMoney(value)} into "${goal.name}"` : `${formatMoney(value)} taken out of "${goal.name}"`, sign > 0 ? 'pop' : 'info');
+    if (reachedNow) {
+      toast(`Goal reached: ${goal.name}! MashaAllah!`, 'level');
+      gainXp(50, 'savings goal reached');
+    }
+    setAmount('');
+  };
+
+  const remove = async () => {
+    if (!(await ask(`Delete the "${goal.name}" jar? (Purchases already logged stay in your spending.)`))) return;
+    update((d) => {
+      d.goals = d.goals.filter((g) => g.id !== goal.id);
+    });
+  };
+
+  return (
+    <Panel title={goal.name} icon={goal.icon} actions={<button type="button" className="icon-btn" onClick={remove} aria-label={`Delete ${goal.name}`}><PixelIcon name="trash" size={16} /></button>}>
+      <div className="goal">
+        <Jar pct={pct} />
+        <div className="goal__info">
+          <p className="big-number big-number--small">{formatMoney(saved)}</p>
+          <p className="muted">
+            of {formatMoney(goal.target)} · {Math.floor(Math.min(100, pct))}%
+          </p>
+          {goal.reached ? (
+            <p className="alert alert--ok">Reached on {formatDay(goal.reached)}!</p>
+          ) : (
+            <p>
+              {formatMoney(Math.max(0, goal.target - saved))} to go
+              {when && <small className="muted"> · at your pace, around {when}</small>}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="form__row">
+        <input className="input grow" inputMode="decimal" aria-label={`Amount for ${goal.name}`} placeholder="$ amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <button type="button" className="btn btn--primary" onClick={() => move(1)}>
+          <PixelIcon name="coin" size={16} /> Add
+        </button>
+        <button type="button" className="btn" onClick={() => move(-1)}>
+          Take out
+        </button>
+      </div>
+      {savingsCat && (
+        <label className="check">
+          <input type="checkbox" checked={countIt} onChange={(e) => setCountIt(e.target.checked)} />
+          <span className="small">Also count money I add in this month's "{savingsCat.name}" budget</span>
+        </label>
+      )}
+    </Panel>
+  );
+}
+
+function Savings() {
+  const { data, update, today, toast } = useStore();
+  const [form, setForm] = useState({ name: '', target: '', icon: 'plane' as SavingsGoal['icon'] });
+  const goals = [...data.goals].sort((a, b) => Number(Boolean(a.reached)) - Number(Boolean(b.reached)));
+
+  const add = (e: FormEvent) => {
+    e.preventDefault();
+    const target = parseAmount(form.target);
+    if (!form.name.trim() || !(target > 0)) {
+      toast('Give it a name and a target amount', 'error');
+      return;
+    }
+    update((d) => {
+      d.goals.push({ id: uid(), name: form.name.trim(), target, icon: form.icon, created: today, deposits: [] });
+    });
+    toast(`New jar: ${form.name.trim()}`, 'pop');
+    setForm({ name: '', target: '', icon: 'plane' });
+  };
+
+  return (
+    <div className="grid grid--2">
+      {goals.map((g) => (
+        <GoalCard key={g.id} goal={g} />
+      ))}
+      <Panel title="New savings jar" icon="plus">
+        <form className="form" onSubmit={add}>
+          <Field label="What are you saving for?">
+            <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Flight home to Tashkent" />
+          </Field>
+          <Field label="Target ($)">
+            <input className="input input--big" inputMode="decimal" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="650" />
+          </Field>
+          <div className="chip-grid" role="radiogroup" aria-label="Picture">
+            {GOAL_ICONS.map((icon) => (
+              <button key={icon} type="button" role="radio" aria-checked={form.icon === icon} className="chip" onClick={() => setForm({ ...form, icon })} aria-label={icon}>
+                <PixelIcon name={icon} size={22} />
+              </button>
+            ))}
+          </div>
+          <button type="submit" className="btn btn--primary">
+            <PixelIcon name="plus" size={18} /> Make the jar
+          </button>
+        </form>
+        {goals.length === 0 && <p className="muted small">Saving up for something? Make a jar, then drop money in whenever you can. Watch it fill up.</p>}
+      </Panel>
+    </div>
+  );
+}
+
+/** The main jar, small, for Home. */
+export function SavingsMini() {
+  const { data } = useStore();
+  const goal = data.goals.find((g) => !g.reached) ?? data.goals[data.goals.length - 1];
+  if (!goal) return null;
+  const saved = savedIn(goal);
+  return (
+    <Panel title="Savings jar" icon="gift">
+      <a href="#/money/savings" className="goal goal--mini">
+        <Jar pct={(saved / goal.target) * 100} small />
+        <span className="goal__info">
+          <strong>{goal.name}</strong>
+          <span>
+            {formatMoney(saved)} <small className="muted">of {formatMoney(goal.target)}</small>
+          </span>
+        </span>
+      </a>
     </Panel>
   );
 }

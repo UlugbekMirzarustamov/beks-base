@@ -90,6 +90,10 @@ export function SoundMixer() {
           Quiet all
         </button>
       </div>
+      <label className="check">
+        <input type="checkbox" checked={data.settings.sfx} onChange={(e) => update((d) => void (d.settings.sfx = e.target.checked))} />
+        <span>Little sounds (taps, bells, coins, Simba purring)</span>
+      </label>
     </div>
   );
 }

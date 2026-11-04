@@ -10,6 +10,7 @@
 import { useState, type FormEvent } from 'react';
 import { addDays, daysBetween, formatDay, relativeDays } from '../lib/dates';
 import { uid } from '../lib/id';
+import { sfx } from '../lib/sound';
 import type { Letter, NightLog } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
@@ -68,6 +69,7 @@ function Tonight({ onLit }: { onLit: () => void }) {
       return;
     }
     if (!log.rewarded) {
+      sfx('twinkle');
       edit({ rewarded: true });
       gainXp(STAR_XP, 'a new star in your sky');
     }

@@ -13,10 +13,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { addDays, formatDay, UK_TZ, WEEKDAYS, weekdayOf, zonedParts } from '../lib/dates';
 import { daySlots, minsToClock, minsToWait, PRAYER_INFO, PRAYERS, prayerNow, prayerTimes, qiblaBearing } from '../lib/prayer';
+import { buzz, sfx } from '../lib/sound';
 import type { PrayerName } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Field, Panel, Segmented, useConfirm } from '../ui/kit';
+import { Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Quran, Tasbih } from './Devotion';
 
 const PRAYER_XP = 15;
 const FULL_DAY_XP = 25;
@@ -65,6 +67,8 @@ export function usePrayer() {
     update((d) => {
       d.prayers[date] = after;
     });
+    sfx('bell');
+    buzz(15);
     gainXp(PRAYER_XP, `${PRAYER_INFO[name].name} prayed`);
     if (PRAYERS.every((p) => after.includes(p))) {
       gainXp(FULL_DAY_XP, 'all five prayers');
@@ -263,7 +267,34 @@ export function PrayerLanterns() {
 }
 
 // ---------------------------------------------------------------- the Prayer page
-export default function PrayerPage() {
+const PAGE_TABS = ['today', 'tasbih', 'quran'] as const;
+type PageTab = (typeof PAGE_TABS)[number];
+
+export default function PrayerPage({ sub }: { sub?: string }) {
+  const [tab, setTab] = useSubRoute<PageTab>('prayer', sub, PAGE_TABS);
+  return (
+    <div className="screen">
+      <h1 className="screen__title">
+        <PixelIcon name="mat" size={28} /> The Prayer Mat
+      </h1>
+      <Tabs<PageTab>
+        label="Prayer sections"
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'today', label: 'Prayers', icon: 'lantern' },
+          { id: 'tasbih', label: 'Tasbih', icon: 'bead' },
+          { id: 'quran', label: "Qur'an", icon: 'quran' },
+        ]}
+      />
+      {tab === 'today' && <PrayersToday />}
+      {tab === 'tasbih' && <Tasbih />}
+      {tab === 'quran' && <Quran />}
+    </div>
+  );
+}
+
+function PrayersToday() {
   const { data, update } = useStore();
   const p = usePrayer();
   const ask = useConfirm();
@@ -283,10 +314,7 @@ export default function PrayerPage() {
   };
 
   return (
-    <div className="screen">
-      <h1 className="screen__title">
-        <PixelIcon name="mat" size={28} /> The Prayer Mat
-      </h1>
+    <>
       <PrayerLanterns />
       <div className="grid grid--2">
         <Panel title={`Today · ${formatDay(p.today)}`} icon="lantern">
@@ -370,6 +398,6 @@ export default function PrayerPage() {
           </label>
         </Panel>
       </div>
-    </div>
+    </>
   );
 }

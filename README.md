@@ -7,7 +7,12 @@ and sealed letters to future you), **prayer** (the Prayer mat: Sheffield prayer 
 five lanterns a day, a call to prayer when you open the app, qibla compass),
 your **USIC timetable** day by day, a rain/fire/wind **sound mixer**,
 money in **US dollars** (with a $ / £ switch when you pay in pounds),
+savings jars, a morning briefing, a tasbih counter and Qur'an tracker,
 plus words, habits, mood and a journal.
+
+The cabin is alive: it grows as you level up (choynak, reading lamp, fairy lights…),
+the window shows the real Sheffield weather and the season, and **Simba** the ginger
+cat reacts to your day — tap him to say hi.
 
 - No accounts, no bank connection, no tracking. **Your data stays on your device.**
 - Works offline and can be installed on your phone like an app (a "PWA").
@@ -127,6 +132,9 @@ src/
     xp.ts         XP and levels
     prayer.ts     prayer times for Sheffield (+ prayer.test.ts)
     timetable.ts  your USIC timetable, by date
+    cabin.ts      cabin unlocks, seasons, streaks, Simba's moods
+    weather.ts    Sheffield weather (Open-Meteo, no key; only the city's location is sent)
+    quran.ts      Qur'an pages/juz helpers
   state/store.tsx the app's memory: data, auto-save, XP, toasts, Pomodoro timer
   ui/           reusable pixel pieces (panels, bars, tabs, pop-ups, icons)
   scene/        the canvas cabin on the Home screen

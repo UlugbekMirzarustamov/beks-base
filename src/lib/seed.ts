@@ -76,6 +76,7 @@ export function emptyData(today: string): AppData {
       theme: 'auto',
       sound: 'off',
       mixer: { rain: 0, fire: 0, wind: 0 },
+      sfx: true,
       prayer: { asr: 'hanafi', offsets: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, call: true },
       usdToUzs: 12500,
       gbpPerUsd: 0.76,
@@ -115,6 +116,9 @@ export function emptyData(today: string): AppData {
     nightLogs: {},
     letters: [],
     prayers: {},
+    goals: [],
+    tasbih: {},
+    quran: { page: 0, dailyGoal: 4, log: {}, khatms: 0 },
     applied: [],
   };
 }

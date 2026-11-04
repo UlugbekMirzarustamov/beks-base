@@ -194,6 +194,30 @@ export interface PrayerSettings {
   call: boolean;
 }
 
+/** Money put aside towards something (a flight home, a laptop…). */
+export interface SavingsGoal extends Base {
+  name: string;
+  target: number; // dollars
+  icon: 'plane' | 'house' | 'book' | 'heart' | 'star' | 'gift' | 'coin';
+  created: string; // YYYY-MM-DD
+  /** + money in, − money taken out */
+  deposits: { id: string; date: string; amount: number; note: string }[];
+  /** Set when the goal was reached (so we celebrate only once). */
+  reached?: string;
+}
+
+/** Qur'an reading progress (Madani mushaf, 604 pages). */
+export interface QuranProgress {
+  /** Last page finished (0 = not started this round). */
+  page: number;
+  /** Pages a day you're aiming for. */
+  dailyGoal: number;
+  /** "YYYY-MM-DD" → pages read that day */
+  log: Record<string, number>;
+  /** Times you've read the whole Qur'an (khatm) in the app. */
+  khatms: number;
+}
+
 /** Sound mixer: each channel 0 (off) … 8 (loudest). */
 export interface Mixer {
   rain: number;
@@ -208,6 +232,8 @@ export interface Settings {
   /** Old single sound choice (kept so old backups still load; replaced by `mixer`). */
   sound: 'off' | 'rain' | 'fire';
   mixer: Mixer;
+  /** Little sound effects (clicks, bells, purrs). */
+  sfx: boolean;
   prayer: PrayerSettings;
   /** How many Uzbek so'm for $1 — typed in by hand. */
   usdToUzs: number;
@@ -260,6 +286,10 @@ export interface AppData {
   letters: Letter[];
   /** "YYYY-MM-DD" → prayers marked as prayed that day */
   prayers: Record<string, PrayerName[]>;
+  goals: SavingsGoal[];
+  /** "YYYY-MM-DD" → tasbih count that day */
+  tasbih: Record<string, number>;
+  quran: QuranProgress;
   /** One-time updates already applied to this data (e.g. "usic-nov-2026"). */
   applied: string[];
 }
