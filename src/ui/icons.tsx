@@ -56,6 +56,10 @@ const ICONS = {
   arrowR: ['........', '....k...', '....kk..', '.kkkkkk.', '.kkkkkk.', '....kk..', '....k...', '........'],
   telescope: ['......yk', '.....kBk', '....kBk.', '...kBk..', '..kkk...', '..kNk...', '.kN.Nk..', 'kN...Nk.'],
   letter: ['........', 'kkkkkkkk', 'kkppppkk', 'kpkppkpk', 'kppkkppk', 'kpprrppk', 'kkkkkkkk', '........'],
+  lantern: ['...kk...', '..kkkk..', '.kyyyyk.', '.kyoyyk.', '.kyoyyk.', '.kyyyyk.', '..kkkk..', '...kk...'],
+  mat: ['kkkkkkkk', 'kGGyyGGk', 'kGyrryGk', 'kGyrryGk', 'kGGGGGGk', 'kGyGGyGk', 'kGGGGGGk', 'kkkkkkkk'],
+  rain: ['..kkkk..', '.kwwwwk.', 'kwwwwwwk', 'kkkkkkkk', '.b..b...', '..b..b..', 'b..b..b.', '.b..b...'],
+  wind: ['........', 'sssss...', '.....s..', 'sssssss.', '......s.', 'sssss.s.', '....ss..', '........'],
   globe: ['..kkkk..', '.kbgbbk.', 'kbggbbbk', 'kbbgggbk', 'kbbbggbk', 'kgbbbgbk', '.kbbbbk.', '..kkkk..'],
   // Faces for the mood check-in (great → awful)
   face5: ['.kkkkkk.', 'kffffffk', 'kfkffkfk', 'kffffffk', 'kkffffkk', 'kfkkkkfk', 'kffffffk', '.kkkkkk.'],

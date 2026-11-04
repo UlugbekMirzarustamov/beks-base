@@ -5,11 +5,11 @@
 import { useState, type FormEvent } from 'react';
 import { addDays, daysBetween, formatDay, fromMinutes, relativeDays, startOfWeek, toMinutes, weekdayOf, WEEKDAYS, WEEKDAYS_LONG } from '../lib/dates';
 import { uid } from '../lib/id';
-import type { Task, Weekday } from '../lib/types';
+import type { AppData, Task, Weekday } from '../lib/types';
 import { XP } from '../lib/xp';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Empty, Field, Panel, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Empty, Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
 const TABS = ['today', 'week', 'timetable'] as const;
 type Tab = (typeof TABS)[number];
@@ -300,9 +300,14 @@ function Week() {
             ))}
           </div>
           {days.map((date, i) => {
-            const classes: Block[] = data.timetable
-              .filter((c) => c.day === i)
-              .map((c) => ({ id: c.id, start: toMinutes(c.start), end: toMinutes(c.end), title: c.name, sub: c.room, kind: 'class' }));
+            const classes: Block[] = classesOn(data, date).map((c) => ({
+              id: c.id,
+              start: toMinutes(c.start),
+              end: toMinutes(c.end),
+              title: c.name,
+              sub: c.room,
+              kind: 'class',
+            }));
             const study: Block[] = data.studyBlocks
               .filter((b) => b.date === date)
               .map((b) => ({ id: b.id, start: toMinutes(b.start), end: toMinutes(b.end), title: b.title, kind: 'study' }));
@@ -372,11 +377,36 @@ function Week() {
   );
 }
 
-// ---------------------------------------------------------------- Weekly timetable
+// ---------------------------------------------------------------- Timetable
+export interface ClassItem {
+  id: string;
+  start: string;
+  end: string;
+  name: string;
+  room: string;
+  teacher: string;
+  /** true = a dated school class; false = a class you set to repeat every week */
+  dated: boolean;
+}
+
+/** All classes on a day: your dated school timetable + any weekly repeating classes, in time order. */
+export function classesOn(data: AppData, date: string): ClassItem[] {
+  const dated = data.sessions.filter((c) => c.date === date).map((c) => ({ ...c, dated: true }));
+  const weekly = data.timetable.filter((c) => c.day === weekdayOf(date)).map((c) => ({ ...c, teacher: '', dated: false }));
+  return [...dated, ...weekly].sort((a, b) => a.start.localeCompare(b.start));
+}
+
 function Timetable() {
   const ask = useConfirm();
-  const { data, update, toast } = useStore();
-  const [form, setForm] = useState({ day: 0 as Weekday, start: '09:00', end: '10:00', name: '', room: '' });
+  const { data, update, toast, today } = useStore();
+  const [form, setForm] = useState({ repeat: false, date: today, day: weekdayOf(today), start: '09:00', end: '10:00', name: '', room: '', teacher: '' });
+
+  // School classes from today onwards, grouped by day.
+  const upcoming = data.sessions.filter((c) => c.date >= today).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+  const byDay = new Map<string, typeof upcoming>();
+  for (const c of upcoming) byDay.set(c.date, [...(byDay.get(c.date) ?? []), c]);
+  const days = [...byDay.keys()];
+  const lastDay = days[days.length - 1];
 
   const add = (e: FormEvent) => {
     e.preventDefault();
@@ -388,82 +418,147 @@ function Timetable() {
       toast('End time must be after start time', 'error');
       return;
     }
+    const base = { id: uid(), start: form.start, end: form.end, name: form.name.trim(), room: form.room.trim() };
     update((d) => {
-      d.timetable.push({ id: uid(), ...form, name: form.name.trim(), room: form.room.trim() });
+      if (form.repeat) d.timetable.push({ ...base, day: form.day });
+      else d.sessions.push({ ...base, date: form.date, teacher: form.teacher.trim() });
     });
-    toast(`${form.name.trim()} added on ${WEEKDAYS_LONG[form.day]}s`, 'pop');
-    setForm({ ...form, name: '', room: '' });
+    toast(form.repeat ? `${base.name} added every ${WEEKDAYS_LONG[form.day]}` : `${base.name} added on ${formatDay(form.date)}`, 'pop');
+    setForm({ ...form, name: '', room: '', teacher: '' });
   };
-  const remove = async (id: string, name: string) => {
-    if (!(await ask(`Remove ${name} from your timetable?`, { ok: 'Remove' }))) return;
+  const removeSession = async (id: string, name: string, date: string) => {
+    if (!(await ask(`Remove ${name} on ${formatDay(date)}?`, { ok: 'Remove' }))) return;
+    update((d) => {
+      d.sessions = d.sessions.filter((c) => c.id !== id);
+    });
+  };
+  const removeWeekly = async (id: string, name: string) => {
+    if (!(await ask(`Remove ${name} from your repeating classes?`, { ok: 'Remove' }))) return;
     update((d) => {
       d.timetable = d.timetable.filter((c) => c.id !== id);
     });
   };
 
+  const dayGroup = (date: string) => (
+    <div key={date} className={`day-group ${date === today ? 'is-today' : ''}`}>
+      <h3 className="day-group__title">
+        {formatDay(date)}
+        {date === today ? ' · today' : ''}
+      </h3>
+      <ul className="list">
+        {byDay.get(date)!.map((c) => (
+          <li key={c.id} className="list__item">
+            <div className="list__main">
+              <span className="time-tag">
+                {c.start}–{c.end}
+              </span>
+              <span className="list__text">
+                <span>{c.name}</span>
+                <small className="muted">{[c.room, c.teacher].filter(Boolean).join(' · ')}</small>
+              </span>
+            </div>
+            <button type="button" className="icon-btn" onClick={() => removeSession(c.id, c.name, c.date)} aria-label={`Remove ${c.name} on ${formatDay(c.date)}`}>
+              <PixelIcon name="trash" size={16} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
   return (
     <div className="grid grid--2">
-      <Panel title="Weekly timetable" icon="clock">
-        <p className="muted small">Enter your classes once — they repeat every week.</p>
-        {data.timetable.length === 0 && <Empty>No classes yet.</Empty>}
-        {WEEKDAYS_LONG.map((dayName, i) => {
-          const classes = data.timetable.filter((c) => c.day === i).sort((a, b) => a.start.localeCompare(b.start));
-          if (!classes.length) return null;
-          return (
-            <div key={dayName} className="day-group">
-              <h3 className="day-group__title">{dayName}</h3>
-              <ul className="list">
-                {classes.map((c) => (
+      <Panel title="School timetable" icon="calendar">
+        <p className="muted small">
+          {lastDay ? `Your USIC classes, day by day, up to ${formatDay(lastDay)}.` : 'No school classes from today on.'} When next month's
+          timetable comes out, add it here (or send the screenshots to get it added in one go).
+        </p>
+        {days.slice(0, 5).map(dayGroup)}
+        {days.length > 5 && (
+          <details className="details">
+            <summary>Later days ({days.length - 5})</summary>
+            {days.slice(5).map(dayGroup)}
+          </details>
+        )}
+      </Panel>
+      <div className="stack">
+        <Panel title="Add a class" icon="plus">
+          <form className="form" onSubmit={add}>
+            <Segmented
+              label="How often"
+              value={form.repeat ? 'weekly' : 'once'}
+              onChange={(v) => setForm({ ...form, repeat: v === 'weekly' })}
+              options={[
+                { value: 'once', label: 'One date' },
+                { value: 'weekly', label: 'Every week' },
+              ]}
+            />
+            {form.repeat ? (
+              <Field label="Day">
+                <select className="input" value={form.day} onChange={(e) => setForm({ ...form, day: Number(e.target.value) as Weekday })}>
+                  {WEEKDAYS_LONG.map((d, i) => (
+                    <option key={d} value={i}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            ) : (
+              <Field label="Date">
+                <input className="input" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              </Field>
+            )}
+            <div className="form__row">
+              <Field label="Start" className="grow">
+                <input className="input" type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
+              </Field>
+              <Field label="End" className="grow">
+                <input className="input" type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
+              </Field>
+            </div>
+            <Field label="Class">
+              <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Physics" />
+            </Field>
+            <div className="form__row">
+              <Field label="Room" className="grow">
+                <input className="input" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="e.g. SOL711" />
+              </Field>
+              {!form.repeat && (
+                <Field label="Teacher" className="grow">
+                  <input className="input" value={form.teacher} onChange={(e) => setForm({ ...form, teacher: e.target.value })} />
+                </Field>
+              )}
+            </div>
+            <button type="submit" className="btn btn--primary">
+              Add class
+            </button>
+          </form>
+        </Panel>
+        {data.timetable.length > 0 && (
+          <Panel title="Repeating classes" icon="clock">
+            <ul className="list">
+              {[...data.timetable]
+                .sort((a, b) => a.day - b.day || a.start.localeCompare(b.start))
+                .map((c) => (
                   <li key={c.id} className="list__item">
                     <div className="list__main">
                       <span className="time-tag">
-                        {c.start}–{c.end}
+                        {WEEKDAYS[c.day]} {c.start}
                       </span>
                       <span className="list__text">
                         <span>{c.name}</span>
                         {c.room && <small className="muted">{c.room}</small>}
                       </span>
                     </div>
-                    <button type="button" className="icon-btn" onClick={() => remove(c.id, c.name)} aria-label={`Remove ${c.name} on ${dayName}`}>
+                    <button type="button" className="icon-btn" onClick={() => removeWeekly(c.id, c.name)} aria-label={`Remove ${c.name}`}>
                       <PixelIcon name="trash" size={16} />
                     </button>
                   </li>
                 ))}
-              </ul>
-            </div>
-          );
-        })}
-      </Panel>
-      <Panel title="Add a class" icon="plus">
-        <form className="form" onSubmit={add}>
-          <Field label="Day">
-            <select className="input" value={form.day} onChange={(e) => setForm({ ...form, day: Number(e.target.value) as Weekday })}>
-              {WEEKDAYS_LONG.map((d, i) => (
-                <option key={d} value={i}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <div className="form__row">
-            <Field label="Start" className="grow">
-              <input className="input" type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
-            </Field>
-            <Field label="End" className="grow">
-              <input className="input" type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
-            </Field>
-          </div>
-          <Field label="Class">
-            <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Physics" />
-          </Field>
-          <Field label="Room (optional)">
-            <input className="input" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="e.g. Room 1.02" />
-          </Field>
-          <button type="submit" className="btn btn--primary">
-            Add class
-          </button>
-        </form>
-      </Panel>
+            </ul>
+          </Panel>
+        )}
+      </div>
     </div>
   );
 }

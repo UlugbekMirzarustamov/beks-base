@@ -10,11 +10,13 @@
  * - The window shows the sky in Sheffield right now (UK time): sunrise, day,
  *   sunset and starry night, using rough real sunrise/sunset times per month.
  * - The fireplace and lantern flicker and glow (only if motion is allowed).
- * - Chest, Bookshelf, Telescope and Crafting table are real links on top of the
+ * - The fire, rain and clouds follow the sound mixer (louder = bigger/more/faster).
+ * - Chest, Bookshelf, Telescope, Prayer mat and Crafting table are real links on top of the
  *   canvas, so they work with a keyboard and screen readers too.
  */
 import { useEffect, useRef, useState } from 'react';
 import { UK_TZ, zonedParts } from '../lib/dates';
+import type { Mixer } from '../lib/types';
 import { PixelIcon, type IconName } from '../ui/icons';
 
 const H = 96;
@@ -83,7 +85,7 @@ function layout(W: number) {
   };
 }
 
-function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number, rain: boolean, motion: boolean) {
+function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number, levels: Mixer, motion: boolean) {
   const r = (x: number, y: number, w: number, h: number, c: string) => {
     ctx.fillStyle = c;
     ctx.fillRect(x, y, w, h);
@@ -140,7 +142,7 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   }
   if (phase !== 'night') {
     for (let c = 0; c < 2; c++) {
-      const cloudX = WX - 10 + ((c * 27 + flick * 0.15) % (WW + 14));
+      const cloudX = WX - 10 + ((c * 27 + flick * (0.15 + levels.wind * 0.35)) % (WW + 14)); // wind = faster clouds
       const cloudY = WY + 5 + c * 7;
       const col = phase === 'day' ? '#ffffff' : '#f7c9b0';
       r(cloudX, cloudY + 1, 10, 2, col);
@@ -159,8 +161,8 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   r(WX + 33, WY + 21, 1, 1, phase === 'night' || phase === 'dusk' ? '#ffd27a' : '#6a7a8a');
   r(WX + 9, WY + 19, 1, 4, '#4a2e15'); // tree
   r(WX + 7, WY + 15, 5, 4, near);
-  if (rain) {
-    for (let i = 0; i < 16; i++) {
+  if (levels.rain > 0) {
+    for (let i = 0; i < levels.rain * 4; i++) { // more rain volume = more drops
       const x = WX + Math.floor(rand(i * 7) * WW);
       const y = WY + ((Math.floor(rand(i * 3) * WH) + flick * 3) % WH);
       r(x, y, 1, 3, 'rgba(190,220,255,0.75)');
@@ -179,8 +181,9 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   r(WX - 4, 46, 52, 1, '#8a5a2e');
   r(92 + C, 42, 6, 4, '#c0603a');
   r(91 + C, 41, 8, 1, '#a04a2a');
+  const sway = motion && levels.wind > 0 && frame % Math.max(3, 12 - levels.wind) < 2 ? 1 : 0; // leaves wobble in the wind
   r(93 + C, 37, 1, 4, '#3f7a26');
-  r(95 + C, 35, 1, 6, '#5fa83b');
+  r(95 + C + sway, 35, 1, 6, '#5fa83b');
   r(97 + C, 38, 1, 3, '#3f7a26');
   r(94 + C, 36, 1, 1, '#5fa83b');
   r(96 + C, 37, 1, 1, '#5fa83b');
@@ -312,15 +315,25 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   r(45, 12, 5, 2, '#2b2b2b');
   r(45, 20, 5, 1, '#2b2b2b');
 
-  // ---------- Rug + sleeping cat ----------
-  r(60 + C, 82, 40, 10, '#9e3b2f');
-  r(60 + C, 82, 40, 1, '#e0a040');
-  r(60 + C, 91, 40, 1, '#e0a040');
-  r(60 + C, 82, 1, 10, '#e0a040');
-  r(99 + C, 82, 1, 10, '#e0a040');
-  for (let i = 0; i < 5; i++) r(64 + C + i * 8, 86, 3, 2, '#e0a040');
+  // ---------- Prayer mat (the Pray station): green with a golden border and an arch (mihrab) ----------
+  const m = 60 + C;
+  r(m, 82, 40, 10, '#2f6b3a');
+  r(m, 82, 40, 1, '#e0b030');
+  r(m, 91, 40, 1, '#e0b030');
+  r(m, 82, 1, 10, '#e0b030');
+  r(m + 39, 82, 1, 10, '#e0b030');
+  r(m + 30, 85, 6, 5, '#9e3b2f'); // arch
+  r(m + 31, 84, 4, 1, '#9e3b2f');
+  r(m + 32, 86, 2, 4, '#1f4a28');
+  for (let i = 0; i < 3; i++) r(m + 6 + i * 7, 86, 3, 2, '#e0b030'); // pattern
+  for (let y = 83; y < 91; y += 2) {
+    r(m - 1, y, 1, 1, '#e0b030'); // tassels
+    r(m + 40, y, 1, 1, '#e0b030');
+  }
+
+  // ---------- Sleeping cat (next to the mat) ----------
   const breathe = motion && frame % 24 < 12 ? 1 : 0;
-  const k = 80 + C; // cat x
+  const k = 104 + C; // cat x
   r(k, 85 - breathe, 10, 4 + breathe, '#5a5a66');
   r(k + 8, 84, 4, 4, '#5a5a66');
   r(k + 8, 83, 1, 1, '#5a5a66');
@@ -369,8 +382,9 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   r(fx + 11, 69, 12, 2, '#5b3a1d');
   r(fx + 9, 71, 2, 3, '#c99a5f');
   r(fx + 23, 71, 2, 3, '#c99a5f');
+  const fireSize = 0.75 + levels.fire * 0.12; // louder fire = bigger flames
   for (let x = fx + 10; x < fx + 24; x++) {
-    const h = Math.max(2, Math.round(5 + rand((x - R) * 13 + flick) * 8 - Math.abs(x - (fx + 17)) * 0.7));
+    const h = Math.min(21, Math.max(2, Math.round((5 + rand((x - R) * 13 + flick) * 8 - Math.abs(x - (fx + 17)) * 0.7) * fireSize)));
     r(x, 70 - h, 1, h, '#e8501a');
     r(x, 70 - Math.floor(h * 0.7), 1, Math.floor(h * 0.7), '#ffa53a');
     r(x, 70 - Math.floor(h * 0.35), 1, Math.floor(h * 0.35), '#ffe27a');
@@ -407,11 +421,12 @@ function stations(W: number): Station[] {
     { href: '#/study', label: 'Study', sub: 'Bookshelf', icon: 'shelf', x: 6, y: 24, w: 30, h: 50 },
     { href: '#/money', label: 'Money', sub: 'Chest', icon: 'chest', x: 35, y: 55, w: 24, h: 24, sign: 'bottom' },
     { href: '#/reflect', label: 'Reflect', sub: 'Telescope', icon: 'telescope', x: telescopeX - 3, y: 49, w: 21, h: 32 },
+    { href: '#/prayer', label: 'Pray', sub: 'Prayer mat', icon: 'mat', x: telescopeX - 6, y: 81, w: 42, h: 12 },
     { href: '#/planner', label: 'Planner', sub: 'Crafting table', icon: 'table', x: tableX - 2, y: 53, w: 28, h: 28 },
   ];
 }
 
-export function Cabin({ rain }: { rain: boolean }) {
+export function Cabin({ mix }: { mix: Mixer }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLCanvasElement>(null);
   const [W, setW] = useState(BASE_W);
@@ -436,8 +451,8 @@ export function Cabin({ rain }: { rain: boolean }) {
     const motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!motion) {
       // Still picture, refreshed once a minute so the sky and clock keep up with the time.
-      draw(ctx, W, new Date(), 0, rain, false);
-      const id = setInterval(() => draw(ctx, W, new Date(), 0, rain, false), 60_000);
+      draw(ctx, W, new Date(), 0, mix, false);
+      const id = setInterval(() => draw(ctx, W, new Date(), 0, mix, false), 60_000);
       return () => clearInterval(id);
     }
     let frame = 0;
@@ -448,13 +463,13 @@ export function Cabin({ rain }: { rain: boolean }) {
         // ~8 frames a second: enough for a pixel-art flicker, light on battery
         last = t;
         frame++;
-        draw(ctx, W, new Date(), frame, rain, true);
+        draw(ctx, W, new Date(), frame, mix, true);
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [rain, W]);
+  }, [mix, W]);
 
   const { phase } = skyAt(new Date());
   const words: Record<SkyPhase, string> = { night: 'a starry night', dawn: 'sunrise', day: 'daytime', dusk: 'sunset' };

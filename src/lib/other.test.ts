@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { exportJson, parseBackup } from './backup';
 import { guessColumns, parseCsv, rowsToPurchases } from './csv';
 import { daysBetween, startOfWeek, todayUK, weekdayOf } from './dates';
-import { clearExampleData, createInitialData, hasExampleData } from './seed';
+import { clearExampleData, createInitialData, emptyData, hasExampleData, upgrade } from './seed';
 import { levelInfo } from './xp';
 
 const TODAY = '2026-11-03';
@@ -30,15 +30,39 @@ describe('backup', () => {
   });
 });
 
-describe('example data', () => {
-  it('can be cleared in one go, keeping starter topics & formulas', () => {
+describe('upgrading saved data', () => {
+  it('removes old example items but keeps your own', () => {
     const data = createInitialData(TODAY);
+    data.expenses = [
+      { id: 'a', amount: 3.2, categoryId: 'food', note: 'Coffee (example)', date: TODAY, example: true },
+      { id: 'b', amount: 4.5, categoryId: 'transport', note: 'My bus', date: TODAY },
+    ];
+    data.tasks = [{ id: 't', title: 'Physics worksheet (example)', due: null, done: false, example: true }];
     expect(hasExampleData(data)).toBe(true);
-    const cleared = clearExampleData(data, TODAY);
-    expect(hasExampleData(cleared)).toBe(false);
-    expect(cleared.expenses).toHaveLength(0);
-    expect(cleared.topics.length).toBe(14);
-    expect(cleared.flashcards.length).toBeGreaterThan(15);
+    const up = upgrade(data, TODAY);
+    expect(hasExampleData(up)).toBe(false);
+    expect(up.expenses.map((e) => e.note)).toEqual(['My bus']);
+    expect(up.tasks).toHaveLength(0);
+    expect(up.topics.length).toBe(14);
+    expect(clearExampleData(up, TODAY)).toEqual(up);
+  });
+
+  it('adds the November timetable exactly once', () => {
+    const first = createInitialData(TODAY);
+    const again = upgrade(first, TODAY);
+    expect(again.sessions.length).toBe(first.sessions.length);
+    const on = (date: string) => first.sessions.filter((s) => s.date === date).map((s) => `${s.start} ${s.name} ${s.room}`);
+    expect(on('2026-11-03')).toEqual(['09:00 Academic English Skills Online', '11:00 Physics SOL703', '13:00 Physics SOL403LT', '14:00 Physics SOL713']);
+    expect(on('2026-11-12')).toContain('15:30 Progress Coach Workshop KH06');
+    // Week 4 is the same as week 3
+    expect(on('2026-11-26')).toEqual(on('2026-11-19'));
+    expect(on('2026-11-07')).toEqual([]); // Saturday
+  });
+
+  it('turns the old sound setting into mixer levels', () => {
+    const data = emptyData(TODAY);
+    data.settings.sound = 'fire';
+    expect(upgrade(data, TODAY).settings.mixer).toEqual({ rain: 0, fire: 4, wind: 0 });
   });
 });
 

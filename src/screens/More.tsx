@@ -4,11 +4,12 @@
  */
 import { useState } from 'react';
 import { backupFileName, exportJson, parseBackup } from '../lib/backup';
-import { clearExampleData, emptyData, hasExampleData } from '../lib/seed';
+import { createInitialData, upgrade } from '../lib/seed';
 import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { SoundMixer } from '../ui/SoundMixer';
 import { Habits, Journal, MoodCheckIn, MoodWeek, Vocab } from './Extras';
 
 const TABS = ['words', 'habits', 'mood', 'journal', 'settings'] as const;
@@ -74,7 +75,7 @@ export function SettingsPanel() {
     if (!file) return;
     setImportError('');
     try {
-      const restored = parseBackup(await file.text(), today);
+      const restored = upgrade(parseBackup(await file.text(), today), today);
       if (!(await ask('Replace ALL current data with this backup? (Tip: export first if unsure.)', { ok: 'Replace', danger: false }))) return;
       replaceAll(restored);
       toast('Backup restored!', 'pop');
@@ -83,16 +84,10 @@ export function SettingsPanel() {
     }
   };
 
-  const clearExamples = async () => {
-    if (!(await ask('Remove all example items? Your own items stay.', { ok: 'Clear examples', danger: false }))) return;
-    replaceAll(clearExampleData(data, today));
-    toast('Example data cleared', 'info');
-  };
-
   const resetAll = async () => {
     if (!(await ask('Delete EVERYTHING and start fresh? This cannot be undone.'))) return;
     if (!(await ask('Really sure? Maybe export a backup first.', { ok: 'Yes, delete all' }))) return;
-    replaceAll(emptyData(today));
+    replaceAll(createInitialData(today)); // keeps the starter topics, formulas and school timetable
     toast('Fresh start!', 'info');
   };
 
@@ -112,16 +107,7 @@ export function SettingsPanel() {
         />
         <p className="muted small">Auto switches to night mode from 19:00 to 07:00 UK time.</p>
         <p className="field__label">Background sound</p>
-        <Segmented
-          label="Background sound"
-          value={data.settings.sound}
-          onChange={(v) => set('sound', v)}
-          options={[
-            { value: 'off', label: 'Off' },
-            { value: 'rain', label: 'Rain' },
-            { value: 'fire', label: 'Fire' },
-          ]}
-        />
+        <SoundMixer />
       </Panel>
 
       <Panel title="Backups" icon="chest">
@@ -145,18 +131,8 @@ export function SettingsPanel() {
         )}
       </Panel>
 
-      <Panel title="Clean up" icon="trash">
-        {hasExampleData(data) ? (
-          <>
-            <p>The app started with some example items (marked "example") so it didn't look empty.</p>
-            <button type="button" className="btn btn--primary" onClick={clearExamples}>
-              Clear example data
-            </button>
-          </>
-        ) : (
-          <p className="muted">No example data left. Everything here is yours.</p>
-        )}
-        <hr className="divider" />
+      <Panel title="Start over" icon="trash">
+        <p className="muted">Deletes everything you've entered. Your school timetable, starter topics and formula cards come back.</p>
         <button type="button" className="btn btn--danger" onClick={resetAll}>
           Delete everything
         </button>

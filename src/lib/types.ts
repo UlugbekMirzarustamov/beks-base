@@ -113,6 +113,16 @@ export interface ClassSlot extends Base {
   room: string;
 }
 
+/** One real class on a real date (from the USIC timetable). Unlike ClassSlot it doesn't repeat. */
+export interface ClassSession extends Base {
+  date: string; // YYYY-MM-DD
+  start: string; // HH:MM
+  end: string;
+  name: string; // e.g. "Physics"
+  room: string; // e.g. "SOL711"
+  teacher: string;
+}
+
 export interface StudyBlock extends Base {
   date: string;
   start: string;
@@ -170,11 +180,33 @@ export interface Reflection {
   updated: string; // ISO timestamp
 }
 
+// ---------- Prayer ----------
+export type PrayerName = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+
+export interface PrayerSettings {
+  /** Asr starts when a shadow is 2× (Hanafi, common in Uzbekistan) or 1× (standard) an object's length. */
+  asr: 'hanafi' | 'standard';
+  /** Minutes to add/subtract per prayer, to match your local mosque's timetable. */
+  offsets: Record<PrayerName, number>;
+  /** Show the full-screen "time to pray" call when opening the app. */
+  call: boolean;
+}
+
+/** Sound mixer: each channel 0 (off) … 8 (loudest). */
+export interface Mixer {
+  rain: number;
+  fire: number;
+  wind: number;
+}
+
 // ---------- Settings & the whole thing ----------
 export interface Settings {
   /** 'auto' follows UK time (night 19:00–07:00). */
   theme: 'auto' | 'day' | 'night';
+  /** Old single sound choice (kept so old backups still load; replaced by `mixer`). */
   sound: 'off' | 'rain' | 'fire';
+  mixer: Mixer;
+  prayer: PrayerSettings;
   /** How many Uzbek som for £1 — typed in by hand. */
   gbpToUzs: number;
   pomodoroWork: number;
@@ -200,6 +232,8 @@ export interface AppData {
   tasks: Task[];
   priorities: Priorities;
   timetable: ClassSlot[];
+  /** Real dated classes (school timetable) */
+  sessions: ClassSession[];
   studyBlocks: StudyBlock[];
 
   xp: number;
@@ -216,4 +250,8 @@ export interface AppData {
   /** "YYYY-MM-DD" → that night's log (each one is a star in your sky) */
   nightLogs: Record<string, NightLog>;
   letters: Letter[];
+  /** "YYYY-MM-DD" → prayers marked as prayed that day */
+  prayers: Record<string, PrayerName[]>;
+  /** One-time updates already applied to this data (e.g. "usic-nov-2026"). */
+  applied: string[];
 }

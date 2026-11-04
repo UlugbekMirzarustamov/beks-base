@@ -2,13 +2,12 @@
  * Starting data.
  *
  * - `emptyData()` = the "starter kit" everyone gets: budget categories, Physics &
- *   Maths topics, formula flashcards, habits. This is NOT example data and is
- *   never removed by "Clear example data".
- * - `createInitialData()` = starter kit + EXAMPLE items (marked `example: true`)
- *   so the app doesn't look empty on first launch.
+ *   Maths topics, formula flashcards, habits.
+ * - `createInitialData()` = starter kit + your real school timetable.
+ * - `upgrade()` = keeps saved data up to date (see below).
  */
-import { addDays, monthOf, weekdayOf } from './dates';
 import { uid } from './id';
+import { TIMETABLES } from './timetable';
 import type { AppData, Category, Flashcard, Topic } from './types';
 
 /** The budget the app starts with (you said £600–700, so £650). Editable in Money → Setup. */
@@ -73,7 +72,15 @@ export function emptyData(today: string): AppData {
 
   return {
     version: 1,
-    settings: { theme: 'auto', sound: 'off', gbpToUzs: 16000, pomodoroWork: 25, pomodoroBreak: 5 },
+    settings: {
+      theme: 'auto',
+      sound: 'off',
+      mixer: { rain: 0, fire: 0, wind: 0 },
+      prayer: { asr: 'hanafi', offsets: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, call: true },
+      gbpToUzs: 16000,
+      pomodoroWork: 25,
+      pomodoroBreak: 5,
+    },
     monthlyBudget: DEFAULT_BUDGET,
     categories: CATEGORIES.map((c) => ({ ...c })),
     expenses: [],
@@ -90,6 +97,7 @@ export function emptyData(today: string): AppData {
     tasks: [],
     priorities: { date: today, items: ['', '', ''], done: [false, false, false] },
     timetable: [],
+    sessions: [],
     studyBlocks: [],
     xp: 0,
     vocab: [],
@@ -104,78 +112,38 @@ export function emptyData(today: string): AppData {
     reflections: {},
     nightLogs: {},
     letters: [],
+    prayers: {},
+    applied: [],
   };
 }
 
-/** First launch: starter kit + clearly-labelled example items. */
+/** First launch: the starter kit plus your real timetable. (No made-up example items any more.) */
 export function createInitialData(today: string): AppData {
-  const d = emptyData(today);
-  const ex = { example: true } as const;
-  const month = monthOf(today);
-  const day = Number(today.slice(8, 10));
-  // Example purchases on earlier days of this month (never in the future).
-  const earlier = (n: number) => (day > n ? addDays(today, -n) : today);
+  return upgrade(emptyData(today), today);
+}
 
-  d.expenses = [
-    { id: uid(), amount: 23.4, categoryId: 'food', note: 'Weekly shop (example)', date: earlier(2), ...ex },
-    { id: uid(), amount: 3.2, categoryId: 'food', note: 'Coffee (example)', date: today, ...ex },
-    { id: uid(), amount: 2.6, categoryId: 'transport', note: 'Bus (example)', date: earlier(1), ...ex },
-    { id: uid(), amount: 12, categoryId: 'fun', note: 'Cinema (example)', date: earlier(3), ...ex },
-  ];
-  d.recurring = [
-    // lastAdded = this month, so the example rent isn't auto-added on top of everything.
-    { id: uid(), name: 'Rent (example)', amount: 350, categoryId: 'rent', day: 1, lastAdded: month, ...ex },
-    { id: uid(), name: 'Phone plan (example)', amount: 10, categoryId: 'phone', day: 15, lastAdded: null, ...ex },
-  ];
-  d.tests = [
-    { id: uid(), name: 'Physics test (example)', date: addDays(today, 18), subjectId: 'physics', ...ex },
-    { id: uid(), name: 'Maths test (example)', date: addDays(today, 40), subjectId: 'maths', ...ex },
-  ];
-  d.mistakes = [
-    {
-      id: uid(),
-      question: 'Box on a 30° slope, m = 2 kg. Force along the slope?',
-      wrongAnswer: '2 × 9.81 × cos 30 = 17.0 N',
-      correctAnswer: '2 × 9.81 × sin 30 = 9.81 N',
-      why: 'Mixed up sin and cos. ALONG the slope = sin, INTO the slope = cos.',
-      topicId: null,
-      reviewAgain: true,
-      date: today,
-      ...ex,
-    },
-  ];
-  d.tasks = [
-    { id: uid(), title: 'Physics worksheet (example)', due: addDays(today, 1), done: false, ...ex },
-    { id: uid(), title: 'Email student services (example)', due: addDays(today, 3), done: false, ...ex },
-    { id: uid(), title: 'Buy bus pass (example)', due: null, done: true, ...ex },
-  ];
-  d.priorities = { date: today, items: ['Review SUVAT', 'Do 1 Pomodoro of Maths', 'Call home'], done: [false, false, false], example: true };
-  d.timetable = [
-    { id: uid(), day: 0, start: '09:00', end: '11:00', name: 'Physics (example)', room: 'Room 1.02', ...ex },
-    { id: uid(), day: 0, start: '13:00', end: '15:00', name: 'Maths (example)', room: 'Room 2.10', ...ex },
-    { id: uid(), day: 2, start: '10:00', end: '12:00', name: 'Maths (example)', room: 'Room 2.10', ...ex },
-    { id: uid(), day: 3, start: '09:00', end: '12:00', name: 'Physics lab (example)', room: 'Lab B', ...ex },
-    { id: uid(), day: 4, start: '11:00', end: '13:00', name: 'English (example)', room: 'Room 0.05', ...ex },
-  ];
-  // A study block on the next weekday afternoon.
-  const studyDay = weekdayOf(today) >= 5 ? addDays(today, 7 - weekdayOf(today)) : today;
-  d.studyBlocks = [{ id: uid(), date: studyDay, start: '16:00', end: '17:30', title: 'Study: SUVAT (example)', ...ex }];
-  d.vocab = [
-    { id: uid(), word: 'Resultant (example)', meaning: 'The single force that has the same effect as all the forces together.', sentence: 'The resultant force is 5 N to the right.', subjectId: 'physics', ...ex },
-  ];
-  d.letters = [
-    {
-      id: uid(),
-      title: 'To Bek, one week from now (example)',
-      body: "If you're reading this, you made it through another week in Sheffield. Proud of you. Now go and drink some water.",
-      written: today,
-      openOn: addDays(today, 7),
-      opened: false,
-      ...ex,
-    },
-  ];
-  d.notes = [{ id: uid(), title: 'Welcome to your base! (example)', body: 'This is your journal. Write anything here — it stays only on this device.', updated: new Date().toISOString(), ...ex }];
-  return d;
+/**
+ * Brings saved data up to date. Runs every time the app opens, and is safe to
+ * run again and again:
+ *  1. removes any old "(example)" items the app used to add — your own items stay;
+ *  2. adds each school timetable (lib/timetable.ts) once;
+ *  3. turns the old single "sound" setting into mixer levels.
+ */
+export function upgrade(data: AppData, today: string): AppData {
+  const d = hasExampleData(data) ? clearExampleData(data, today) : data;
+  const missing = Object.keys(TIMETABLES).filter((id) => !d.applied.includes(id));
+  const out: AppData = missing.length
+    ? { ...d, sessions: [...d.sessions, ...missing.flatMap((id) => TIMETABLES[id]())], applied: [...d.applied, ...missing] }
+    : d;
+  if (!out.applied.includes('mixer')) {
+    const { sound } = out.settings;
+    return {
+      ...out,
+      applied: [...out.applied, 'mixer'],
+      settings: { ...out.settings, sound: 'off', mixer: { rain: sound === 'rain' ? 4 : 0, fire: sound === 'fire' ? 4 : 0, wind: 0 } },
+    };
+  }
+  return out;
 }
 
 /** True if any example items are still in the data. */

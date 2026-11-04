@@ -1,11 +1,9 @@
 /**
  * Cozy background sound, made live with the Web Audio API — no sound files needed.
- *   rain = soft filtered "white noise"
- *   fire = deep rumble + random little crackles
- * Browsers only allow sound after you tap something, so this always starts from a button.
+ * Three channels you can mix, each with its own volume: rain, fire and wind.
+ * Browsers only allow sound after you tap something, so it starts from a tap.
  */
 let ctx: AudioContext | null = null;
-let current: { stop: () => void } | null = null;
 
 function audio(): AudioContext | null {
   try {
@@ -33,29 +31,39 @@ function noise(ac: AudioContext, seconds: number, kind: 'white' | 'brown'): Audi
   return buffer;
 }
 
-export function startAmbient(kind: 'rain' | 'fire'): void {
-  stopAmbient();
-  const ac = audio();
-  if (!ac) return;
+export type Channel = 'rain' | 'fire' | 'wind';
 
-  const master = ac.createGain();
-  master.gain.setValueAtTime(0, ac.currentTime);
-  master.gain.linearRampToValueAtTime(kind === 'rain' ? 0.18 : 0.5, ac.currentTime + 1.5); // gentle fade-in
-  master.connect(ac.destination);
+/** Loudest volume of each channel (they sound balanced at the same mixer level). */
+const MAX_GAIN: Record<Channel, number> = { rain: 0.28, fire: 0.75, wind: 0.45 };
+/** Mixer levels go from 0 (off) to 8 (loudest). */
+export const MAX_LEVEL = 8;
 
+interface Running {
+  gain: GainNode;
+  stop: () => void;
+}
+const running: Partial<Record<Channel, Running>> = {};
+
+/** Build one channel's sound, feeding into `out`. Returns a function that stops it. */
+function build(ac: AudioContext, kind: Channel, out: GainNode): () => void {
   const bed = ac.createBufferSource();
   bed.buffer = noise(ac, 3, kind === 'rain' ? 'white' : 'brown');
   bed.loop = true;
   const filter = ac.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = kind === 'rain' ? 1300 : 450;
-  bed.connect(filter).connect(master);
-  bed.start();
+  const stops: (() => void)[] = [() => bed.stop()];
 
-  // Fire crackles: tiny bursts of high noise at random moments.
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  if (kind === 'fire') {
+  if (kind === 'rain') {
+    // rain = soft, hissy noise
+    filter.type = 'lowpass';
+    filter.frequency.value = 1300;
+    bed.connect(filter).connect(out);
+  } else if (kind === 'fire') {
+    // fire = deep rumble + random little crackles
+    filter.type = 'lowpass';
+    filter.frequency.value = 450;
+    bed.connect(filter).connect(out);
     const pop = noise(ac, 0.03, 'white');
+    let timer: ReturnType<typeof setTimeout>;
     const crackle = () => {
       const src = ac.createBufferSource();
       src.buffer = pop;
@@ -65,30 +73,72 @@ export function startAmbient(kind: 'rain' | 'fire'): void {
       const g = ac.createGain();
       g.gain.setValueAtTime(0.05 + Math.random() * 0.15, ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.05);
-      src.connect(hp).connect(g).connect(master);
+      src.connect(hp).connect(g).connect(out);
       src.start();
       timer = setTimeout(crackle, 60 + Math.random() * 500);
     };
     crackle();
+    stops.push(() => clearTimeout(timer));
+  } else {
+    // wind = deep noise through a moving filter, slowly swelling and fading ("whoosh")
+    filter.type = 'bandpass';
+    filter.frequency.value = 500;
+    filter.Q.value = 0.8;
+    const swell = ac.createGain();
+    swell.gain.value = 0.6;
+    const lfo = ac.createOscillator();
+    lfo.frequency.value = 0.12;
+    const lfoDepth = ac.createGain();
+    lfoDepth.gain.value = 0.4;
+    lfo.connect(lfoDepth).connect(swell.gain);
+    const sweep = ac.createOscillator();
+    sweep.frequency.value = 0.07;
+    const sweepDepth = ac.createGain();
+    sweepDepth.gain.value = 250;
+    sweep.connect(sweepDepth).connect(filter.frequency);
+    bed.connect(filter).connect(swell).connect(out);
+    lfo.start();
+    sweep.start();
+    stops.push(() => lfo.stop(), () => sweep.stop());
   }
-
-  current = {
-    stop() {
-      clearTimeout(timer);
-      master.gain.cancelScheduledValues(ac.currentTime);
-      master.gain.setValueAtTime(master.gain.value, ac.currentTime);
-      master.gain.linearRampToValueAtTime(0, ac.currentTime + 0.4); // fade-out
-      setTimeout(() => {
-        bed.stop();
-        master.disconnect();
-      }, 450);
-    },
-  };
+  bed.start();
+  return () => stops.forEach((s) => s());
 }
 
-export function stopAmbient(): void {
-  current?.stop();
-  current = null;
+/**
+ * Set one channel's volume (0 = off … 8 = loudest), fading smoothly.
+ * Must first be called from a tap/click (browser rule for sound).
+ */
+export function setChannel(kind: Channel, level: number): void {
+  const ac = audio();
+  if (!ac) return;
+  const target = level <= 0 ? 0 : MAX_GAIN[kind] * Math.pow(level / MAX_LEVEL, 1.6);
+  let ch = running[kind];
+  if (!ch && target === 0) return;
+  if (!ch) {
+    const gain = ac.createGain();
+    gain.gain.value = 0;
+    gain.connect(ac.destination);
+    const stopSound = build(ac, kind, gain);
+    ch = running[kind] = { gain, stop: stopSound };
+  }
+  const now = ac.currentTime;
+  ch.gain.gain.cancelScheduledValues(now);
+  ch.gain.gain.setValueAtTime(ch.gain.gain.value, now);
+  ch.gain.gain.linearRampToValueAtTime(target, now + (target === 0 ? 0.4 : 0.8));
+  if (target === 0) {
+    const old = ch;
+    delete running[kind];
+    setTimeout(() => {
+      old.stop();
+      old.gain.disconnect();
+    }, 450);
+  }
+}
+
+/** Apply all mixer levels at once. */
+export function applyMixer(levels: Record<Channel, number>): void {
+  (Object.keys(levels) as Channel[]).forEach((k) => setChannel(k, levels[k]));
 }
 
 /** Little 3-note "ding" for when a Pomodoro finishes. */

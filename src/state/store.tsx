@@ -15,7 +15,7 @@ import { todayUK } from '../lib/dates';
 import { loadData, requestPersistentStorage, saveData } from '../lib/db';
 import { uid } from '../lib/id';
 import { applyRecurring, formatGBP } from '../lib/money';
-import { createInitialData } from '../lib/seed';
+import { createInitialData, upgrade } from '../lib/seed';
 import { playChime } from '../lib/sound';
 import type { AppData, Expense } from '../lib/types';
 import { levelInfo, XP } from '../lib/xp';
@@ -58,10 +58,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const dataRef = useRef<AppData | null>(null);
   dataRef.current = data;
 
-  // ----- Load once on start (or create example data on the very first launch) -----
+  // ----- Load once on start (first launch: starter kit + timetable). `upgrade` tidies older saved data. -----
   useEffect(() => {
     loadData()
-      .then((saved) => setData(saved ? normalize(saved as Partial<AppData>, todayUK()) : createInitialData(todayUK())))
+      .then((saved) => setData(saved ? upgrade(normalize(saved as Partial<AppData>, todayUK()), todayUK()) : createInitialData(todayUK())))
       .catch(() => setData(createInitialData(todayUK())));
     requestPersistentStorage();
   }, []);

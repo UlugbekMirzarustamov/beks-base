@@ -1,25 +1,27 @@
 /**
  * The app shell: top bar, the current screen, bottom tab bar, the big "+"
- * button, toasts, theme (day/night) and background sound.
+ * button, toasts, theme (day/night), the sound mixer and the prayer strip/call.
  *
  * Navigation uses the URL hash: #/home, #/money/charts, #/study/timer …
  * so the browser Back button works and there's no server setup.
  */
 import { useEffect, useRef, useState } from 'react';
 import { isNightUK } from './lib/dates';
-import { startAmbient, stopAmbient } from './lib/sound';
+import { applyMixer } from './lib/sound';
 import { levelInfo } from './lib/xp';
 import Home from './screens/Home';
 import Money, { ExpenseSheet } from './screens/Money';
 import More from './screens/More';
 import Planner from './screens/Planner';
+import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Reflect from './screens/Reflect';
 import Study from './screens/Study';
 import { useStore, useTimer } from './state/store';
 import { PixelIcon, type IconName } from './ui/icons';
 import { Toaster } from './ui/kit';
+import { SoundMixer } from './ui/SoundMixer';
 
-const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more'] as const;
+const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: { id: Screen; label: string; icon: IconName }[] = [
@@ -70,25 +72,35 @@ export default function App() {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', night ? '#1b1722' : '#6e4522');
   }, [night]);
 
-  // ----- Background sound (browsers need a tap before sound can play) -----
-  const sound = data.settings.sound;
+  // ----- Background sound mixer (browsers need a tap before sound can play) -----
+  const { rain, fire, wind } = data.settings.mixer;
   useEffect(() => {
-    if (sound === 'off') {
-      stopAmbient();
+    const levels = { rain, fire, wind };
+    if (navigator.userActivation?.hasBeenActive || rain + fire + wind === 0) {
+      applyMixer(levels);
       return;
     }
-    if (navigator.userActivation?.hasBeenActive) {
-      startAmbient(sound);
-      return;
-    }
-    const begin = () => startAmbient(sound);
+    const begin = () => applyMixer(levels);
     window.addEventListener('pointerdown', begin, { once: true });
     return () => window.removeEventListener('pointerdown', begin);
-  }, [sound]);
+  }, [rain, fire, wind]);
+  const soundOn = rain + fire + wind > 0;
 
-  const lastSound = useRef<'rain' | 'fire'>('rain');
-  if (sound !== 'off') lastSound.current = sound;
-  const toggleSound = () => update((d) => void (d.settings.sound = sound === 'off' ? lastSound.current : 'off'));
+  // The sound button opens a small mixer panel; Esc or a tap outside closes it.
+  const [mixerOpen, setMixerOpen] = useState(false);
+  const mixerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!mixerOpen) return;
+    const onDown = (e: PointerEvent) => !mixerRef.current?.contains(e.target as Node) && setMixerOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMixerOpen(false);
+    window.addEventListener('pointerdown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [mixerOpen]);
+
   const toggleTheme = () => update((d) => void (d.settings.theme = night ? 'day' : 'night'));
 
   const lvl = levelInfo(data.xp);
@@ -111,14 +123,30 @@ export default function App() {
               <span style={{ width: `${(lvl.into / lvl.needed) * 100}%` }} />
             </span>
           </a>
-          <button type="button" className="icon-btn icon-btn--bar" onClick={toggleSound} aria-label={sound === 'off' ? `Turn on ${lastSound.current} sound` : 'Mute background sound'} aria-pressed={sound !== 'off'}>
-            <PixelIcon name={sound === 'off' ? 'mute' : 'sound'} size={22} />
-          </button>
+          <div className="mixer-pop" ref={mixerRef}>
+            <button
+              type="button"
+              className="icon-btn icon-btn--bar"
+              onClick={() => setMixerOpen(!mixerOpen)}
+              aria-label="Sound mixer"
+              aria-expanded={mixerOpen}
+              aria-controls="mixer-panel"
+            >
+              <PixelIcon name={soundOn ? 'sound' : 'mute'} size={22} />
+            </button>
+            {mixerOpen && (
+              <div id="mixer-panel" className="mixer-pop__panel" role="dialog" aria-label="Sound mixer">
+                <p className="panel__title">Sound mixer</p>
+                <SoundMixer />
+              </div>
+            )}
+          </div>
           <button type="button" className="icon-btn icon-btn--bar" onClick={toggleTheme} aria-label={night ? 'Switch to day mode' : 'Switch to night mode'}>
             <PixelIcon name={night ? 'sun' : 'moon'} size={22} />
           </button>
         </div>
       </header>
+      <PrayerBar />
 
       <main id="main" ref={mainRef} tabIndex={-1} className="main">
         {route.screen === 'home' && <Home />}
@@ -127,6 +155,7 @@ export default function App() {
         {route.screen === 'planner' && <Planner sub={route.sub} />}
         {route.screen === 'reflect' && <Reflect sub={route.sub} />}
         {route.screen === 'more' && <More sub={route.sub} />}
+        {route.screen === 'prayer' && <PrayerPage />}
       </main>
 
       <button type="button" className="fab" onClick={() => openExpense()} aria-label="Add a purchase">
@@ -144,6 +173,7 @@ export default function App() {
       </nav>
 
       <ExpenseSheet />
+      <PrayerCall />
       <Toaster />
     </div>
   );

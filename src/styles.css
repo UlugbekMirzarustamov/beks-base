@@ -2329,3 +2329,585 @@ button.list__main {
   background: #fffaf0;
   border-left: 4px solid var(--red);
 }
+
+/* ==========================================================================
+   Prayer — lantern strip, five lanterns, the call, the prayer page
+   ========================================================================== */
+.prayer-bar {
+  position: sticky;
+  top: calc(58px + env(safe-area-inset-top)); /* right under the top bar */
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  color: #f3e3bd;
+  background: #173a2c;
+  border-bottom: 4px solid #0b1d15;
+  box-shadow: inset 0 3px 0 #23533f;
+}
+.prayer-bar__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prayer-bar__main span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prayer-bar__dots {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.prayer-dot {
+  width: 9px;
+  height: 9px;
+  background: #0b1d15;
+  border: 2px solid #3c6b55;
+}
+.prayer-dot.is-on {
+  background: var(--gold);
+  border-color: #a8800c;
+  box-shadow: 0 0 6px var(--gold);
+}
+.prayer-bar.is-due {
+  background: #6b4a12;
+  border-bottom-color: #2b1d0e;
+  box-shadow: inset 0 3px 0 #8f6a22, 0 0 16px rgba(255, 190, 80, 0.45);
+}
+.prayer-bar__btn {
+  flex-shrink: 0;
+  min-height: 32px;
+  color: #2f1d0c !important;
+  background: var(--gold);
+  box-shadow: inset 3px 3px 0 #fff3b0, inset -3px -3px 0 #b8900f;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .prayer-bar.is-due {
+    animation: due-glow 2s steps(2) infinite;
+  }
+  @keyframes due-glow {
+    50% {
+      box-shadow: inset 0 3px 0 #8f6a22, 0 0 26px rgba(255, 200, 90, 0.75);
+    }
+  }
+}
+
+/* A pixel lantern drawn with CSS */
+.big-lantern {
+  position: relative;
+  display: block;
+  width: 30px;
+  height: 40px;
+  margin: 10px auto 0;
+  background: #3a3530;
+  border: 3px solid #1a120a;
+  box-shadow: inset 0 0 0 3px #5a4a3a;
+}
+.big-lantern::before {
+  /* cap + hook */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -11px;
+  width: 18px;
+  height: 7px;
+  margin-left: -9px;
+  background: #1a120a;
+  box-shadow: 0 -4px 0 -2px #1a120a;
+}
+.big-lantern::after {
+  /* the flame */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 12px;
+  margin: -6px 0 0 -4px;
+  background: #5a4a3a;
+}
+.big-lantern--small {
+  width: 18px;
+  height: 24px;
+  margin: 6px 0 0;
+}
+.big-lantern--small::before {
+  width: 10px;
+  margin-left: -5px;
+  top: -8px;
+  height: 5px;
+}
+.big-lantern--small::after {
+  width: 4px;
+  height: 6px;
+  margin: -3px 0 0 -2px;
+}
+
+.lanterns {
+  padding: 10px 10px 8px;
+  color: #f3e3bd;
+  border: 4px solid var(--edge);
+  background-color: #0f1733;
+  background-image:
+    radial-gradient(1px 1px at 10% 30%, #fff8d088 50%, transparent 51%),
+    radial-gradient(1px 1px at 30% 70%, #fff8d066 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 20%, #fff8d088 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 60%, #fff8d066 50%, transparent 51%),
+    radial-gradient(1px 1px at 92% 25%, #fff8d088 50%, transparent 51%),
+    linear-gradient(180deg, #0f1733, #1d2650);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
+}
+.lanterns__row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  /* the string they hang from */
+  background: linear-gradient(#6b5134, #6b5134) 0 0 / 100% 3px no-repeat;
+}
+.lantern-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0 0 4px;
+  cursor: pointer;
+  color: inherit;
+  background: none;
+  border: 2px solid transparent;
+}
+.lantern-slot::before {
+  /* each lantern's own little string */
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 10px;
+  background: #6b5134;
+}
+.lantern-slot:hover {
+  border-color: rgba(255, 217, 59, 0.4);
+}
+.lantern-slot__name {
+  font-family: var(--font-title);
+  font-size: clamp(7px, 1.9vw, 11px);
+  margin-top: 4px;
+}
+.lantern-slot__time {
+  font-family: var(--font-num);
+  font-size: 20px;
+  line-height: 1;
+  color: #e2cfa8;
+}
+.lantern-slot__tag {
+  font-family: var(--font-title);
+  font-size: 7px;
+  padding: 2px 4px;
+  color: #2f1d0c;
+  background: var(--gold);
+}
+.lantern-slot--lit .big-lantern,
+.prayer-call .big-lantern.is-now {
+  background: #ffd27a;
+  box-shadow: inset 0 0 0 3px #ffe9b0, 0 0 22px 6px rgba(255, 190, 80, 0.55);
+}
+.lantern-slot--lit .big-lantern::after,
+.prayer-call .big-lantern.is-now::after {
+  background: #ff8c1a;
+}
+.lantern-slot--now .big-lantern {
+  background: #7a6232;
+  box-shadow: inset 0 0 0 3px #a58440, 0 0 14px 3px rgba(255, 190, 80, 0.35);
+}
+.lantern-slot--now .big-lantern::after {
+  background: #ffb347;
+}
+.lantern-slot--now {
+  border-color: var(--gold);
+}
+.lantern-slot--missed {
+  opacity: 0.45;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lantern-slot--now .big-lantern::after,
+  .prayer-call .big-lantern.is-now::after {
+    animation: flame 0.6s steps(2) infinite;
+  }
+  .lantern-slot--lit .big-lantern {
+    animation: lantern-on 0.5s steps(3);
+  }
+  @keyframes flame {
+    50% {
+      transform: scaleY(0.75) translateY(1px);
+      background: #ffe27a;
+    }
+  }
+  @keyframes lantern-on {
+    from {
+      transform: scale(0.7);
+    }
+  }
+}
+.lanterns__foot {
+  margin-top: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+.lanterns__foot .muted {
+  color: #b9b2cf;
+}
+
+/* The full-screen call to prayer */
+.prayer-call {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+  text-align: center;
+  color: #f3e8d2;
+  background-color: #0b1030;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #fff8d0 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 42%, #fff8d0aa 50%, transparent 51%),
+    radial-gradient(2px 2px at 70% 14%, #fff8d0 50%, transparent 51%),
+    radial-gradient(1px 1px at 86% 38%, #fff8d0aa 50%, transparent 51%),
+    radial-gradient(1px 1px at 46% 8%, #fff8d0 50%, transparent 51%),
+    radial-gradient(circle at 50% 120%, rgba(255, 170, 70, 0.35), transparent 55%),
+    linear-gradient(180deg, #0b1030, #1f2a5e);
+}
+.prayer-call__sky {
+  position: relative;
+  width: min(320px, 90%);
+  height: 90px;
+}
+.prayer-call__moon {
+  position: absolute;
+  right: 12%;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  background: #f4f1de;
+  box-shadow: 0 0 16px rgba(244, 241, 222, 0.4);
+}
+.prayer-call__moon::after {
+  /* a sky-coloured block takes a "bite" out of the moon → pixel crescent */
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  width: 26px;
+  height: 26px;
+  background: #0d1336;
+}
+.prayer-call__lanterns {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-around;
+}
+.prayer-call__arabic {
+  font-size: clamp(36px, 10vw, 56px);
+  line-height: 1.2;
+  font-family: 'Geeza Pro', 'Noto Naskh Arabic', 'Amiri', serif;
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 217, 59, 0.5);
+}
+.prayer-call__title {
+  font-family: var(--font-title);
+  font-size: clamp(14px, 3.6vw, 22px);
+  line-height: 1.6;
+  text-shadow: 3px 3px 0 #000;
+}
+.prayer-call__time {
+  font-family: var(--font-num);
+  font-size: 28px;
+}
+.prayer-call__reminder {
+  max-width: 34ch;
+  font-size: 17px;
+  color: #d9d0f0;
+}
+.prayer-call__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(340px, 100%);
+}
+.prayer-call__later {
+  color: #d9d0f0 !important;
+}
+.prayer-call__note {
+  color: #9c95b8;
+}
+
+/* Prayer page */
+.prayer-times {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.prayer-times li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  background: var(--panel-hi);
+  border: 2px solid var(--panel-lo);
+}
+.prayer-times li.is-now {
+  border-color: var(--gold);
+  box-shadow: inset 6px 0 0 var(--gold);
+}
+.prayer-times__name {
+  font-weight: 600;
+}
+.prayer-times__name span {
+  color: var(--ink-soft);
+  font-weight: 400;
+  margin-left: 6px;
+}
+.prayer-times__clock {
+  font-family: var(--font-num);
+  font-size: 26px;
+}
+.prayer-times__sunrise {
+  grid-column: 1 / -1;
+  font-size: 13px;
+}
+.prayer-week {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.prayer-week__day {
+  display: grid;
+  grid-template-columns: 3em repeat(5, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+.prayer-week__day.is-today .prayer-week__label {
+  color: var(--lantern);
+}
+.prayer-week__label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.mini-lantern {
+  height: 26px;
+  cursor: pointer;
+  background: var(--bar-bg);
+  border: 2px solid var(--edge);
+}
+.mini-lantern.is-on {
+  background: var(--gold);
+  box-shadow: inset 0 0 0 3px #fff3b0, 0 0 8px rgba(255, 190, 80, 0.6);
+}
+.qibla {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.qibla__dial {
+  position: relative;
+  flex-shrink: 0;
+  width: 110px;
+  height: 110px;
+  background: repeating-conic-gradient(var(--panel-hi) 0 45deg, var(--panel-lo) 45deg 90deg);
+  border: 4px solid var(--edge);
+}
+.qibla__n {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-title);
+  font-size: 10px;
+  color: var(--red);
+}
+.qibla__needle {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 6px;
+  height: 42%;
+  margin-left: -3px;
+  background: var(--gold);
+  border: 2px solid var(--edge);
+  transform-origin: 50% 100%;
+}
+.qibla__needle::after {
+  /* the Kaaba at the tip */
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  background: #111;
+  box-shadow: inset 0 3px 0 var(--gold);
+}
+.offsets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+}
+
+/* ==========================================================================
+   Sound mixer
+   ========================================================================== */
+.mixer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stairs-row {
+  display: grid;
+  grid-template-columns: auto 3.5em minmax(0, 1fr) 2.2em;
+  align-items: center;
+  gap: 8px;
+}
+.stairs-row__mute.is-off {
+  opacity: 0.4;
+}
+.stairs-row__label {
+  font-weight: 600;
+  font-size: 15px;
+}
+.stairs-row__value {
+  font-family: var(--font-num);
+  font-size: 20px;
+  text-align: right;
+}
+.stairs {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 36px;
+  padding: 2px;
+  cursor: pointer;
+  touch-action: none; /* let a finger drag across the steps */
+}
+.stairs__step {
+  flex: 1;
+  background: var(--bar-bg);
+  border: 2px solid var(--edge);
+}
+.stairs__step.is-on {
+  background: var(--grass);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.35);
+}
+.stairs__step.is-on:nth-child(n + 5) {
+  background: var(--lantern);
+}
+.stairs__step.is-on:nth-child(n + 7) {
+  background: var(--red);
+}
+.mixer__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.mixer-pop__panel {
+  position: fixed;
+  top: calc(62px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 45;
+  width: min(380px, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 4px solid var(--edge);
+  box-shadow: inset 3px 3px 0 var(--panel-hi), inset -3px -3px 0 var(--panel-lo), 0 8px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* ==========================================================================
+   Today's classes
+   ========================================================================== */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.class-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.class-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: var(--panel-hi);
+  border: 2px solid var(--panel-lo);
+  border-left: 6px solid var(--sky);
+}
+.class-row.is-live {
+  border-left-color: var(--grass);
+  box-shadow: 0 0 0 2px var(--grass);
+}
+.class-row.is-done {
+  opacity: 0.5;
+}
+.class-row__time {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-num);
+  font-size: 22px;
+  line-height: 1;
+}
+.class-row__time small {
+  font-size: 16px;
+  color: var(--ink-soft);
+}
+.class-row__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.class-row__tag {
+  font-family: var(--font-num);
+  font-size: 18px;
+  padding: 0 6px;
+  white-space: nowrap;
+  color: #2f1d0c;
+  background: var(--gold);
+}
+.class-row__tag--live {
+  background: var(--xp);
+}
+.day-group.is-today .day-group__title {
+  color: var(--lantern);
+}

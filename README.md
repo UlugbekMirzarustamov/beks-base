@@ -3,7 +3,10 @@
 A cozy, blocky pixel-art home base for life as an international student:
 **money** (the Chest), **study** (the Bookshelf), **planning** (the Crafting table),
 **reflecting** (the Telescope: nightly log, weekly look back, your own night sky of stars,
-and sealed letters to future you), plus words, habits, mood and a journal.
+and sealed letters to future you), **prayer** (the Prayer mat: Sheffield prayer times,
+five lanterns a day, a call to prayer when you open the app, qibla compass),
+your **USIC timetable** day by day, a rain/fire/wind **sound mixer**,
+plus words, habits, mood and a journal.
 
 - No accounts, no bank connection, no tracking. **Your data stays on your device.**
 - Works offline and can be installed on your phone like an app (a "PWA").
@@ -93,8 +96,11 @@ This *replaces* everything in the app with what's in the file.
 
 Good habit: export every Sunday evening (maybe add it as a weekly task in the Planner 😉).
 
-**Start fresh:** the app begins with a few items marked "(example)". Remove them with
-More → Settings → **Clear example data**. Your own items are kept.
+**Start over:** More → Settings → **Delete everything** (your school timetable,
+starter topics and formula cards come back).
+
+**Next month's timetable:** add classes in Planner → Timetable → "Add a class",
+or put the new weeks into `src/lib/timetable.ts` (copy the November block) and push.
 
 ---
 
@@ -118,6 +124,8 @@ src/
     csv.ts        bank CSV import
     sound.ts      rain / fire background sound (made in code)
     xp.ts         XP and levels
+    prayer.ts     prayer times for Sheffield (+ prayer.test.ts)
+    timetable.ts  your USIC timetable, by date
   state/store.tsx the app's memory: data, auto-save, XP, toasts, Pomodoro timer
   ui/           reusable pixel pieces (panels, bars, tabs, pop-ups, icons)
   scene/        the canvas cabin on the Home screen
