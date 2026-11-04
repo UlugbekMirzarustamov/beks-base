@@ -14,6 +14,7 @@ import Money, { ExpenseSheet } from './screens/Money';
 import More from './screens/More';
 import { MorningBriefing } from './screens/Briefing';
 import CalmCorner, { JarOverlay } from './screens/Calm';
+import { PotCloseout } from './screens/Plan';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Reflect from './screens/Reflect';
@@ -188,6 +189,7 @@ export default function App() {
 
       <ExpenseSheet />
       <MorningBriefing />
+      <PotCloseout />
       <JarOverlay />
       <Splash />
       <PrayerCall />

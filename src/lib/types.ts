@@ -36,6 +36,8 @@ export interface Expense extends Base {
   date: string; // YYYY-MM-DD
   /** Set when this expense was created automatically by a recurring bill. */
   recurringId?: string;
+  /** Bought with the wish fund: comes out of the fund, not out of that day's allowance. */
+  fromWish?: boolean;
 }
 
 export interface RecurringBill extends Base {
@@ -228,6 +230,16 @@ export interface Avatar {
   doppi: boolean;
 }
 
+/** Something you'd love to buy with the money you save by spending less each day. */
+export interface Wish extends Base {
+  name: string;
+  cost: number; // approximate, in dollars
+  icon: 'gift' | 'plane' | 'phone' | 'book' | 'heart' | 'star' | 'house' | 'globe';
+  created: string;
+  /** The day you bought it (it's then on the "wishes come true" shelf). */
+  bought?: string;
+}
+
 /** Sound mixer: each channel 0 (off) … 8 (loudest). */
 export interface Mixer {
   rain: number;
@@ -257,6 +269,8 @@ export interface Settings {
   pomodoroWork: number;
   pomodoroBreak: number;
 }
+
+import type { Pot } from './pot';
 
 export interface AppData {
   /** Bumped if the shape ever changes, so old backups can be upgraded. */
@@ -309,6 +323,10 @@ export interface AppData {
   sleepLog: Record<string, string>;
   /** "YYYY-MM-DD" → the mistake recalled that morning and how it went */
   recall: Record<string, { id: string; result?: 'got' | 'again' }>;
+  /** The money plan: one pot that must last N months (null = not set up). */
+  pot: Pot | null;
+  /** Things you're saving for with the wish fund. */
+  wishes: Wish[];
   /** Cabin shop: items you own, which item is shown in each spot, coins spent. */
   shop: { owned: string[]; placed: Record<string, string>; spent: number };
   /** One-time updates already applied to this data (e.g. "usic-nov-2026"). */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyRecurring, barLevel, convertPoundsToDollars, formatMoney, parseAmount, poundsToDollars, safeToSpend, spendingByDay, spentInMonth } from './money';
 import { emptyData } from './seed';
+import { daysUntil, potStatus } from './pot';
 import type { Expense, RecurringBill } from './types';
 
 const exp = (amount: number, date: string, categoryId = 'food'): Expense => ({ id: date + amount, amount, date, categoryId, note: '' });
@@ -120,5 +121,55 @@ describe('dollars', () => {
     expect(out.monthlyBudget).toBe(867);
     expect(out.expenses[0]).toMatchObject({ amount: 4, paidGbp: 3 });
     expect(out.settings.currencyChecked).toBe(true);
+  });
+});
+
+describe('money plan ($3,700 for 5 months)', () => {
+  const pot = { total: 3700, start: '2026-11-04', months: 5 };
+
+  it('splits the pot into a daily allowance', () => {
+    const s = potStatus(pot, [], '2026-11-04');
+    expect(s.end).toBe('2027-04-03');
+    expect(s.totalDays).toBe(151);
+    expect(s.daily).toBe(24.5);
+    expect(s.remaining).toBe(3700);
+    expect(s.leftToday).toBe(24.5);
+    expect(s.fund).toBe(0);
+  });
+
+  it('takes purchases out of the pot and saves what you do not spend', () => {
+    const spent = [exp(10, '2026-11-04'), exp(30, '2026-11-05'), exp(4.5, '2026-11-06')];
+    const s = potStatus(pot, spent, '2026-11-06');
+    expect(s.remaining).toBe(3655.5); // 3700 − 44.50
+    expect(s.leftToday).toBe(20); // 24.50 − 4.50
+    // Day 1: saved 14.50; day 2: overspent 5.50 → fund = 9.00
+    expect(s.fund).toBe(9);
+    expect(s.underStreak).toBe(0); // yesterday was over
+  });
+
+  it('takes wishes out of the wish fund, not out of the day', () => {
+    const coat: Expense = { ...exp(40, '2026-11-06'), fromWish: true };
+    const s = potStatus(pot, [exp(10, '2026-11-04'), exp(30, '2026-11-05'), exp(4.5, '2026-11-06'), coat], '2026-11-06');
+    expect(s.fund).toBe(9 - 40); // the coat comes straight out of the fund
+    expect(s.leftToday).toBe(20); // today's allowance is untouched
+    expect(s.remaining).toBe(3615.5); // but it still comes out of the pot
+  });
+
+  it('overspending today lowers the wish fund straight away', () => {
+    const s = potStatus(pot, [exp(30, '2026-11-04')], '2026-11-04');
+    expect(s.leftToday).toBe(-5.5);
+    expect(s.fund).toBe(-5.5);
+  });
+
+  it('ignores spending from before the plan started', () => {
+    expect(potStatus(pot, [exp(500, '2026-11-01')], '2026-11-04').remaining).toBe(3700);
+  });
+
+  it('says when the money would run out at your pace', () => {
+    const s = potStatus(pot, [exp(100, '2026-11-04')], '2026-11-05');
+    expect(s.runsOutOn).not.toBeNull(); // $50/day on average → runs out long before April
+    expect(daysUntil(100, 40, 5)).toBe(12);
+    expect(daysUntil(100, 120, 5)).toBe(0);
+    expect(daysUntil(100, 40, 0)).toBeNull();
   });
 });

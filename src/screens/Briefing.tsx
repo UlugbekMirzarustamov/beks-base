@@ -5,6 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 import { pick } from '../lib/cabin';
+import { potStatus } from '../lib/pot';
 import { todaysQuest } from '../lib/daily';
 import { daysBetween, formatDay, UK_TZ, zonedParts } from '../lib/dates';
 import { formatMoney, safeToSpend } from '../lib/money';
@@ -131,7 +132,16 @@ export function MorningBriefing() {
           <li>
             <PixelIcon name="coin" size={26} />
             <span>
-              Safe to spend today: <strong>{formatMoney(money.perDay)}</strong>
+              {data.pot ? (
+                <>
+                  Today: <strong>{formatMoney(potStatus(data.pot, data.expenses, today).leftToday)}</strong> to spend · wish fund{' '}
+                  {formatMoney(potStatus(data.pot, data.expenses, today).fund)}
+                </>
+              ) : (
+                <>
+                  Safe to spend today: <strong>{formatMoney(money.perDay)}</strong>
+                </>
+              )}
             </span>
           </li>
           {test && daysBetween(today, test.date) <= 21 && (

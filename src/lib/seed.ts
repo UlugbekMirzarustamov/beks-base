@@ -123,6 +123,8 @@ export function emptyData(today: string): AppData {
     badges: {},
     shop: { owned: [], placed: {}, spent: 0 },
     quests: {},
+    pot: null,
+    wishes: [],
     sleepLog: {},
     recall: {},
     applied: [],
@@ -156,6 +158,14 @@ export function upgrade(data: AppData, today: string): AppData {
       ...result,
       applied: [...result.applied, 'mixer'],
       settings: { ...result.settings, sound: 'off', mixer: { rain: sound === 'rain' ? 4 : 0, fire: sound === 'fire' ? 4 : 0, wind: 0 } },
+    };
+  }
+  // Bek's real money: $3,700 that has to last 5 months, starting the day this update arrives.
+  if (!result.applied.includes('pot-3700')) {
+    result = {
+      ...result,
+      applied: [...result.applied, 'pot-3700'],
+      pot: result.pot ?? { total: 3700, start: today, months: 5, lastCloseout: today },
     };
   }
   if (!result.applied.includes('usd')) {

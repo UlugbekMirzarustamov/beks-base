@@ -8,6 +8,7 @@ import { levelInfo } from './xp';
 import { streak } from './cabin';
 import { PRAYERS } from './prayer';
 import { QURAN_PAGES } from './quran';
+import { potStatus } from './pot';
 import type { AppData } from './types';
 
 export interface Badge {
@@ -57,6 +58,8 @@ export const BADGES: Badge[] = [
   { id: 'bookkeeper', name: 'Bookkeeper', how: 'Log your first purchase.', icon: 'coin', tier: 'bronze', earned: (d) => d.expenses.length >= 1 },
   { id: 'saver', name: 'Saver', how: 'Start a savings jar.', icon: 'gift', tier: 'bronze', earned: (d) => d.goals.length >= 1 },
   { id: 'goal-getter', name: 'Goal getter', how: 'Fill a savings jar to the top.', icon: 'gift', tier: 'gold', earned: (d) => d.goals.some((g) => Boolean(g.reached)) },
+  { id: 'wish', name: 'Wish come true', how: 'Buy a wish with money you saved.', icon: 'star', tier: 'gold', earned: (d) => d.wishes.some((w) => Boolean(w.bought)) },
+  { id: 'thrifty', name: 'Thrifty week', how: 'Stay within your daily allowance 7 days in a row.', icon: 'coin', tier: 'silver', earned: (d, t) => Boolean(d.pot && potStatus(d.pot, d.expenses, t).underStreak >= 7) },
   // Reflect & life
   { id: 'stargazer', name: 'Stargazer', how: "Light your first star (Reflect → Tonight).", icon: 'star', tier: 'bronze', earned: (d) => Object.values(d.nightLogs).some((l) => l.rewarded) },
   { id: 'constellation', name: 'Constellation', how: 'Log 7 nights in a row.', icon: 'telescope', tier: 'gold', earned: (d, t) => streak((day) => Boolean(d.nightLogs[day]?.line.trim()), t) >= 7 },

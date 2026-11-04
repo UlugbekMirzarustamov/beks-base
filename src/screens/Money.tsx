@@ -10,6 +10,7 @@ import { addDays, addMonths, daysBetween, daysInMonth, formatDay, formatMonth, m
 import { uid } from '../lib/id';
 import { barLevel, convertPoundsToDollars, formatMoney, formatPounds, parseAmount, poundsToDollars, roundPennies, safeToSpend, spendingByDay, spentInMonth } from '../lib/money';
 import { moneyInsights } from '../lib/daily';
+import { PlanTab, PotToday, Wishes } from './Plan';
 import { sfx } from '../lib/sound';
 import type { Category, CategoryIcon, Expense, SavingsGoal } from '../lib/types';
 import { useStore } from '../state/store';
@@ -28,7 +29,7 @@ export const CATEGORY_COLOR: Record<CategoryIcon, string> = {
 };
 const ICON_CHOICES: CategoryIcon[] = ['house', 'apple', 'bus', 'phone', 'star', 'coin', 'box'];
 
-const TABS = ['overview', 'spending', 'savings', 'charts', 'bills', 'setup', 'tools'] as const;
+const TABS = ['plan', 'wishes', 'overview', 'spending', 'savings', 'charts', 'bills', 'setup', 'tools'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function Money({ sub }: { sub?: string }) {
@@ -43,12 +44,14 @@ export default function Money({ sub }: { sub?: string }) {
         active={tab}
         onChange={setTab}
         tabs={[
-          { id: 'overview', label: 'Overview', icon: 'coin' },
+          { id: 'plan', label: 'Plan', icon: 'chest' },
+          { id: 'wishes', label: 'Wishes', icon: 'star' },
+          { id: 'overview', label: 'Budget', icon: 'coin' },
           { id: 'spending', label: 'Spending', icon: 'scroll' },
           { id: 'savings', label: 'Savings', icon: 'gift' },
           { id: 'charts', label: 'Charts', icon: 'calendar' },
           { id: 'bills', label: 'Bills', icon: 'house' },
-          { id: 'setup', label: 'Budget', icon: 'gear' },
+          { id: 'setup', label: 'Limits', icon: 'gear' },
           { id: 'tools', label: 'Tools', icon: 'globe' },
         ]}
       />
@@ -59,6 +62,8 @@ export default function Money({ sub }: { sub?: string }) {
           <Insights />
         </div>
       )}
+      {tab === 'plan' && <PlanTab />}
+      {tab === 'wishes' && <Wishes />}
       {tab === 'spending' && <SpendingList />}
       {tab === 'savings' && <Savings />}
       {tab === 'charts' && <Charts />}
@@ -83,6 +88,12 @@ function useCategory() {
 
 // ---------------------------------------------------------------- Safe to spend
 export function SafeToSpendCard() {
+  const { data } = useStore();
+  // With a money plan (one pot for N months), show today's allowance from the pot instead.
+  return data.pot ? <PotToday /> : <MonthlySafeToSpend />;
+}
+
+function MonthlySafeToSpend() {
   const { data, today, openExpense } = useStore();
   const s = safeToSpend(data.monthlyBudget, data.expenses, today);
   const spent = roundPennies(data.monthlyBudget - s.left);

@@ -3782,12 +3782,12 @@ button.list__main {
   gap: 8px;
 }
 .insights li {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  display: block; /* plain flowing text, so bold amounts don't break into columns */
 }
 .insights .picon {
-  margin-top: 3px;
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 6px;
 }
 .calm__intro {
   color: #fff3d6;
@@ -4027,4 +4027,164 @@ button.list__main {
     50% { transform: rotate(-4deg); }
     75% { transform: rotate(2deg); }
   }
+}
+
+/* ==========================================================================
+   Money plan: pot, runway, calendar, wishes
+   ========================================================================== */
+.pot-today__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.pot-today__row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pot-today__fund {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  text-decoration: none;
+  background: rgba(255, 217, 59, 0.18);
+  border: 2px dashed var(--gold);
+}
+.pot-today__fund.is-negative {
+  background: rgba(214, 69, 65, 0.15);
+  border-color: var(--red);
+}
+.pot-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.pot-stats > div {
+  display: flex;
+  flex-direction: column;
+}
+.runway {
+  position: relative;
+  height: 40px;
+  margin: 8px 6px 0;
+}
+.runway__road {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18px;
+  height: 10px;
+  background: repeating-linear-gradient(90deg, #4a4a52 0 10px, #5a5a62 10px 20px);
+  border: 2px solid var(--edge);
+}
+.runway__done {
+  position: absolute;
+  left: 0;
+  top: 18px;
+  height: 10px;
+  background: var(--grass);
+  border: 2px solid var(--edge);
+}
+.runway__you,
+.runway__flag {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+}
+.runway__flag {
+  left: 100%;
+}
+.runway__empty {
+  position: absolute;
+  top: 10px;
+  width: 6px;
+  height: 26px;
+  margin-left: -3px;
+  background: var(--red);
+  border: 2px solid var(--edge);
+}
+.runway__labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-num);
+  font-size: 18px;
+  color: var(--ink-soft);
+}
+.money-cal {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 22px);
+  gap: 4px;
+}
+.money-cal__day {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--edge);
+}
+.money-cal__day.is-great {
+  background: var(--grass);
+}
+.money-cal__day.is-ok {
+  background: #9be36a;
+}
+.money-cal__day.is-over {
+  background: var(--red);
+}
+.money-cal__day.is-today {
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold);
+}
+.slider {
+  width: 100%;
+  accent-color: var(--gold);
+}
+.wish-fund .big-number {
+  color: #c99a0f;
+}
+:root[data-theme='night'] .wish-fund .big-number {
+  color: var(--gold);
+}
+.wish__stars {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 3px;
+}
+.wish__star {
+  aspect-ratio: 1;
+  background: var(--bar-bg);
+  border: 2px solid var(--edge);
+  clip-path: polygon(50% 0, 64% 36%, 100% 50%, 64% 64%, 50% 100%, 36% 64%, 0 50%, 36% 36%);
+}
+.wish__star.is-on {
+  background: var(--gold);
+}
+.wish.is-ready {
+  box-shadow: inset 3px 3px 0 var(--panel-hi), inset -3px -3px 0 var(--panel-lo), 0 0 0 3px var(--gold), 0 0 20px rgba(255, 217, 59, 0.5);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wish.is-ready .wish__star.is-on {
+    animation: twinkle 1.6s steps(2) infinite;
+  }
+}
+.wish-shelf {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wish-shelf li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: var(--panel-hi);
+  border: 2px solid var(--gold);
 }
