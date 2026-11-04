@@ -11,6 +11,7 @@ import { Bar, Empty, Panel } from '../ui/kit';
 import { Clocks, MoodCheckIn } from './Extras';
 import { InstallCard } from '../ui/AppFeel';
 import { BadgeSummary } from './Badges';
+import { coins } from '../lib/shop';
 import { SafeToSpendCard, SavingsMini } from './Money';
 import { classesOn, TaskRow, TopThree } from './Planner';
 import { PrayerLanterns, usePrayer } from './Prayer';
@@ -140,7 +141,12 @@ export default function Home() {
             <PixelIcon name="clock" size={14} /> {studiedToday} min studied today · Tasks +10 · Top 3 +15 · Pomodoro +25 · Prayer +15
           </p>
           <CabinUnlocks level={lvl.level} />
-          <BadgeSummary />
+          <div className="level-links">
+            <BadgeSummary />
+            <a href="#/more/shop" className="badge-summary">
+              <PixelIcon name="coin" size={16} /> {coins(data)} coins · Cabin shop →
+            </a>
+          </div>
         </Panel>
       </div>
     </div>
@@ -223,8 +229,8 @@ function useCabinScene() {
 
   // Memoised so the cabin animation isn't restarted on every re-render.
   const scene = useMemo<CabinScene>(
-    () => ({ mix: data.settings.mixer, level, prayerStreak: prayer.streak, studyStreak, simba: mood, season: seasonOf(today), weather: kind, avatar: data.settings.avatar }),
-    [data.settings.mixer, level, prayer.streak, studyStreak, mood, today, kind, data.settings.avatar],
+    () => ({ mix: data.settings.mixer, level, prayerStreak: prayer.streak, studyStreak, simba: mood, season: seasonOf(today), weather: kind, avatar: data.settings.avatar, decor: data.shop.placed }),
+    [data.settings.mixer, level, prayer.streak, studyStreak, mood, today, kind, data.settings.avatar, data.shop.placed],
   );
 
   // Simba speaks up on his own for important moods (once per mood change).
@@ -239,7 +245,8 @@ function useCabinScene() {
   const petSimba = () => {
     sfx('purr');
     buzz([10, 30, 10]);
-    const pool = mood === 'cosy' || mood === 'sleep' ? [...SIMBA_PETS, ...SIMBA_LINES[mood]] : SIMBA_PETS;
+    const yarn = data.shop.placed.toy === 'yarn' ? ['*bats the yarn ball across the floor*', 'Thank you for the yarn ball!'] : [];
+    const pool = [...(mood === 'cosy' || mood === 'sleep' ? [...SIMBA_PETS, ...SIMBA_LINES[mood]] : SIMBA_PETS), ...yarn];
     setPetLine(pick(pool));
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setPetLine(null), 3500);

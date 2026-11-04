@@ -14,9 +14,10 @@ import { InstallCard } from '../ui/AppFeel';
 import { BEK_H, BEK_W, drawBek } from '../scene/Cabin';
 import type { BekPose } from '../lib/cabin';
 import { BadgeShelf } from './Badges';
+import { CabinShop } from './Shop';
 import { Habits, Journal, MoodCheckIn, MoodWeek, Vocab } from './Extras';
 
-const TABS = ['badges', 'words', 'habits', 'mood', 'journal', 'settings'] as const;
+const TABS = ['shop', 'badges', 'words', 'habits', 'mood', 'journal', 'settings'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function More({ sub }: { sub?: string }) {
@@ -31,6 +32,7 @@ export default function More({ sub }: { sub?: string }) {
         active={tab}
         onChange={setTab}
         tabs={[
+          { id: 'shop', label: 'Shop', icon: 'coin' },
           { id: 'badges', label: 'Badges', icon: 'star' },
           { id: 'words', label: 'Words', icon: 'book' },
           { id: 'habits', label: 'Habits', icon: 'check' },
@@ -39,6 +41,7 @@ export default function More({ sub }: { sub?: string }) {
           { id: 'settings', label: 'Settings', icon: 'gear' },
         ]}
       />
+      {tab === 'shop' && <CabinShop />}
       {tab === 'badges' && <BadgeShelf />}
       {tab === 'words' && <Vocab />}
       {tab === 'habits' && <Habits />}

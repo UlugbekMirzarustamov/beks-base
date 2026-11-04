@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { UK_TZ, zonedParts } from '../lib/dates';
 import { BEK_POSE, plantStage, unlockedIds, type BekPose, type Season, type SimbaMood } from '../lib/cabin';
+import type { ShopSlot } from '../lib/shop';
 import type { Avatar, Mixer } from '../lib/types';
 import type { WeatherKind } from '../lib/weather';
 import { PixelIcon, type IconName } from '../ui/icons';
@@ -98,6 +99,132 @@ export interface CabinScene {
   /** Real weather right now (null = unknown/offline → just the time-of-day sky). */
   weather: WeatherKind | null;
   avatar: Avatar;
+  /** Cabin-shop items on display, by spot. */
+  decor: Partial<Record<ShopSlot, string>>;
+}
+
+/* ---------------------------------------------------------------------------
+ * Cabin-shop decorations. Each draws with its top-left at (x, y).
+ * ------------------------------------------------------------------------- */
+/** Size of each item (used for the shop previews). */
+export const DECOR_SIZE: Record<string, [number, number]> = {
+  samarkand: [17, 14],
+  bukhara: [16, 13],
+  suzani: [14, 14],
+  samovar: [9, 10],
+  plov: [12, 5],
+  gilam: [30, 7],
+  curtains: [22, 16],
+  globe: [8, 9],
+  yarn: [5, 4],
+  fonar: [20, 9],
+};
+
+/** One curtain panel in atlas-silk zigzag stripes. */
+function curtain(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  const cols = ['#c0392b', '#e0b030', '#2a6fa8', '#f3ead2', '#7a4fa3'];
+  for (let yy = 0; yy < h; yy++) {
+    for (let xx = 0; xx < w; xx++) {
+      ctx.fillStyle = cols[(Math.floor(yy / 2) + Math.abs(xx - Math.floor(w / 2))) % cols.length];
+      ctx.fillRect(x + xx, y + yy, 1, 1);
+    }
+  }
+}
+
+export function drawDecor(ctx: CanvasRenderingContext2D, id: string, x: number, y: number) {
+  const r = (xx: number, yy: number, w: number, h: number, c: string) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(x + xx, y + yy, w, h);
+  };
+  switch (id) {
+    case 'samarkand': // Registan: three blue-domed buildings on sand
+      r(0, 0, 17, 14, '#4a2e15');
+      r(1, 1, 15, 12, '#8fd3ff');
+      r(1, 9, 15, 4, '#e8cf96');
+      r(2, 5, 4, 5, '#d8b878');
+      r(7, 4, 4, 6, '#d8b878');
+      r(12, 5, 3, 5, '#d8b878');
+      r(3, 3, 2, 2, '#2a8fd8');
+      r(8, 2, 2, 2, '#2a8fd8');
+      r(12, 3, 2, 2, '#2a8fd8');
+      r(3, 7, 2, 3, '#2a6fa8');
+      r(8, 6, 2, 4, '#2a6fa8');
+      r(12, 7, 2, 3, '#2a6fa8');
+      break;
+    case 'bukhara': // Kalyan minaret at sunset
+      r(0, 0, 16, 13, '#4a2e15');
+      r(1, 1, 14, 6, '#4a5aa0');
+      r(1, 6, 14, 5, '#f6a76a');
+      r(1, 11, 14, 1, '#e8cf96');
+      r(7, 2, 2, 9, '#d8b878');
+      r(6, 2, 4, 1, '#c9a46a');
+      r(11, 7, 3, 2, '#2a8fd8');
+      r(10, 9, 5, 2, '#c9a46a');
+      break;
+    case 'suzani':
+      r(0, 0, 14, 14, '#e0a040');
+      r(1, 1, 12, 12, '#b8322a');
+      for (const [dx, dy] of [[2, 2], [8, 2], [5, 5], [2, 8], [8, 8]]) {
+        r(dx, dy, 4, 4, '#2a6fa8');
+        r(dx + 1, dy + 1, 2, 2, '#f3e3bd');
+      }
+      break;
+    case 'samovar':
+      r(3, 0, 3, 2, '#2a6fa8'); // little choynak on top
+      r(4, 0, 1, 1, '#f3ead2');
+      r(1, 2, 7, 6, '#c9a04a');
+      r(1, 4, 7, 1, '#e0c060');
+      r(0, 3, 1, 3, '#8a6420');
+      r(8, 3, 1, 3, '#8a6420');
+      r(4, 6, 1, 1, '#3a3a3a'); // tap
+      r(2, 8, 5, 2, '#8a6420');
+      break;
+    case 'plov':
+      r(0, 3, 12, 2, '#2a6fa8');
+      r(1, 3, 10, 1, '#f3ead2');
+      r(2, 1, 8, 2, '#e8b24a');
+      r(3, 0, 6, 1, '#e8b24a');
+      r(4, 1, 1, 1, '#e06a2a');
+      r(7, 2, 1, 1, '#e06a2a');
+      r(5, 0, 2, 1, '#7a3b1e');
+      break;
+    case 'gilam':
+      r(0, 0, 30, 7, '#8a2a22');
+      r(0, 0, 30, 1, '#e0b030');
+      r(0, 6, 30, 1, '#e0b030');
+      for (let i = 0; i < 4; i++) {
+        r(3 + i * 7, 2, 3, 3, '#1d3a6a');
+        r(4 + i * 7, 3, 1, 1, '#f3e3bd');
+      }
+      break;
+    case 'curtains': // shop preview: two panels with a little window between
+      r(4, 0, 14, 14, '#4fa8ea');
+      curtain(ctx, x, y, 5, 16);
+      curtain(ctx, x + 17, y, 5, 16);
+      break;
+    case 'globe':
+      r(1, 0, 6, 6, '#2a8fd8');
+      r(2, 1, 2, 2, '#5fa83b');
+      r(4, 3, 2, 2, '#5fa83b');
+      r(0, 2, 1, 2, '#8a6420');
+      r(4, 6, 1, 2, '#5a3a1d');
+      r(2, 8, 5, 1, '#5a3a1d');
+      break;
+    case 'yarn':
+      r(0, 0, 4, 4, '#d63a8a');
+      r(1, 1, 2, 1, '#f27ab8');
+      r(4, 3, 1, 1, '#d63a8a'); // loose thread
+      break;
+    case 'fonar': // two coloured-glass lanterns
+      for (const [dx, col] of [[0, '#e05a3a'], [14, '#3aa0e0']] as [number, string][]) {
+        r(dx + 2, 0, 1, 3, '#3a3a3a');
+        r(dx, 3, 5, 1, '#3a3a3a');
+        r(dx, 4, 5, 4, col);
+        r(dx + 1, 5, 3, 2, '#ffe9b0');
+        r(dx, 8, 5, 1, '#3a3a3a');
+      }
+      break;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -120,9 +247,12 @@ const BEK_LEGS = ['..pppp..', '..pppp..', '..pPPp..', '..pPPp..', '..bbbb..'];
 export const BEK_W = 8;
 export const BEK_H = 17;
 
-/** Draw Bek with his top-left corner at (x, y). Used by the cabin and the character editor preview. */
-export function drawBek(ctx: CanvasRenderingContext2D, x: number, y: number, pose: BekPose, look: Avatar, blink = false) {
-  const colours: Record<string, string> = {
+/**
+ * Draw Bek with his top-left corner at (x, y). `scale` 2 = each of his pixels is 2×2
+ * (how big he is in the cabin); `shade` 0–1 darkens him a little at night so he fits the room.
+ */
+export function drawBek(ctx: CanvasRenderingContext2D, x: number, y: number, pose: BekPose, look: Avatar, blink = false, scale = 1, shade = 0) {
+  const base: Record<string, string> = {
     h: look.hair,
     d: '#1c1c1c',
     w: '#f3ead2',
@@ -138,38 +268,43 @@ export function drawBek(ctx: CanvasRenderingContext2D, x: number, y: number, pos
     K: '#c0392b',
     C: '#f3ead2',
   };
+  const tint = (c: string) => (shade > 0 && c.startsWith('#') ? mix(c, '#0a0c23', shade) : c);
+  const px = (xx: number, yy: number, c: string) => {
+    ctx.fillStyle = tint(c);
+    ctx.fillRect(x + xx * scale, y + yy * scale, scale, scale);
+  };
   const rows = [...(look.doppi ? BEK_HEAD_DOPPI : BEK_HEAD_HAIR), ...BEK_FACE, ...BEK_BODY[pose], ...BEK_LEGS];
-  rows.forEach((row, yy) =>
-    [...row].forEach((ch, xx) => {
-      if (ch === '.') return;
-      ctx.fillStyle = colours[ch];
-      ctx.fillRect(x + xx, y + yy, 1, 1);
-    }),
-  );
+  rows.forEach((row, yy) => [...row].forEach((ch, xx) => ch !== '.' && px(xx, yy, base[ch])));
   if (pose === 'think') {
     // left hand scratching his head
-    ctx.fillStyle = look.skin;
-    ctx.fillRect(x - 1, y + 3, 1, 2);
-    ctx.fillStyle = look.shirt;
-    ctx.fillRect(x - 1, y + 5, 1, 2);
+    px(-1, 3, look.skin);
+    px(-1, 4, look.skin);
+    px(-1, 5, look.shirt);
+    px(-1, 6, look.shirt);
   }
 }
 
-/** Where Bek stands (top-left, scene pixels) — always right next to Simba. */
+/** Bek is drawn at 2× in the cabin so he's easy to see. */
+const BEK_SCALE = 2;
+
+/**
+ * Where Bek stands (top-left, scene pixels, already at 2× size).
+ * Prayer time → on the prayer mat. Otherwise beside the tall plant ("the tree")
+ * between the window and the crafting table when the room is wide enough,
+ * or in front of the bookshelf on narrow (phone) screens.
+ */
 function bekSpot(W: number, mood: SimbaMood): { x: number; y: number } {
-  const { C, fireX } = layout(W);
-  switch (mood) {
-    case 'study':
-      return { x: 2, y: 84 - BEK_H }; // reading by the bookshelf
-    case 'prayer':
-      return { x: 66 + C, y: 88 - BEK_H }; // standing on the prayer mat
-    case 'worried':
-      return { x: 58, y: 84 - BEK_H }; // next to the chest, scratching his head
-    case 'cosy':
-      return { x: fireX + 16, y: 84 - BEK_H }; // a piyola of tea by the fire
-    default:
-      return { x: 93 + C, y: 88 - BEK_H }; // hanging out by sleeping Simba
+  const { C, win, tableX } = layout(W);
+  const h = BEK_H * BEK_SCALE;
+  if (mood === 'prayer') return { x: 70 + C, y: 91 - h };
+  const rightGap = tableX - 3 - (win.x + 48);
+  if (rightGap >= 16) {
+    // The plant is drawn here: stand just to its right, tucking in front of its leaves if space is tight.
+    const plantX = win.x + 48 + Math.round((rightGap - 10) / 2);
+    return { x: Math.max(plantX - 2, Math.min(plantX + 10, tableX - 2 - BEK_W * BEK_SCALE)), y: 87 - h };
   }
+  // Narrow (phone) rooms have no tree and the middle is busy with signs: stand in front of the bookshelf.
+  return { x: 4, y: 90 - h };
 }
 
 /** Simba's spot in scene pixels for each mood (used to draw him and to place his tap area). */
@@ -179,7 +314,7 @@ function simbaSpot(W: number, mood: SimbaMood): { x: number; y: number; sitting:
     case 'study':
       return { x: 12, y: 72, sitting: true }; // by the bookshelf, next to the book stack
     case 'prayer':
-      return { x: 80 + C, y: 74, sitting: true }; // on the prayer mat, near the arch
+      return { x: 88 + C, y: 74, sitting: true }; // on the prayer mat by the arch, next to Bek
     case 'worried':
       return { x: 43, y: 47, sitting: true }; // on top of the chest
     case 'cosy':
@@ -225,6 +360,8 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
     for (let x = (y * 11) % 28; x < W; x += 28) r(x, y + 1, 1, 4, '#64401f');
   }
   r(0, 70, W, 2, '#4f3218'); // skirting board
+  const decor = scene.decor;
+  if (decor.floor) drawDecor(ctx, decor.floor, 3, 88);
 
   // ---------- Window: sky, sun/moon, hills ----------
   const { x: WX, y: WY, w: WW, h: WH } = win;
@@ -390,6 +527,15 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
     }
   }
 
+  // ---------- Cabin-shop items on the walls, window and ceiling ----------
+  if (decor.wallA) drawDecor(ctx, decor.wallA, 38, 29);
+  if (decor.wallB) drawDecor(ctx, decor.wallB, cx + 4, 31);
+  if (decor.window === 'curtains') {
+    curtain(ctx, WX - 7, 8, 5, 38);
+    curtain(ctx, WX + 46, 8, 5, 38);
+  }
+  if (decor.ceiling) drawDecor(ctx, decor.ceiling, WX + 9, 4);
+
   // ---------- Unlocked: hanging plant (Lv 4) and fairy lights (Lv 6) ----------
   if (has.has('hangingPlant')) {
     const hx = WX + 52;
@@ -432,6 +578,8 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   // A pile of books on the floor that grows with your study streak (up to 6).
   const pile = Math.min(6, scene.studyStreak);
   for (let i = 0; i < pile; i++) r(23 + (i % 2), 81 - i * 2, 9, 2, ['#c0392b', '#2e86c1', '#27ae60', '#8e44ad', '#e67e22', '#16a085'][i]);
+  if (decor.shelf) drawDecor(ctx, decor.shelf, 23, 17);
+  if (decor.toy) drawDecor(ctx, decor.toy, 30, 85);
 
   // ---------- Chest ----------
   r(37, 57, 20, 20, '#3b2512');
@@ -484,6 +632,9 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
     r(bk + 5, 80, 2, 2, '#e8c21a');
     r(bk + 3, 78, 1, 1, '#7a1f1a');
   }
+
+  if (decor.table === 'samovar') drawDecor(ctx, 'samovar', cx + 8, 45);
+  if (decor.table === 'plov') drawDecor(ctx, 'plov', cx + 6, 50);
 
   // ---------- Fireplace (stone) ----------
   const stone = (x0: number, y0: number, w: number, h: number) => {
@@ -585,12 +736,6 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
     }
   }
 
-  // ---------- Bek ----------
-  const bek = bekSpot(W, scene.simba);
-  const pose = BEK_POSE[scene.simba];
-  drawBek(ctx, bek.x, bek.y, pose, scene.avatar, motion && frame % 40 === 0);
-  if (pose === 'tea' && motion) r(bek.x + 7, bek.y + 9 - ((frame >> 1) % 4), 1, 1, 'rgba(255,255,255,0.55)'); // steam from his tea
-
   // ---------- Telescope (the Reflect station), pointing at the window ----------
   for (let i = 0; i <= 12; i++) {
     r(tx + 7 - Math.round(i * 0.45), 67 + i, 1, 1, '#4a2e15'); // left leg
@@ -625,6 +770,10 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   glow(fx + 17, 64, phase === 'day' ? 30 : 60, (phase === 'day' ? 0.12 : 0.32) + wobble);
   glow(47, 17, phase === 'day' ? 12 : 30, (phase === 'day' ? 0.1 : 0.25) + wobble);
   if (has.has('lamp') && phase !== 'day') glow(16, 18, 26, 0.22 + wobble);
+  if (decor.ceiling === 'fonar' && phase !== 'day') {
+    glow(WX + 11, 10, 14, 0.25 + wobble);
+    glow(WX + 25, 10, 14, 0.25 + wobble);
+  }
 
   // ---------- Light sources (drawn last so they stay bright) ----------
   r(fx + 9, 71, 16, 3, '#6e4522'); // logs
@@ -646,6 +795,11 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   }
   r(fx + 2, 24, 2, 2, motion && frame % 6 < 3 ? '#ffd27a' : '#ffb347'); // candle flame
   r(45, 14, 5, 6, motion && frame % 5 < 2 ? '#ffe39a' : '#ffc35a'); // lantern glass
+  // ---------- Bek (drawn last so nothing — not even the fire — covers him) ----------
+  const bek = bekSpot(W, scene.simba);
+  const pose = BEK_POSE[scene.simba];
+  drawBek(ctx, bek.x, bek.y, pose, scene.avatar, motion && frame % 40 === 0, BEK_SCALE, dark * 0.45);
+  if (pose === 'tea' && motion) r(bek.x + 15, bek.y + 18 - ((frame >> 1) % 6), 1, 1, 'rgba(255,255,255,0.6)'); // steam from his tea
   if (has.has('lamp')) {
     r(12, 15, 8, 4, phase === 'day' ? '#e0a040' : '#ffcf6a'); // lamp shade
     r(13, 14, 6, 1, '#c98a30');
@@ -802,7 +956,7 @@ export function Cabin({
       {(() => {
         const b = bekSpot(W, scene.simba);
         // Only his upper body is the tap area, so the prayer mat underneath stays tappable.
-        const box = { x: b.x - 1, y: b.y, w: BEK_W + 2, h: 11 };
+        const box = { x: b.x - 2, y: b.y, w: BEK_W * BEK_SCALE + 4, h: 22 };
         const cx = ((box.x + box.w / 2) / W) * 100;
         return (
           <>

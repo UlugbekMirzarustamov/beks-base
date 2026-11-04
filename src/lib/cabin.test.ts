@@ -3,6 +3,7 @@ import { nextUnlock, plantStage, seasonOf, simbaMood, streak, unlockedIds } from
 import { juzOfPage } from './quran';
 import { parseWeather, weatherKind } from './weather';
 import { newlyEarned } from './badges';
+import { coins, SHOP_ITEMS } from './shop';
 import { emptyData } from './seed';
 
 describe('cabin', () => {
@@ -82,5 +83,18 @@ describe('badges', () => {
     expect(ids).not.toContain('steadfast'); // needs 7 days in a row
     d.badges = Object.fromEntries(ids.map((id) => [id, '2026-11-04']));
     expect(newlyEarned(d, '2026-11-04')).toEqual([]);
+  });
+});
+
+describe('cabin shop', () => {
+  it('turns XP into coins and subtracts what you spend', () => {
+    const d = emptyData('2026-11-04');
+    d.xp = 101;
+    expect(coins(d)).toBe(50);
+    d.shop.spent = 40;
+    expect(coins(d)).toBe(10);
+    d.shop.spent = 999;
+    expect(coins(d)).toBe(0); // never negative
+    expect(new Set(SHOP_ITEMS.map((i) => i.id)).size).toBe(SHOP_ITEMS.length);
   });
 });

@@ -3649,3 +3649,54 @@ button.list__main {
   outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
+
+/* ---------- Cabin shop ---------- */
+.shop-wallet {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.shop {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.shop-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  text-align: center;
+  background: var(--panel-hi);
+  border: 2px solid var(--panel-lo);
+}
+.shop-item.is-shown {
+  border-color: var(--grass);
+  box-shadow: inset 0 0 0 2px var(--grass);
+}
+.shop-item__preview {
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  image-rendering: pixelated;
+  background: repeating-linear-gradient(180deg, #a0703f 0 6px, #7d5530 6px 7px);
+  border: 3px solid var(--edge);
+}
+.shop-item__slot {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+.shop-item .btn {
+  margin-top: auto;
+}
+.level-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}

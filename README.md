@@ -12,7 +12,8 @@ plus words, habits, mood and a journal.
 
 The cabin is alive: it grows as you level up (choynak, reading lamp, fairy lights…),
 the window shows the real Sheffield weather and the season, and **Simba** the ginger
-cat reacts to your day — tap him to say hi.
+cat reacts to your day — tap him to say hi. **Bek** (you!) lives there too, and you can
+spend coins earned from XP on decorations in the **cabin shop** (More → Shop).
 
 - No accounts, no bank connection, no tracking. **Your data stays on your device.**
 - Works offline and can be installed on your phone like an app (a "PWA").

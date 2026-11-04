@@ -303,6 +303,8 @@ export interface AppData {
   quran: QuranProgress;
   /** Badge id → the day it was earned */
   badges: Record<string, string>;
+  /** Cabin shop: items you own, which item is shown in each spot, coins spent. */
+  shop: { owned: string[]; placed: Record<string, string>; spent: number };
   /** One-time updates already applied to this data (e.g. "usic-nov-2026"). */
   applied: string[];
 }
