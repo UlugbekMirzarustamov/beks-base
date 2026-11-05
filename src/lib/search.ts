@@ -67,8 +67,73 @@ export function buildIndex(d: AppData): SearchEntry[] {
   for (const [day, log] of Object.entries(d.nightLogs)) {
     if (log.line.trim()) add({ key: `night-${day}`, kind: 'Night log', title: log.line, sub: day, href: '#/reflect/sky', date: day, text: `${log.good.join(' ')} ${log.tomorrow}` });
   }
+  // The archive: older things that otherwise only live inside their own screens.
+  for (const [monday, r] of Object.entries(d.reflections)) {
+    const title = r.wentWell || r.learned || r.next || r.hard;
+    if (title.trim()) add({ key: `week-${monday}`, kind: 'Week review', title, sub: `week of ${monday}`, href: '#/reflect/week', date: monday, text: `${r.wentWell} ${r.hard} ${r.learned} ${r.next}` });
+  }
+  for (const [monday, c] of Object.entries(d.campfires)) {
+    if (c.win.trim() || c.focus.trim()) add({ key: `campfire-${monday}`, kind: 'Campfire', title: c.win || c.focus, sub: c.focus ? `focus: ${c.focus}` : c.date, href: '#/campfire', date: c.date || monday, text: c.focus });
+  }
+  for (const i of d.inbox) if (i.done) add({ key: `inbox-${i.id}`, kind: 'Inbox (done)', title: i.text, sub: `${i.kind} · done ${i.done}`, href: '#/archive', date: i.created, text: i.url });
+  for (const [day, meals] of Object.entries(d.meals)) {
+    for (const [slot, meal] of Object.entries(meals)) if (meal?.text) add({ key: `meal-${day}-${slot}`, kind: 'Meal', title: meal.text, sub: `${slot} · ${day}`, href: '#/kitchen/meals', date: day });
+  }
   return out;
 }
+
+// ---------------------------------------------------------------- Archive
+export type ArchiveArea = 'study' | 'money' | 'planner' | 'reflect' | 'kitchen' | 'admin';
+
+export const ARCHIVE_AREAS: { id: ArchiveArea; label: string; kinds: string[] }[] = [
+  { id: 'planner', label: 'Planner', kinds: ['Task', 'Event', 'Inbox', 'Inbox (done)'] },
+  { id: 'study', label: 'Study', kinds: ['Assignment', 'Exam', 'Mistake', 'Formula', 'Topic', 'Word'] },
+  { id: 'money', label: 'Money', kinds: ['Purchase', 'Bill', 'Subscription', 'Wish', 'Savings jar'] },
+  { id: 'reflect', label: 'Journal & reflect', kinds: ['Journal', 'Night log', 'Week review', 'Campfire', 'Vision', 'Letter'] },
+  { id: 'kitchen', label: 'Kitchen', kinds: ['Recipe', 'Meal', 'Pantry', 'Shopping'] },
+  { id: 'admin', label: 'Admin', kinds: ['Admin'] },
+];
+
+export interface ArchiveFilter {
+  query: string;
+  /** Only these areas (empty = everything). */
+  areas: ArchiveArea[];
+  /** Inclusive date range (YYYY-MM-DD); entries without a date only show when there's no range. */
+  from?: string;
+  to?: string;
+}
+
+/**
+ * The archive: everything (or what matches the words typed) in the chosen areas and dates,
+ * newest first, undated things last.
+ */
+export function searchArchive(index: SearchEntry[], f: ArchiveFilter): SearchEntry[] {
+  const words = fold(f.query).split(' ').filter(Boolean);
+  const kinds = f.areas.length ? new Set(ARCHIVE_AREAS.filter((a) => f.areas.includes(a.id)).flatMap((a) => a.kinds)) : null;
+  const ranged = Boolean(f.from || f.to);
+  return index
+    .filter((e) => {
+      if (kinds && !kinds.has(e.kind)) return false;
+      if (ranged && (!e.date || (f.from && e.date < f.from) || (f.to && e.date > f.to))) return false;
+      return !words.length || matches(fold(`${e.title} ${e.sub} ${e.kind} ${e.text ?? ''}`), words);
+    })
+    .sort((a, b) => (a.date && b.date ? b.date.localeCompare(a.date) : a.date ? -1 : b.date ? 1 : 0) || a.title.localeCompare(b.title));
+}
+
+/** Split an archive list into months ("YYYY-MM"; "" = no date), keeping the order. */
+export function groupByMonth(entries: SearchEntry[]): { month: string; entries: SearchEntry[] }[] {
+  const groups: { month: string; entries: SearchEntry[] }[] = [];
+  for (const e of entries) {
+    const month = e.date.slice(0, 7);
+    const last = groups[groups.length - 1];
+    if (last && last.month === month) last.entries.push(e);
+    else groups.push({ month, entries: [e] });
+  }
+  return groups;
+}
+
+/** The years that have something in them, newest first. */
+export const archiveYears = (index: SearchEntry[]) => [...new Set(index.filter((e) => e.date).map((e) => e.date.slice(0, 4)))].sort().reverse();
 
 /** A thing you can DO from the palette. */
 export interface Command {
@@ -115,6 +180,7 @@ export const COMMANDS: Command[] = [
   go('Pantry', '#/kitchen/pantry', 'kitchen food fridge expiry'),
   go('Meal plan', '#/kitchen/meals', 'kitchen food cook week'),
   go('Recipes', '#/kitchen/recipes', 'cookbook cook kitchen what can i cook'),
+  go('Archive', '#/archive', 'history past old everything browse months year'),
   go('Calm corner', '#/calm', 'breathe anxious stress dua'),
   go('Pond', '#/pond', 'fishing fish'),
   go('Journal', '#/more/journal', 'notes'),

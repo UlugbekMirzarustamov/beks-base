@@ -34,12 +34,14 @@ const loadReflect = () => import('./screens/Reflect');
 const loadMore = () => import('./screens/More');
 const loadPond = () => import('./screens/Pond');
 const loadKitchen = () => import('./screens/Kitchen');
+const loadArchive = () => import('./screens/Archive');
 const Reflect = lazy(loadReflect);
 const More = lazy(loadMore);
 const Pond = lazy(loadPond);
 const Kitchen = lazy(loadKitchen);
+const Archive = lazy(loadArchive);
 export function prefetchScreens() {
-  void Promise.all([loadReflect(), loadMore(), loadPond(), loadKitchen(), import('./screens/Calendar'), import('./screens/Assignments'), import('./screens/Admin')]).catch(() => {
+  void Promise.all([loadReflect(), loadMore(), loadPond(), loadKitchen(), loadArchive(), import('./screens/Calendar'), import('./screens/Assignments'), import('./screens/Admin')]).catch(() => {
     /* offline: they'll be fetched next time */
   });
 }
@@ -63,7 +65,7 @@ class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolea
   }
 }
 
-const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire', 'kitchen'] as const;
+const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire', 'kitchen', 'archive'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: { id: Screen; label: string; icon: IconName }[] = [
@@ -217,6 +219,7 @@ export default function App() {
             {route.screen === 'calm' && <CalmCorner />}
             {route.screen === 'pond' && <Pond />}
             {route.screen === 'kitchen' && <Kitchen sub={route.sub} />}
+            {route.screen === 'archive' && <Archive key={route.sub ?? ''} sub={route.sub} />}
             {route.screen === 'campfire' && <Campfire />}
           </Suspense>
         </ScreenBoundary>

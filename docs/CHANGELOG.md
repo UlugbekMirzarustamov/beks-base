@@ -4,6 +4,17 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Phase 2 handover:** done — subscriptions & financial calendar, important dates & birthday reminders,
+  kitchen (shopping, pantry, meals, cookbook, what-can-I-cook), student admin checklists, searchable
+  archive. Each feature was checked at 375 px with real typing, saving and a reload. Still waiting on
+  Bek: none.
+- **Searchable archive (Phase 2, feature 5):** a new **Archive** (palette → "Archive", the link at the top
+  of Reflect, or "See everything for … in the archive" under any palette search). With no words it's a
+  timeline of everything you've written, newest first and grouped by month; type words to search it.
+  Filter by area (Planner, Study, Money, Journal & reflect, Kitchen, Admin) and by time (any time, this
+  month, or a year). Search now also finds weekly reviews, Friday campfires, finished inbox items and
+  planned meals. Sealed letters still show their title only. Nothing is copied: it reads the same index
+  as the palette. Tests: 152 passing.
 - **Student admin (Phase 2, feature 4):** Planner → Admin. Visa, passport, accommodation, council tax,
   GP and enrolment as **checklists with dates**: each item has a key date ("Expires", "Deadline",
   "Ends"…), steps you tick off (each can have its own date), notes, and a *Finished* switch (finished

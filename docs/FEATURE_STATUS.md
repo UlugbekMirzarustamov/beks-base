@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Phase 2: student admin checklists: 150 tests passing, production build passing.
+Last verified: **2026-11-05** — Phase 2 complete (archive): 152 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -36,6 +36,8 @@ Paths are relative to `src/`.
 | Inbox: sort into task, calendar event or journal note, or mark done | Implemented | `InboxPanel` in `screens/Capture.tsx` (Home card + Planner → Today) |
 | In-app reminders (pop up while the app is open) | Implemented | `ReminderWatcher` in `screens/Capture.tsx` |
 | Global search across the app (sealed letters by title only) | Implemented | `lib/search.ts` (tests in `lib/search.test.ts`) |
+| Searchable archive: everything newest first by month; search words, area filters (Planner, Study, Money, Journal & reflect, Kitchen, Admin), any time / this month / a year | Implemented | `screens/Archive.tsx` (`#/archive`, from the palette, Reflect and "See everything … in the archive"); `searchArchive`, `groupByMonth`, `archiveYears` in `lib/search.ts` (tests in `lib/search.test.ts`) |
+| Search also covers bills, kitchen, admin, week reviews, campfires, finished inbox items and planned meals | Implemented | `buildIndex()` in `lib/search.ts` |
 | Command palette: Ctrl/⌘ K + top-bar magnifier; go anywhere, quick actions, "Capture: …" | Implemented | `CommandPalette` in `screens/Search.tsx`, mounted in `App.tsx` |
 | Opening the exact record (not just its screen) from a search result | Not started | Results open the screen where the item lives |
 | Phone notifications when the app is closed | Not started | Needs a push service — Phase 5, ask Bek first |

@@ -5815,3 +5815,18 @@ button.list__main {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* ---------- Archive ---------- */
+.archive__field {
+  padding: 4px 8px;
+  border: var(--bevel) solid var(--edge);
+  background: var(--field);
+}
+.archive__row {
+  color: inherit;
+  text-decoration: none;
+}
+.archive-link {
+  display: block;
+  margin: -4px 0 8px;
+}

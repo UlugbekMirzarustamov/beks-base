@@ -35,6 +35,9 @@ export default function Reflect({ sub }: { sub?: string }) {
       <h1 className="screen__title">
         <PixelIcon name="telescope" size={28} /> The Telescope
       </h1>
+      <a href="#/archive" className="more-link archive-link">
+        Look back through everything in the archive →
+      </a>
       <Tabs<Tab>
         label="Reflect sections"
         active={tab}

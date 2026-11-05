@@ -93,6 +93,9 @@ export function CommandPalette() {
       .map((c) => ({ id: `cmd-${c.key}`, group: 'Go & do', title: c.title, sub: c.href ? 'Open' : 'Action', run: () => runCommand(c) })),
     ...(query.trim() ? [{ id: 'capture', group: 'Capture', title: `Capture: “${query.trim()}”`, sub: 'Quick Capture guesses where it goes', run: capture }] : []),
     ...searchIndex(index, query, 20).map((e) => ({ id: `rec-${e.key}`, group: 'Found in your base', title: e.title, sub: `${e.kind}${e.sub ? ` · ${e.sub}` : ''}`, run: () => openRecord(e) })),
+    ...(query.trim()
+      ? [{ id: 'archive', group: 'Found in your base', title: `See everything for “${query.trim()}” in the archive`, sub: 'By month, with filters', run: () => ((location.hash = `#/archive/${encodeURIComponent(query.trim())}`), close()) }]
+      : []),
   ];
   const current = Math.min(active, Math.max(0, rows.length - 1));
 
