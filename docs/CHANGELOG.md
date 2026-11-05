@@ -4,6 +4,13 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Lesson attachments:** each lecture note (Study → Notes) can now hold **images** (photos of the board, made
+  smaller), **PDFs** (slides, handouts — up to 8 MB each), **links** (recordings, readings) and **formulas**
+  (one tap sends a formula to your formula cards). Images open full screen, PDFs open in a new tab, and the list
+  shows 📎 how many things each note has. Files stay on the phone in their own storage spot (`lessonFiles`), like
+  family photos, and are included in safety copies, backup files and restores (not in the small daily backups);
+  deleting a note asks before removing its files. Fixed on the way: editing a note now keeps its links and
+  formulas. Tests: 194 passing.
 - **Mock exams + predicted grade:** Study → **Mock exam**. Build a question bank (past-paper questions with
   model answers and marks, per module and topic); your mistakes notebook and formula cards can join the pool,
   and weak topics come up more often. A mock runs in **exam conditions**: full screen, a countdown (about

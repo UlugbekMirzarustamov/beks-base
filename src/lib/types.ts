@@ -377,6 +377,9 @@ export interface LectureNote extends Base {
   date: string;
   body: string;
   updated: string; // ISO timestamp
+  /** Links (slides, videos, readings) and formulas attached to the lesson. Files live in "lessonFiles". */
+  links?: { id: string; title: string; url: string }[];
+  formulas?: { id: string; name: string; expr: string }[];
 }
 
 export interface Note extends Base {

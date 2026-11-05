@@ -4,6 +4,7 @@
  * Keys used:
  *   "appdata"             all of AppData (one object)
  *   "photos"              the family photos (kept apart so AppData stays small)
+ *   "lessonFiles"         images and PDFs attached to lecture notes (kept apart, like photos)
  *   "snapshot:<time>…"    automatic safety copies (see lib/persist.ts)
  *   "unreadable:<time>"   stored data that couldn't be read, kept untouched for recovery
  *
@@ -68,6 +69,7 @@ export const idb: KV = {
 
 export const APP_KEY = 'appdata';
 export const PHOTOS_KEY = 'photos';
+export const FILES_KEY = 'lessonFiles';
 
 /** Old builds wrote here when IndexedDB failed. Read-only now; a broken copy throws (→ recovery, never overwritten). */
 export function readLegacyCopy(): unknown {
@@ -86,6 +88,9 @@ export const saveData = (data: unknown, kv: KV = idb) => kv.put(APP_KEY, data);
 /** The family photo list. Rejects if it can't be read (so nothing saves over photos we couldn't load). */
 export const loadPhotoList = (kv: KV = idb) => kv.get(PHOTOS_KEY);
 export const savePhotoList = (list: unknown, kv: KV = idb) => kv.put(PHOTOS_KEY, list);
+/** Files attached to lecture notes. Rejects if they can't be read (so nothing saves over them). */
+export const loadFileList = (kv: KV = idb) => kv.get(FILES_KEY);
+export const saveFileList = (list: unknown, kv: KV = idb) => kv.put(FILES_KEY, list);
 
 /** Ask the browser not to delete our data when the device is low on space. */
 export async function requestPersistentStorage(): Promise<void> {

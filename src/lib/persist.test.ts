@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { exportJson, normalize, parseBackup, validateData } from './backup';
-import { APP_KEY, PHOTOS_KEY, saveData, type KV } from './db';
+import { backupFiles, exportJson, normalize, parseBackup, validateData } from './backup';
+import { APP_KEY, FILES_KEY, PHOTOS_KEY, saveData, type KV } from './db';
 import { migrate, SCHEMA_VERSION, type Migration } from './migrate';
 import { createSnapshot, dailyBackup, DAILY_PREFIX, listAllSnapshots, listSnapshots, loadApp, openAnyway, restoreBackupText, restoreSnapshot, safeReplace, SNAPSHOT_PREFIX, UNREADABLE_PREFIX } from './persist';
 import { createInitialData, emptyData } from './seed';
@@ -231,6 +231,38 @@ describe('imports', () => {
     expect(await kv.get(PHOTOS_KEY)).toEqual([photo]);
     const [snap] = await listSnapshots(kv);
     expect(((await kv.get(snap.id)) as { data: AppData }).data.xp).toBe(10);
+  });
+});
+
+describe('lesson files (images and PDFs on lecture notes)', () => {
+  const file = { id: 'f1', noteId: 'n1', name: 'slides.pdf', type: 'application/pdf', size: 10, data: 'data:application/pdf;base64,JVBERi0=', added: TODAY };
+
+  it('go into safety copies and come back with a restore', async () => {
+    const original = ready();
+    const kv = withApp(original);
+    kv.store.set(FILES_KEY, JSON.stringify([file]));
+    const snap = await createSnapshot(kv, original, 'Before importing a backup', at(1));
+    await kv.put(FILES_KEY, []);
+    await restoreSnapshot(kv, snap.id, TODAY);
+    expect(await kv.get(FILES_KEY)).toEqual([file]);
+  });
+
+  it('travel inside backup files; broken entries are left out', async () => {
+    const kv = withApp(ready());
+    const text = exportJson(ready(), new Date(), [], [file]);
+    expect(backupFiles(text)).toEqual([file]);
+    const withJunk = JSON.stringify({ ...JSON.parse(text), files: [file, { id: 'x', noteId: 'n', data: 'javascript:alert(1)' }] });
+    expect(backupFiles(withJunk)).toEqual([file]);
+    await restoreBackupText(kv, text, TODAY);
+    expect(await kv.get(FILES_KEY)).toEqual([file]);
+  });
+
+  it('are not copied into the small daily backups (like photos)', async () => {
+    const kv = withApp(ready());
+    kv.store.set(FILES_KEY, JSON.stringify([file]));
+    await dailyBackup(kv, ready(), TODAY, at(2));
+    const id = (await kv.keys()).find((k) => k.startsWith(DAILY_PREFIX))!;
+    expect((await kv.get(id)) as object).not.toHaveProperty('files');
   });
 });
 

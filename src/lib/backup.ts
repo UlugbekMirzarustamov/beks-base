@@ -15,9 +15,36 @@ export interface Photo {
   added: string; // YYYY-MM-DD
 }
 
-/** The backup also carries your family photos (if any), so moving to a new phone keeps them. */
-export function exportJson(data: AppData, now: Date = new Date(), photos: Photo[] = []): string {
-  return JSON.stringify({ app: 'ulus-base', exportedAt: now.toISOString(), data, ...(photos.length ? { photos } : {}) }, null, 2);
+/** An image or PDF attached to a lecture note (as a data: URL). */
+export interface LessonFile {
+  id: string;
+  noteId: string;
+  name: string;
+  type: string;
+  size: number;
+  data: string;
+  added: string; // YYYY-MM-DD
+}
+
+/** The backup also carries your family photos and lesson files (if any), so moving to a new phone keeps them. */
+export function exportJson(data: AppData, now: Date = new Date(), photos: Photo[] = [], files: LessonFile[] = []): string {
+  return JSON.stringify({ app: 'ulus-base', exportedAt: now.toISOString(), data, ...(photos.length ? { photos } : {}), ...(files.length ? { files } : {}) }, null, 2);
+}
+
+/** A file attachment that looks right: an image or a PDF stored as a data: URL. */
+export const isLessonFile = (f: unknown): f is LessonFile => {
+  const x = f as LessonFile | null;
+  return Boolean(x && typeof x.id === 'string' && typeof x.noteId === 'string' && typeof x.data === 'string' && /^data:(image\/|application\/pdf)/.test(x.data));
+};
+
+/** The lesson files inside a backup file (an empty list if it has none or looks wrong). */
+export function backupFiles(text: string): LessonFile[] {
+  try {
+    const list = (JSON.parse(text) as { files?: unknown }).files;
+    return Array.isArray(list) ? list.filter(isLessonFile) : [];
+  } catch {
+    return [];
+  }
 }
 
 /** The photos inside a backup file (an empty list if it has none or looks wrong). */

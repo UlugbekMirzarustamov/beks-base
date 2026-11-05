@@ -4,7 +4,8 @@
  * Sunday backup card.
  */
 import { useState } from 'react';
-import { backupFileName, exportJson, type Photo } from '../lib/backup';
+import { backupFileName, exportJson, isLessonFile, type Photo } from '../lib/backup';
+import { loadFileList } from '../lib/db';
 import { careStatus, MEAL_GOAL, WATER_GOAL } from '../lib/care';
 import type { AppData, DayCheckin } from '../lib/types';
 import { usePhotos } from './Photos';
@@ -249,7 +250,10 @@ export const lastBackup = (): string | null => {
  */
 export async function shareBackup(data: AppData, photos: Photo[], today: string): Promise<'shared' | 'downloaded' | 'cancelled'> {
   const name = backupFileName(today);
-  const file = new File([exportJson(data, new Date(), photos)], name, { type: 'application/json' });
+  // Lesson files (images/PDFs on lecture notes) travel in the backup too.
+  const stored = await loadFileList().catch(() => []);
+  const files = Array.isArray(stored) ? stored.filter(isLessonFile) : [];
+  const file = new File([exportJson(data, new Date(), photos, files)], name, { type: 'application/json' });
   const remember = () => {
     try {
       localStorage.setItem(BACKUP_KEY, today);

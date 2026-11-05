@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Mock exams + predicted grade: 191 tests passing, production build passing.
+Last verified: **2026-11-05** — Lesson attachments (images, PDFs, links, formulas): 194 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -57,6 +57,7 @@ Paths are relative to `src/`.
 | Assignment manager (module, deadline + time, priority, status, weighting, mark, notes) | Implemented | `screens/Assignments.tsx` (Study → Assignments), `Assignment` in `lib/types.ts` |
 | Grade calculator (weighted average, secured points, mark needed for a target, UK band guide) | Implemented | `lib/grades.ts` (tests in `lib/grades.test.ts`); exams count via optional weight/mark on tests |
 | Assignment deadlines in the calendar and Coming up | Implemented | `itemsOn()` in `lib/calendar.ts` |
+| Attach images (made smaller), PDFs (up to 8 MB), links and formulas to a lecture note; formulas → formula cards; files removed with the note | Implemented | `screens/NoteAttachments.tsx`; `state/lessonFiles.ts`; storage key `lessonFiles` in safety copies, backup files and restores (`lib/persist.ts`, `lib/backup.ts`; tests in `lib/persist.test.ts`) |
 | Lecture notes per module (lecture date, search, module filter) with [[links]] between notes and to topics, backlinks, rename keeps links | Implemented | `screens/Notes.tsx` (Study → Notes, loads on demand); `lib/notes.ts` (tests in `lib/notes.test.ts`) |
 | Revision planner: 30-min sessions before exams (weak topics and close exams first) → week plan + calendar, replace or remove | Implemented | `screens/Revision.tsx` (Study → Tests); `lib/revision.ts` (tests in `lib/notes.test.ts`); `StudyBlock.revision` |
 | Exam start time, length and room (shown on countdowns; timed in the calendar, so clashes are flagged) | Implemented | `Tests` in `screens/Study.tsx`; `itemsOn()` in `lib/calendar.ts` |

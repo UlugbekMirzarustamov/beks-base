@@ -1,7 +1,7 @@
 /**
  * 📝 Study → Notes: lecture notes per module. Write [[Another note]] to link notes together;
  * each note shows what links back to it. A link to one of your topics shows how confident you are.
- * The link logic lives in lib/notes.ts.
+ * Images, PDFs, links and formulas can be attached (NoteAttachments). The link logic lives in lib/notes.ts.
  */
 import { useState, type FormEvent } from 'react';
 import { formatDay } from '../lib/dates';
@@ -12,12 +12,15 @@ import type { LectureNote } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Empty, Field, Panel, Sheet, useConfirm } from '../ui/kit';
+import { useLessonFiles } from '../state/lessonFiles';
+import { NoteAttachments, removeNoteFiles } from './NoteAttachments';
 
 type Draft = Omit<LectureNote, 'id' | 'updated'> & { id?: string };
 const CONFIDENCE_COLOUR = { red: '#d64541', amber: '#e8a317', green: '#5fa83b' } as const;
 
 export default function Notes() {
   const { data, today } = useStore();
+  const { files } = useLessonFiles();
   const [q, setQ] = useState('');
   const [module, setModule] = useState('all');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -69,6 +72,10 @@ export default function Notes() {
                     <span>{n.title}</span>
                     <small className="muted">
                       {subjectName(n.subjectId)} · {formatDay(n.date)}
+                      {(() => {
+                        const count = files.filter((f) => f.noteId === n.id).length + (n.links?.length ?? 0) + (n.formulas?.length ?? 0);
+                        return count ? ` · 📎 ${count}` : '';
+                      })()}
                       {n.body ? ` · ${n.body.replace(/\s+/g, ' ').slice(0, 60)}${n.body.length > 60 ? '…' : ''}` : ''}
                     </small>
                   </span>
@@ -115,10 +122,13 @@ export default function Notes() {
 function NoteView({ note, onOpen, onCreate, onEdit, onDeleted }: { note: LectureNote; onOpen: (id: string) => void; onCreate: (title: string) => void; onEdit: () => void; onDeleted: () => void }) {
   const ask = useConfirm();
   const { data, update } = useStore();
+  const { files } = useLessonFiles();
   const back = backlinks(data.lectureNotes, note);
   const remove = async () => {
-    if (!(await ask(`Delete the note "${note.title}"? (Links to it will show as missing.)`))) return;
+    const attached = files.filter((f) => f.noteId === note.id).length;
+    if (!(await ask(`Delete the note "${note.title}"${attached ? ` and its ${attached} attached file${attached === 1 ? '' : 's'}` : ''}? (Links to it will show as missing.)`))) return;
     update((d) => void (d.lectureNotes = d.lectureNotes.filter((n) => n.id !== note.id)));
+    await removeNoteFiles(note.id, files);
     onDeleted();
   };
 
@@ -153,6 +163,7 @@ function NoteView({ note, onOpen, onCreate, onEdit, onDeleted }: { note: Lecture
         {data.subjects.find((s) => s.id === note.subjectId)?.name ?? 'No module'} · {formatDay(note.date)}
       </p>
       <div className="note-body">{note.body ? splitLinks(note.body).map((part, i) => ('link' in part ? link(part.link, i) : <span key={i}>{part.text}</span>)) : <span className="muted">Empty note.</span>}</div>
+      <NoteAttachments note={note} />
       {back.length > 0 && (
         <div>
           <p className="muted small">Linked from:</p>
@@ -210,7 +221,8 @@ function NoteForm({ initial, onDone }: { initial: Draft; onDone: (id?: string) =
           const pattern = new RegExp(`\\[\\[\\s*${old.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\]\\]`, 'gi');
           for (const n of d.lectureNotes) n.body = n.body.replace(pattern, `[[${title}]]`);
         }
-        d.lectureNotes[i] = value;
+        // Keep what the form doesn't edit (links and formulas).
+        d.lectureNotes[i] = { ...d.lectureNotes[i], ...value };
       } else d.lectureNotes.push(value);
     });
     toast(f.id ? 'Note saved' : 'Note added', 'pop');

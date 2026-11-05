@@ -38,8 +38,9 @@ an international student. It runs as an installable, offline web app (PWA) on hi
 ## Data safety rules (non-negotiable)
 Storage design lives in `src/lib/db.ts` and `src/lib/persist.ts`; read them before touching data.
 - IndexedDB (`ulus-base` → store `kv`) is the **only** place data is written. Keys: `appdata`,
-  `photos`, `snapshot:*` (safety copies, newest 3), `daily:<date>:*` (automatic daily backups,
-  newest 7), `unreadable:*` (never auto-deleted).
+  `photos`, `lessonFiles` (images/PDFs on lecture notes), `snapshot:*` (safety copies, newest 3; include
+  photos and lesson files), `daily:<date>:*` (automatic daily backups, newest 7; data only),
+  `unreadable:*` (never auto-deleted). Backup files carry photos and lesson files too.
 - Saving is disabled until a load succeeds; load failures show the recovery screen
   (`src/ui/Recovery.tsx`) and must never fall back to fresh data.
 - Anything that replaces data in bulk goes through `replaceAll(next, reason)` in

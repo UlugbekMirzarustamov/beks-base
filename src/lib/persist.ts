@@ -16,8 +16,8 @@
  * Everything works through the small `KV` interface, so tests can use a fake
  * storage that fails on purpose.
  */
-import { backupPhotos, normalize, parseBackup, validateData, type Photo } from './backup';
-import { APP_KEY, PHOTOS_KEY, type KV } from './db';
+import { backupFiles, backupPhotos, normalize, parseBackup, validateData, type LessonFile, type Photo } from './backup';
+import { APP_KEY, FILES_KEY, PHOTOS_KEY, type KV } from './db';
 import { createInitialData, upgrade } from './seed';
 import type { AppData } from './types';
 
@@ -32,6 +32,7 @@ export interface Snapshot {
   createdAt: string; // ISO time
   data: AppData;
   photos?: Photo[];
+  files?: LessonFile[];
 }
 export interface SnapshotInfo {
   id: string;
@@ -70,7 +71,7 @@ interface SnapshotOptions {
   tag?: string;
   /** How many copies of this kind to keep. */
   keep?: number;
-  /** Include the family photos (default: yes). */
+  /** Include the family photos and lesson files (default: yes). */
   photos?: boolean;
 }
 
@@ -82,7 +83,8 @@ interface SnapshotOptions {
 export async function createSnapshot(kv: KV, data: unknown, reason: string, now = new Date(), opts: SnapshotOptions = {}): Promise<SnapshotInfo> {
   const { prefix = SNAPSHOT_PREFIX, tag = '', keep = MAX_SNAPSHOTS, photos: withPhotos = true } = opts;
   const photos = withPhotos ? await kv.get(PHOTOS_KEY).catch(() => undefined) : undefined;
-  const snap = { reason, createdAt: now.toISOString(), data, ...(Array.isArray(photos) ? { photos } : {}) };
+  const files = withPhotos ? await kv.get(FILES_KEY).catch(() => undefined) : undefined;
+  const snap = { reason, createdAt: now.toISOString(), data, ...(Array.isArray(photos) ? { photos } : {}), ...(Array.isArray(files) ? { files } : {}) };
   if (!isSnapshot(snap)) throw new Error("Couldn't make a safety copy (there's no readable data to copy)");
   const id = `${prefix}${tag}${snap.createdAt}-${Math.random().toString(36).slice(2, 6)}`;
   try {
@@ -205,22 +207,25 @@ export async function safeReplace(kv: KV, current: AppData, next: AppData, reaso
   await kv.put(APP_KEY, next);
 }
 
-/** Put a snapshot back (and its photos). What's stored now is kept first. */
+/** Put a snapshot back (and its photos and lesson files). What's stored now is kept first. */
 export async function restoreSnapshot(kv: KV, id: string, today: string): Promise<void> {
   const snap = await kv.get(id);
   if (!isSnapshot(snap)) throw new Error('That safety copy is damaged');
   await preserveStored(kv, 'Before restoring a safety copy', today);
   await kv.put(APP_KEY, normalize(snap.data, today));
   if (snap.photos) await kv.put(PHOTOS_KEY, snap.photos);
+  if (snap.files) await kv.put(FILES_KEY, snap.files);
 }
 
 /** Restore from a backup file's text. An invalid file throws BEFORE anything is changed. */
 export async function restoreBackupText(kv: KV, text: string, today: string): Promise<void> {
   const data = upgrade(parseBackup(text, today), today);
   const photos = backupPhotos(text);
+  const files = backupFiles(text);
   await preserveStored(kv, 'Before restoring a backup file', today);
   await kv.put(APP_KEY, data);
   if (photos.length) await kv.put(PHOTOS_KEY, photos);
+  if (files.length) await kv.put(FILES_KEY, files);
 }
 
 /** Recovery "open anyway": keep the damaged data aside untouched, then repair what can be repaired. */
