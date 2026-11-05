@@ -4,6 +4,12 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Important dates & birthdays (Phase 2, feature 2):** a new **Important date** kind in the calendar
+  (anniversaries and other yearly dates) next to Birthday. Every event except classes can **remind you on
+  Home** on the day, 1 / 3 / 7 / 14 days or a month before; birthdays and important dates remind a week
+  before unless you change it (existing birthdays included — nothing is changed in your data). A new
+  **Important dates** card on Home shows what's coming with its notes (e.g. gift ideas); those dates
+  aren't repeated in "Coming up". Tests: 137 passing.
 - **Subscriptions & financial calendar (Phase 2, feature 1):** Money → Bills now tells bills and
   **subscriptions** apart, handles **yearly** payments (e.g. insurance in November) and **free trials**
   (nothing is charged until the trial is over, with a "cancel before then" heads-up a week before).

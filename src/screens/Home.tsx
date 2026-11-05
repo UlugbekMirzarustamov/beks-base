@@ -1,7 +1,7 @@
 /**
  * 🏠 HOME — the cabin, plus everything important at a glance.
  */
-import { addDays, daysBetween, formatDay, startOfWeek, toMinutes, UK_TZ, weekdayOf, zonedParts } from '../lib/dates';
+import { addDays, daysBetween, formatDay, relativeDays, startOfWeek, toMinutes, UK_TZ, weekdayOf, zonedParts } from '../lib/dates';
 import { minsToWait } from '../lib/prayer';
 import { levelInfo } from '../lib/xp';
 import { Cabin } from '../scene/Cabin';
@@ -18,7 +18,7 @@ import { RamadanCard, useRamadan } from './Ramadan';
 import { openPhotos, photoOfTheDay, usePhotos } from './Photos';
 import { BossMini } from './Study';
 import { careStatus } from '../lib/care';
-import { conflicts, itemsOn, KIND_INFO, upcoming } from '../lib/calendar';
+import { conflicts, dateReminders, itemsOn, KIND_INFO, upcoming } from '../lib/calendar';
 import { openJar } from './Calm';
 import { BadgeSummary } from './Badges';
 import { coins } from '../lib/shop';
@@ -83,6 +83,7 @@ export default function Home() {
       <WindDown />
       <div className="grid grid--home">
         <TodayCard />
+        <ImportantDates />
         <FajrRise />
         <RamadanCard />
         <MorningPromise />
@@ -185,10 +186,43 @@ export default function Home() {
   );
 }
 
+/** Birthdays and important dates coming soon, from each event's "remind me" setting (with its notes, e.g. gift ideas). */
+function ImportantDates() {
+  const { data, today } = useStore();
+  const soon = useMemo(() => dateReminders(data, today), [data, today]);
+  if (!soon.length) return null;
+  return (
+    <Panel title="Important dates" icon="gift">
+      <ul className="mini-list coming-up">
+        {soon.map(({ event, date, daysLeft }) => (
+          <li key={event.id}>
+            <span className="cal-dot" style={{ background: KIND_INFO[event.kind].colour }} aria-hidden="true" />
+            <span>
+              <strong>{event.title}</strong>{' '}
+              <small className="muted">· {daysLeft === 0 ? 'today!' : `${relativeDays(daysLeft)} (${formatDay(date)})`}</small>
+              {event.notes && (
+                <>
+                  <br />
+                  <small className="muted">{event.notes}</small>
+                </>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <a href="#/planner/calendar" className="more-link">
+        Calendar →
+      </a>
+    </Panel>
+  );
+}
+
 /** The next important dates from the calendar (exams, deadlines, trips, birthdays…) and today's overlaps. */
 function ComingUp() {
   const { data, today } = useStore();
-  const next = upcoming(data, today, 14).slice(0, 5);
+  // Dates already shown by the Important dates card aren't repeated here.
+  const reminded = new Set(dateReminders(data, today).map((r) => `event-${r.event.id}`));
+  const next = upcoming(data, today, 14).filter((i) => !reminded.has(i.key)).slice(0, 5);
   const clashes = conflicts(itemsOn(data, today));
   if (!next.length && !clashes.length) return null;
   return (

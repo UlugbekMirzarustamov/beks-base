@@ -169,7 +169,7 @@ export interface StudyBlock extends Base {
 }
 
 /** What kind of thing a calendar event is (exams live in Study → Tests, deadlines in tasks). */
-export type CalKind = 'class' | 'appointment' | 'travel' | 'birthday' | 'event';
+export type CalKind = 'class' | 'appointment' | 'travel' | 'birthday' | 'important' | 'event';
 
 /** One entry in the universal calendar. */
 export interface CalEvent extends Base {
@@ -187,6 +187,8 @@ export interface CalEvent extends Base {
   until: string;
   location: string;
   notes: string;
+  /** Show a reminder on Home this many days before (0 = on the day only). Missing = 7 for birthdays and important dates, none otherwise. */
+  remind?: number | null;
 }
 
 /** Things captured quickly that wait in the inbox until you sort them (tasks and expenses go straight to their lists). */

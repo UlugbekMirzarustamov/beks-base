@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { conflicts, itemsOn, newEvent, occursOn, upcoming, type CalItem } from './calendar';
+import { conflicts, dateReminders, itemsOn, newEvent, occursOn, remindDays, upcoming, type CalItem } from './calendar';
 import { emptyData } from './seed';
 import type { CalEvent } from './types';
 
@@ -95,5 +95,32 @@ describe('financial calendar', () => {
     expect(pay[0]).toMatchObject({ kind: 'bill', source: 'bill', id: 'b1', title: 'Phone · $15.00' });
     expect(upcoming(d, '2026-11-05', 14).filter((i) => i.kind === 'bill')).toHaveLength(2);
     expect(d.events).toHaveLength(0);
+  });
+});
+
+describe('important dates and birthday reminders', () => {
+  const ev = (patch: Partial<CalEvent>): CalEvent => ({ ...newEvent('2000-11-12', 'birthday'), id: patch.title ?? 'x', title: 'Friend', ...patch });
+
+  it('reminds a week before a birthday by default, every year', () => {
+    const d = emptyData('2026-11-05');
+    d.events = [ev({ title: 'Friend' })];
+    expect(dateReminders(d, '2026-11-04')).toHaveLength(0);
+    const r = dateReminders(d, '2026-11-05');
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ date: '2026-11-12', daysLeft: 7 });
+    expect(dateReminders(d, '2026-11-12')[0].daysLeft).toBe(0);
+    expect(dateReminders(d, '2026-11-13')).toHaveLength(0);
+  });
+
+  it('follows the chosen reminder, or none', () => {
+    const d = emptyData('2026-11-05');
+    d.events = [
+      ev({ title: 'Off', remind: null }),
+      ev({ title: 'Day before', remind: 1 }),
+      ev({ title: 'Dentist', kind: 'appointment', repeat: 'none', date: '2026-11-06' }),
+      ev({ title: 'Anniversary', kind: 'important', date: '2020-11-20', remind: 30 }),
+    ];
+    expect(dateReminders(d, '2026-11-11').map((r) => r.event.title)).toEqual(['Day before', 'Anniversary']);
+    expect(remindDays(ev({ kind: 'event', repeat: 'none' }))).toBeNull();
   });
 });

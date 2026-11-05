@@ -24,6 +24,7 @@ export const KIND_INFO: Record<ItemKind, { label: string; colour: string }> = {
   appointment: { label: 'Appointment', colour: '#7a4fa3' },
   travel: { label: 'Travel', colour: '#16a085' },
   birthday: { label: 'Birthday', colour: '#f27ab8' },
+  important: { label: 'Important date', colour: '#c0392b' },
   event: { label: 'Event', colour: '#8a5a2e' },
   bill: { label: 'Bill', colour: '#b8860b' },
 };
@@ -171,8 +172,37 @@ export const newEvent = (date: string, kind: CalKind = 'event'): Omit<CalEvent, 
   start: '',
   end: '',
   endDate: '',
-  repeat: kind === 'birthday' ? 'yearly' : 'none',
+  repeat: kind === 'birthday' || kind === 'important' ? 'yearly' : 'none',
   until: '',
   location: '',
   notes: '',
 });
+
+/** How many days ahead an event's Home reminder starts, or null for no reminder. */
+export const remindDays = (e: CalEvent): number | null =>
+  e.remind !== undefined ? e.remind : e.kind === 'birthday' || e.kind === 'important' ? 7 : null;
+
+export interface DateReminder {
+  event: CalEvent;
+  /** The day it happens (the next time, for repeating events). */
+  date: string;
+  /** 0 = today. */
+  daysLeft: number;
+}
+
+/** Birthdays and important dates (and anything else with a reminder) whose reminder window includes today, soonest first. */
+export function dateReminders(d: AppData, today: string): DateReminder[] {
+  const out: DateReminder[] = [];
+  for (const e of d.events) {
+    const ahead = remindDays(e);
+    if (ahead === null || ahead < 0) continue;
+    for (let n = 0; n <= Math.min(ahead, 366); n++) {
+      const date = addDays(today, n);
+      if (occursOn(e, date)) {
+        out.push({ event: e, date, daysLeft: n });
+        break;
+      }
+    }
+  }
+  return out.sort((a, b) => a.daysLeft - b.daysLeft || a.event.title.localeCompare(b.event.title));
+}

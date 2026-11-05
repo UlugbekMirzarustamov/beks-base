@@ -7,7 +7,7 @@
  * task — one source of truth for each, never a copy.
  */
 import { useState, type FormEvent } from 'react';
-import { conflicts, itemsBetween, itemsOn, KIND_INFO, newEvent, type CalItem } from '../lib/calendar';
+import { conflicts, itemsBetween, itemsOn, KIND_INFO, newEvent, remindDays, type CalItem } from '../lib/calendar';
 import { addDays, addMonths, daysInMonth, formatDay, formatMonth, monthOf, startOfWeek, toMinutes, WEEKDAYS } from '../lib/dates';
 import { uid } from '../lib/id';
 import { sfx } from '../lib/sound';
@@ -26,6 +26,7 @@ const FORM_KINDS: { value: FormKind; label: string }[] = [
   { value: 'appointment', label: 'Appointment' },
   { value: 'travel', label: 'Travel' },
   { value: 'birthday', label: 'Birthday' },
+  { value: 'important', label: 'Important date (anniversary…)' },
   { value: 'exam', label: 'Exam (goes to Study → Tests)' },
   { value: 'deadline', label: 'Deadline (goes to your tasks)' },
 ];
@@ -338,7 +339,7 @@ function EventForm({ initial, initialKind, onDone }: { initial: Draft; initialKi
           onChange={(e) => {
             const k = e.target.value as FormKind;
             setKind(k);
-            if (k === 'birthday') {
+            if (k === 'birthday' || k === 'important') {
               set({ repeat: 'yearly' });
               setAllDay(true);
             }
@@ -396,9 +397,26 @@ function EventForm({ initial, initialKind, onDone }: { initial: Draft; initialKi
           <Field label="Where (optional)">
             <input className="input" value={f.location} onChange={(e) => set({ location: e.target.value })} placeholder="e.g. Room 2.14, the GP, the airport" maxLength={80} />
           </Field>
-          <Field label="Notes (optional)">
+          <Field label="Notes (optional)" hint={kind === 'birthday' ? 'e.g. gift ideas — shown with the reminder' : undefined}>
             <textarea className="input" rows={2} value={f.notes} onChange={(e) => set({ notes: e.target.value })} />
           </Field>
+          {kind !== 'class' && (
+            <Field label="Remind me on Home">
+              <select
+                className="input"
+                value={String(remindDays({ ...f, id: '', kind }) ?? 'off')}
+                onChange={(e) => set({ remind: e.target.value === 'off' ? null : Number(e.target.value) })}
+              >
+                <option value="off">No reminder</option>
+                <option value="0">On the day</option>
+                <option value="1">1 day before</option>
+                <option value="3">3 days before</option>
+                <option value="7">A week before</option>
+                <option value="14">2 weeks before</option>
+                <option value="30">A month before</option>
+              </select>
+            </Field>
+          )}
         </>
       )}
       <div className="form__actions">

@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Phase 2: subscription tracker + financial calendar: 135 tests passing, production build passing.
+Last verified: **2026-11-05** — Phase 2: important dates & birthday reminders: 137 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -30,6 +30,7 @@ Paths are relative to `src/`.
 | Calendar events: classes, appointments, travel (multi-day), birthdays, events; daily/weekly/monthly/yearly repeats | Implemented | `lib/calendar.ts` (`occursOn`), `CalEvent` in `lib/types.ts` |
 | One calendar for everything (classes, exams, deadlines, study blocks read from their own lists) | Implemented | `itemsOn()` in `lib/calendar.ts`; exams and deadlines added in the calendar go to Tests / tasks |
 | Conflict detection | Implemented | `conflicts()` in `lib/calendar.ts`; flagged in day/week/month views and on Home |
+| Important dates & birthdays: "Important date" kind (yearly), "remind me on Home" N days before (birthdays and important dates default to a week), notes such as gift ideas shown with it | Implemented | `dateReminders()`, `remindDays()` in `lib/calendar.ts` (tests in `lib/calendar.test.ts`); `ImportantDates` in `screens/Home.tsx`; reminder field in `EventForm` (`screens/Calendar.tsx`) |
 | "Coming up" card on Home (next 14 days) | Implemented | `ComingUp` in `screens/Home.tsx` |
 | Quick Capture (one line → task, purchase, idea, note, link or reminder, with a live preview) | Implemented | `lib/capture.ts` (tests in `lib/capture.test.ts`), `QuickCapture` in `screens/Capture.tsx` (Home) |
 | Inbox: sort into task, calendar event or journal note, or mark done | Implemented | `InboxPanel` in `screens/Capture.tsx` (Home card + Planner → Today) |
