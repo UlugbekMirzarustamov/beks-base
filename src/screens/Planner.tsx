@@ -1,8 +1,9 @@
 /**
  * 🗓️ PLANNER — "the Crafting table".
- * Tabs: Today (top 3 + tasks) · Week (classes + study blocks + deadlines) · Timetable
+ * Tabs: Today (top 3 + tasks) · Calendar (day/week/month, everything dated) · Week (time blocks) · Timetable
  */
-import { useState, type FormEvent } from 'react';
+import { lazy, Suspense, useState, type FormEvent } from 'react';
+import { occursOn } from '../lib/calendar';
 import { addDays, daysBetween, formatDay, fromMinutes, relativeDays, startOfWeek, toMinutes, weekdayOf, WEEKDAYS, WEEKDAYS_LONG } from '../lib/dates';
 import { uid } from '../lib/id';
 import type { AppData, Task, Weekday } from '../lib/types';
@@ -11,7 +12,9 @@ import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Empty, Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
-const TABS = ['today', 'week', 'timetable'] as const;
+const TABS = ['today', 'calendar', 'week', 'timetable'] as const;
+// The calendar loads on first open (it's prefetched for offline use in App.tsx).
+const CalendarTab = lazy(() => import('./Calendar'));
 type Tab = (typeof TABS)[number];
 
 export default function Planner({ sub }: { sub?: string }) {
@@ -27,7 +30,8 @@ export default function Planner({ sub }: { sub?: string }) {
         onChange={setTab}
         tabs={[
           { id: 'today', label: 'Today', icon: 'check' },
-          { id: 'week', label: 'Week', icon: 'calendar' },
+          { id: 'calendar', label: 'Calendar', icon: 'calendar' },
+          { id: 'week', label: 'Week plan', icon: 'clock' },
           { id: 'timetable', label: 'Timetable', icon: 'clock' },
         ]}
       />
@@ -38,6 +42,11 @@ export default function Planner({ sub }: { sub?: string }) {
           </Panel>
           <Tasks />
         </div>
+      )}
+      {tab === 'calendar' && (
+        <Suspense fallback={<p className="muted center">Opening…</p>}>
+          <CalendarTab />
+        </Suspense>
       )}
       {tab === 'week' && <Week />}
       {tab === 'timetable' && <Timetable />}
@@ -389,11 +398,14 @@ export interface ClassItem {
   dated: boolean;
 }
 
-/** All classes on a day: your dated school timetable + any weekly repeating classes, in time order. */
+/** All classes on a day: your dated school timetable, weekly repeating classes and classes added in the calendar, in time order. */
 export function classesOn(data: AppData, date: string): ClassItem[] {
   const dated = data.sessions.filter((c) => c.date === date).map((c) => ({ ...c, dated: true }));
   const weekly = data.timetable.filter((c) => c.day === weekdayOf(date)).map((c) => ({ ...c, teacher: '', dated: false }));
-  return [...dated, ...weekly].sort((a, b) => a.start.localeCompare(b.start));
+  const fromCalendar = data.events
+    .filter((e) => e.kind === 'class' && e.start && occursOn(e, date))
+    .map((e) => ({ id: e.id, start: e.start, end: e.end || e.start, name: e.title, room: e.location, teacher: '', dated: true }));
+  return [...dated, ...weekly, ...fromCalendar].sort((a, b) => a.start.localeCompare(b.start));
 }
 
 function Timetable() {

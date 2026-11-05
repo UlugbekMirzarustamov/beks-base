@@ -134,6 +134,27 @@ export interface StudyBlock extends Base {
   title: string;
 }
 
+/** What kind of thing a calendar event is (exams live in Study → Tests, deadlines in tasks). */
+export type CalKind = 'class' | 'appointment' | 'travel' | 'birthday' | 'event';
+
+/** One entry in the universal calendar. */
+export interface CalEvent extends Base {
+  title: string;
+  kind: CalKind;
+  /** First (or only) day, YYYY-MM-DD. */
+  date: string;
+  /** "HH:MM"; empty = all day. */
+  start: string;
+  end: string;
+  /** Last day of a multi-day event (e.g. a trip); empty = same day. Only for non-repeating events. */
+  endDate: string;
+  repeat: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+  /** Last day a repeating event happens (YYYY-MM-DD); empty = forever. */
+  until: string;
+  location: string;
+  notes: string;
+}
+
 // ---------- Phase 2 ----------
 export interface VocabWord extends Base {
   word: string;
@@ -393,6 +414,8 @@ export interface AppData {
   catches: Catch[];
   /** "YYYY-MM-DD" → meals and water (Simba's needs) */
   care: Record<string, Care>;
+  /** The universal calendar's own events (classes, appointments, travel, birthdays, events). */
+  events: CalEvent[];
   /** "YYYY-MM-DD" → when you got up (Fajr rise) */
   rise: Record<string, Rise>;
   /** "YYYY-MM-DD" → that morning's promise to Simba */

@@ -5192,3 +5192,181 @@ button.list__main {
   justify-content: space-between;
   gap: 8px;
 }
+
+/* =====================================================================
+ * Universal calendar (Planner → Calendar)
+ * ===================================================================== */
+.calendar {
+  display: grid;
+  gap: 12px;
+}
+.cal-head {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--panel);
+  border: var(--bevel) solid var(--edge);
+}
+.cal-head__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cal-head__nav .btn--primary {
+  margin-left: auto;
+}
+.cal-head__label {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.cal-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--edge);
+}
+.cal-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cal-item__btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 4px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-bottom: 2px dashed var(--panel-lo);
+}
+.cal-item__time {
+  flex-shrink: 0;
+  min-width: 78px;
+  font-family: var(--font-num);
+  font-size: 17px;
+  line-height: 1.1;
+}
+.cal-item .cal-dot {
+  margin-top: 4px;
+}
+.cal-item__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.cal-item.is-done strong {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.cal-item__clash {
+  color: var(--red);
+  font-weight: 700;
+}
+.cal-warn {
+  margin: 0 0 8px;
+}
+.cal-week {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cal-week__day {
+  padding: 8px 10px;
+  color: var(--ink);
+  background: var(--panel);
+  border: var(--bevel) solid var(--edge);
+}
+.cal-week__day.is-today {
+  box-shadow: inset 6px 0 0 var(--gold);
+}
+.cal-week__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cal-week__head .icon-btn {
+  margin-left: auto;
+}
+.cal-week__free {
+  margin: 2px 0 0;
+}
+.cal-month {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  padding: 8px;
+  color: var(--ink);
+  background: var(--panel);
+  border: var(--bevel) solid var(--edge);
+}
+.cal-month__head {
+  font-family: var(--font-num);
+  font-size: 15px;
+  text-align: center;
+}
+.cal-month__cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 48px;
+  padding: 3px 1px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: var(--field);
+  border: 2px solid var(--panel-lo);
+}
+:root[data-theme='night'] .cal-month__cell {
+  background: var(--panel-lo);
+}
+.cal-month__cell.is-other {
+  opacity: 0.45;
+}
+.cal-month__cell.is-today {
+  border-color: var(--edge);
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
+.cal-month__num {
+  font-family: var(--font-num);
+  font-size: 17px;
+  line-height: 1;
+}
+.cal-month__dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+}
+.cal-month__dots .cal-dot {
+  width: 7px;
+  height: 7px;
+  border-width: 1px;
+}
+.cal-month__clash {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-weight: 700;
+  color: var(--red);
+}
+.coming-up li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}

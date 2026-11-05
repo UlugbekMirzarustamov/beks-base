@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Task 2 (data foundation): 93 tests passing, production build passing.
+Last verified: **2026-11-05** — Task 3 (universal calendar): 101 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -23,6 +23,12 @@ Paths are relative to `src/`.
 | Night wind-down | Implemented | `screens/Daily.tsx` (`WindDown`) |
 | UK / Tashkent clocks | Implemented | `screens/Extras.tsx` (`Clocks`) |
 | Friday campfire review | Implemented | `screens/Campfire.tsx` |
+| Universal calendar: day / week / month views | Implemented | `screens/Calendar.tsx` (Planner → Calendar), `lib/calendar.ts` (tests in `lib/calendar.test.ts`) |
+| Calendar events: classes, appointments, travel (multi-day), birthdays, events; daily/weekly/monthly/yearly repeats | Implemented | `lib/calendar.ts` (`occursOn`), `CalEvent` in `lib/types.ts` |
+| One calendar for everything (classes, exams, deadlines, study blocks read from their own lists) | Implemented | `itemsOn()` in `lib/calendar.ts`; exams and deadlines added in the calendar go to Tests / tasks |
+| Conflict detection | Implemented | `conflicts()` in `lib/calendar.ts`; flagged in day/week/month views and on Home |
+| "Coming up" card on Home (next 14 days) | Implemented | `ComingUp` in `screens/Home.tsx` |
+| Appointment-style reminders / notifications | Not started | Phase 5 (notifications) |
 | Campfire "due" card on a real Friday evening | Needs verification | `campfireDue()` in `screens/Campfire.tsx` — only the review page was checked |
 
 ## University and engineering tools
@@ -34,7 +40,7 @@ Paths are relative to `src/`.
 | Vocabulary | Implemented | `screens/Extras.tsx` (`Vocab`) |
 | Pomodoro + full-screen focus | Implemented | `state/store.tsx` (`TimerProvider`), `screens/Study.tsx` (`FocusScreen`) |
 | Real timetable, week view, study blocks | Implemented | Dated classes live in the user's data (`sessions`); shown by `screens/Planner.tsx`. `lib/timetable.ts` keeps only the generic builder |
-| Entering a new dated timetable in the app (instead of in code) | Not started | Needed for next month; planned with the universal calendar |
+| Entering classes in the app (instead of in code) | Implemented | Calendar "Class" events (weekly, with an end date) appear in Today's classes, briefing and wind-down via `classesOn()` in `screens/Planner.tsx` |
 | Engineering tools beyond formula cards | Not started | Spec: *To be defined* |
 | Auto revision plan, focus guard, past-paper tracker, speaking practice | Not started | Spec: *Proposed* |
 
@@ -117,7 +123,7 @@ Paths are relative to `src/`.
 | Verified snapshots (newest 3) + restore | Implemented | `lib/persist.ts`, `screens/More.tsx` (`SafetyCopies`) |
 | Automatic daily backups (newest 7, once per UK day) + restore | Implemented | `lib/persist.ts` (`dailyBackup`), `state/store.tsx`; tests in `lib/persist.test.ts` |
 | Numbered schema migrations; newer data refused | Implemented | `lib/migrate.ts`, `lib/seed.ts` (`upgrade`), `lib/backup.ts` (`normalize`); tests in `lib/persist.test.ts` |
-| Separate storage per new domain | Planned | Decided; built with the first new domain (calendar) |
+| Separate storage for large domains | Planned | Revised decision: only for large domains (notes, receipts); the calendar's small `events` list lives in AppData |
 | Deep normalise + import validation | Implemented | `lib/backup.ts` (`normalize`, `validateData`) |
 | JSON export/import incl. photos; Sunday reminder | Implemented | `lib/backup.ts`, `screens/Daily.tsx` (`shareBackup`, `BackupCard`) |
 | Share-sheet backup (AirDrop) on iPhone | Needs verification | Uses `navigator.share` with files; only the download fallback was exercised |

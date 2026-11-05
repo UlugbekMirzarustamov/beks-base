@@ -4,6 +4,15 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Universal calendar (Task 3):** Planner → Calendar with Day / Week / Month views. One calendar for
+  everything: your own events (classes, appointments, multi-day travel, birthdays, events, with daily /
+  weekly / monthly / yearly repeats and an optional end date) merged with the classes, exams, task
+  deadlines and study blocks that already exist — read from their own lists, never copied. Overlaps are
+  flagged (with a heads-up when saving). Adding an "Exam" creates a test (so its boss works) and a
+  "Deadline" creates a task. Classes added here appear in Today's classes, the briefing and wind-down,
+  so new timetables no longer need code. New "Coming up" card on Home. The calendar loads on demand and
+  is prefetched for offline use. Storage decision revised: small domains stay in AppData; separate keys
+  only for large ones. Tests: 101 passing.
 - **Product decisions:** worship is never scored (no XP for prayer, fasting, taraweeh, tasbih or Qur'an;
   XP already earned is kept); nothing takes XP or coins away unless hard mode is on (a broken promise now
   costs nothing by default, and oversleeping Fajr never costs XP); new life tools add no gamification.

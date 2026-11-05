@@ -48,8 +48,11 @@ Storage design lives in `src/lib/db.ts` and `src/lib/persist.ts`; read them befo
   fills them in for old data. Anything that reshapes existing data is a **numbered migration** in
   `src/lib/migrate.ts` (bump `SCHEMA_VERSION`, add a step, add a test); never edit a shipped one.
   Data from a newer app version is refused, not overwritten.
-- **New domains** (calendar, notes, recipes…) get their own storage key when their first real feature
-  is built, and must be included in snapshots, backups and import validation.
+- **New domains:** small ones (like the calendar's `events`) live in `AppData` — `emptyData()` default,
+  automatically in snapshots, backups and import validation. Separate storage keys are only for large
+  domains (notes, receipts) and must then be added to snapshots, backups and validation too.
+- **One source of truth:** the calendar (`src/lib/calendar.ts`) *reads* classes, tests, task deadlines
+  and study blocks — never copy them into another list.
 - Imports must pass `validateData()` (`src/lib/backup.ts`) before anything changes.
 - Never put personal data (finances, timetable, photos, contacts) into tests, docs or commits
   beyond what already exists; the GitHub repo is **public**.

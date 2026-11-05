@@ -17,6 +17,7 @@ import { RamadanCard, useRamadan } from './Ramadan';
 import { openPhotos, photoOfTheDay, usePhotos } from './Photos';
 import { BossMini } from './Study';
 import { careStatus } from '../lib/care';
+import { conflicts, itemsOn, KIND_INFO, upcoming } from '../lib/calendar';
 import { openJar } from './Calm';
 import { BadgeSummary } from './Badges';
 import { coins } from '../lib/shop';
@@ -85,6 +86,7 @@ export default function Home() {
         <CampfireCard />
         <OnePercent />
         <TodayClasses />
+        <ComingUp />
         <SafeToSpendCard />
         <GhostRace />
         <SimbaNeeds />
@@ -176,6 +178,34 @@ export default function Home() {
         </Panel>
       </div>
     </div>
+  );
+}
+
+/** The next important dates from the calendar (exams, deadlines, trips, birthdays…) and today's overlaps. */
+function ComingUp() {
+  const { data, today } = useStore();
+  const next = upcoming(data, today, 14).slice(0, 5);
+  const clashes = conflicts(itemsOn(data, today));
+  if (!next.length && !clashes.length) return null;
+  return (
+    <Panel title="Coming up" icon="calendar">
+      {clashes.length > 0 && (
+        <p className="alert cal-warn">
+          ⚠ Today: {clashes.map(([a, b]) => `${a.title} overlaps ${b.title}`).join('; ')}
+        </p>
+      )}
+      <ul className="mini-list coming-up">
+        {next.map((i) => (
+          <li key={`${i.date}-${i.key}`}>
+            <span className="cal-dot" style={{ background: KIND_INFO[i.kind].colour }} aria-hidden="true" />
+            <strong>{i.title}</strong> <small className="muted">· {KIND_INFO[i.kind].label} · {i.date === today ? 'today' : formatDay(i.date)}{i.start ? ` ${i.start}` : ''}</small>
+          </li>
+        ))}
+      </ul>
+      <a href="#/planner/calendar" className="more-link">
+        Calendar →
+      </a>
+    </Panel>
   );
 }
 
