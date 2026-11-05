@@ -51,14 +51,38 @@ export interface RecurringBill extends Base {
 }
 
 // ---------- Study ----------
+/** A subject is also a module for grades (e.g. Physics). */
 export interface Subject extends Base {
   name: string;
+  /** The module mark you're aiming for, in % (optional). */
+  target?: number;
 }
 
 export interface Test extends Base {
   name: string;
   date: string; // YYYY-MM-DD
   subjectId: string | null;
+  /** How much of the module's final mark this exam is worth, in % (optional). */
+  weight?: number;
+  /** Your result, in % (optional, once you have it). */
+  mark?: number;
+}
+
+/** A piece of coursework with a deadline (exams live in `tests`). */
+export interface Assignment extends Base {
+  title: string;
+  /** The module (a subject id), or null. */
+  subjectId: string | null;
+  due: string; // YYYY-MM-DD
+  /** "HH:MM" or "" */
+  dueTime: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'todo' | 'doing' | 'submitted' | 'graded';
+  /** % of the module's final mark (optional). */
+  weight?: number;
+  /** Your result in % (optional). */
+  mark?: number;
+  notes: string;
 }
 
 export type Confidence = 'red' | 'amber' | 'green' | null;
@@ -431,6 +455,8 @@ export interface AppData {
   catches: Catch[];
   /** "YYYY-MM-DD" → meals and water (Simba's needs) */
   care: Record<string, Care>;
+  /** Coursework with deadlines, weightings and marks. */
+  assignments: Assignment[];
   /** Quick Capture inbox (ideas, notes, links, reminders). */
   inbox: InboxItem[];
   /** The universal calendar's own events (classes, appointments, travel, birthdays, events). */

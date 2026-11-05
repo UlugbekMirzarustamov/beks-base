@@ -36,6 +36,7 @@ const SOURCE_LINK: Record<Exclude<CalItem['source'], 'event'>, { href: string; l
   timetable: { href: '#/planner/timetable', label: 'Weekly timetable' },
   test: { href: '#/study/tests', label: 'Study → Tests' },
   task: { href: '#/planner/today', label: 'Tasks' },
+  assignment: { href: '#/study/assignments', label: 'Study → Assignments' },
   study: { href: '#/planner/week', label: 'Week plan' },
 };
 

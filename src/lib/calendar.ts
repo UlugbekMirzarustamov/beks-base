@@ -5,7 +5,7 @@
  *   - calendar events (`data.events`: classes, appointments, travel, birthdays, events),
  *     with daily / weekly / monthly / yearly repeats and multi-day trips;
  *   - dated school classes (`sessions`) and weekly classes (`timetable`);
- *   - exams (`tests`), task deadlines (`tasks.due`) and study blocks.
+ *   - exams (`tests`), task and assignment deadlines, and study blocks.
  * Plain functions, so they're easy to test.
  */
 import { addDays, daysBetween, daysInMonth, toMinutes, weekdayOf } from './dates';
@@ -31,7 +31,7 @@ export interface CalItem {
   key: string;
   /** The id in its own list (event, session, slot, test, task or study block). */
   id: string;
-  source: 'event' | 'session' | 'timetable' | 'test' | 'task' | 'study';
+  source: 'event' | 'session' | 'timetable' | 'test' | 'task' | 'assignment' | 'study';
   kind: ItemKind;
   title: string;
   date: string;
@@ -86,6 +86,22 @@ export function itemsOn(d: AppData, date: string): CalItem[] {
   }
   for (const t of d.tasks) {
     if (t.due === date) items.push({ key: `task-${t.id}`, id: t.id, source: 'task', kind: 'deadline', title: t.title, date, start: '', end: '', location: '', done: t.done });
+  }
+  for (const a of d.assignments) {
+    if (a.due !== date) continue;
+    const module = d.subjects.find((s) => s.id === a.subjectId)?.name;
+    items.push({
+      key: `assignment-${a.id}`,
+      id: a.id,
+      source: 'assignment',
+      kind: 'deadline',
+      title: module ? `${a.title} (${module})` : a.title,
+      date,
+      start: a.dueTime,
+      end: '',
+      location: '',
+      done: a.status === 'submitted' || a.status === 'graded',
+    });
   }
   for (const b of d.studyBlocks) {
     if (b.date === date) items.push({ key: `study-${b.id}`, id: b.id, source: 'study', kind: 'study', title: b.title, date, start: b.start, end: b.end, location: '' });

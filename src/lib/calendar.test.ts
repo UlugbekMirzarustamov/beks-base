@@ -51,6 +51,7 @@ describe('one calendar for everything', () => {
     d.tests.push({ id: 'x', name: 'Mock exam', date: TODAY, subjectId: null });
     d.tasks.push({ id: 'k', title: 'Essay', due: TODAY, done: false });
     d.studyBlocks.push({ id: 'b', date: TODAY, start: '14:00', end: '15:00', title: 'Revise SUVAT' });
+    d.assignments.push({ id: 'a', title: 'Lab report', subjectId: 'physics', due: TODAY, dueTime: '23:59', priority: 'high', status: 'todo', notes: '' });
     expect(itemsOn(d, TODAY).map((i) => `${i.kind}:${i.title}`)).toEqual([
       'deadline:Essay',
       'exam:Mock exam',
@@ -58,6 +59,7 @@ describe('one calendar for everything', () => {
       'class:Physics',
       'study:Revise SUVAT',
       'appointment:Dentist',
+      'deadline:Lab report (Physics)',
     ]);
     expect(itemsOn(d, '2026-11-06')).toEqual([]); // Friday: nothing
   });

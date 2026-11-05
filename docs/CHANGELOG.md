@@ -4,6 +4,14 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Assignments & grades:** Study → Assignments. Coursework with module, deadline (and time), priority,
+  status (to do → doing → submitted → graded), weighting and mark; overdue and due-soon items stand out,
+  and entering a mark marks it graded. Each module (your subjects) gets a **grade calculator**: weighted
+  average so far, points of the final mark already secured, and the average needed on the rest for your
+  target — saying plainly when it's already safe or out of reach, with a rough UK band guide and a note
+  when weights don't add up to 100%. Exams stay in Tests (bosses unchanged) and just gain an optional
+  weight and mark, edited from the grade table — nothing is stored twice. Deadlines show in the calendar
+  and Coming up. Tests: 119 passing.
 - **Quick Capture:** one box on Home — type a line and it goes to the right place, with a live preview
   and one-tap kind chips to correct the guess. "£4.50 coffee" → a purchase (pounds converted to dollars
   as usual, category guessed), "essay due fri" → a task due Friday, "remind me to … at 6pm" → a reminder,

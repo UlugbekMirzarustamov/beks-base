@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Quick Capture: 111 tests passing, production build passing.
+Last verified: **2026-11-05** — Assignments & grades: 119 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -44,7 +44,10 @@ Paths are relative to `src/`.
 | Pomodoro + full-screen focus | Implemented | `state/store.tsx` (`TimerProvider`), `screens/Study.tsx` (`FocusScreen`) |
 | Real timetable, week view, study blocks | Implemented | Dated classes live in the user's data (`sessions`); shown by `screens/Planner.tsx`. `lib/timetable.ts` keeps only the generic builder |
 | Entering classes in the app (instead of in code) | Implemented | Calendar "Class" events (weekly, with an end date) appear in Today's classes, briefing and wind-down via `classesOn()` in `screens/Planner.tsx` |
-| Engineering tools beyond formula cards | Not started | Spec: *To be defined* |
+| Assignment manager (module, deadline + time, priority, status, weighting, mark, notes) | Implemented | `screens/Assignments.tsx` (Study → Assignments), `Assignment` in `lib/types.ts` |
+| Grade calculator (weighted average, secured points, mark needed for a target, UK band guide) | Implemented | `lib/grades.ts` (tests in `lib/grades.test.ts`); exams count via optional weight/mark on tests |
+| Assignment deadlines in the calendar and Coming up | Implemented | `itemsOn()` in `lib/calendar.ts` |
+| Engineering tools beyond formula cards | Not started | Phase 3 |
 | Auto revision plan, focus guard, past-paper tracker, speaking practice | Not started | Spec: *Proposed* |
 
 ## Finance

@@ -1,8 +1,8 @@
 /**
  * 📚 STUDY — "the Bookshelf".
- * Tabs: Tests · Topics · Mistakes · Cards · Timer
+ * Tabs: Tests · Assignments (coursework + grades) · Topics · Mistakes · Cards · Timer
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { daysBetween, formatDay, startOfWeek } from '../lib/dates';
 import { uid } from '../lib/id';
 import type { Confidence, Flashcard, Mistake, Test, Topic } from '../lib/types';
@@ -12,7 +12,9 @@ import { PixelArt, PixelIcon } from '../ui/icons';
 import { bossFor, POMODORO_HIT, type Boss, type BossKind } from '../lib/boss';
 import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
-const TABS = ['tests', 'topics', 'mistakes', 'cards', 'timer'] as const;
+const TABS = ['tests', 'assignments', 'topics', 'mistakes', 'cards', 'timer'] as const;
+// Loads on first open (prefetched for offline use in App.tsx).
+const AssignmentsTab = lazy(() => import('./Assignments'));
 type Tab = (typeof TABS)[number];
 
 export default function Study({ sub }: { sub?: string }) {
@@ -28,6 +30,7 @@ export default function Study({ sub }: { sub?: string }) {
         onChange={setTab}
         tabs={[
           { id: 'tests', label: 'Tests', icon: 'calendar' },
+          { id: 'assignments', label: 'Assignments', icon: 'scroll' },
           { id: 'topics', label: 'Topics', icon: 'book' },
           { id: 'mistakes', label: 'Mistakes', icon: 'cross' },
           { id: 'cards', label: 'Formulas', icon: 'card' },
@@ -35,6 +38,11 @@ export default function Study({ sub }: { sub?: string }) {
         ]}
       />
       {tab === 'tests' && <Tests />}
+      {tab === 'assignments' && (
+        <Suspense fallback={<p className="muted center">Opening…</p>}>
+          <AssignmentsTab />
+        </Suspense>
+      )}
       {tab === 'topics' && <Topics />}
       {tab === 'mistakes' && <Mistakes />}
       {tab === 'cards' && <Cards />}

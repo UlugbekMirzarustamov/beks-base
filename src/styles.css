@@ -5439,3 +5439,117 @@ button.list__main {
   flex-wrap: wrap;
   gap: 4px;
 }
+
+/* =====================================================================
+ * Assignments + grade calculator (Study → Assignments)
+ * ===================================================================== */
+.assignment-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.assignment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 10px;
+  background: var(--field);
+  border: 2px solid var(--panel-lo);
+  border-left-width: 6px;
+}
+:root[data-theme='night'] .assignment {
+  background: var(--panel-lo);
+}
+.assignment--high {
+  border-left-color: var(--red);
+}
+.assignment--medium {
+  border-left-color: var(--amber);
+}
+.assignment--low {
+  border-left-color: var(--grass);
+}
+.assignment.is-late {
+  box-shadow: inset 0 0 0 2px var(--red);
+}
+.assignment__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+.assignment__due {
+  font-family: var(--font-num);
+  font-size: 16px;
+}
+.assignment__due.is-soon {
+  color: var(--red);
+  font-weight: 700;
+}
+.assignment__status {
+  width: auto;
+  max-width: 120px;
+  padding: 4px;
+  font-size: 14px;
+}
+.grades {
+  display: grid;
+  gap: 12px;
+}
+.module-card__summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.module-card__summary > span,
+.module-card__target {
+  display: flex;
+  flex-direction: column;
+}
+.module-card__summary strong {
+  font-family: var(--font-num);
+  font-size: 26px;
+  line-height: 1;
+}
+.module-card__target .input {
+  padding: 4px 6px;
+}
+.module-card__msg {
+  margin: 8px 0 4px;
+  font-weight: 700;
+}
+.module-card__msg.is-warn {
+  color: var(--red);
+}
+.module-card__msg.is-good {
+  color: var(--grass-lo);
+}
+.grade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.grade-table th,
+.grade-table td {
+  padding: 4px;
+  text-align: left;
+  border-bottom: 2px dashed var(--panel-lo);
+}
+.grade-table th[scope='row'] {
+  font-weight: 600;
+}
+.grade-table td {
+  width: 72px;
+}
+.grade-table .input {
+  padding: 4px;
+}

@@ -134,6 +134,7 @@ export function emptyData(today: string): AppData {
     care: {},
     events: [],
     inbox: [],
+    assignments: [],
     rise: {},
     promises: {},
     vision: [],
