@@ -17,7 +17,6 @@ import {
   brutalLine,
   ghostRace,
   HARD_RULES,
-  OVERSLEPT_XP,
   oversleptRecently,
   PROMISE_XP,
   promiseIdeas,
@@ -56,7 +55,7 @@ export function FajrRise() {
       buzz(20);
       gainXp(RISE_XP, 'up for Fajr');
       toast(streak > 0 ? `Up for Fajr, ${streak + 1} mornings in a row. That's discipline.` : 'Up for Fajr. That’s how winners start.', 'level');
-    } else if (data.settings.hardMode) gainXp(-OVERSLEPT_XP);
+    }
   };
 
   if (now.mins < t.sunrise) {
@@ -131,7 +130,6 @@ export function OversleptCall() {
           {times}× in 30 days
         </li>
       </ul>
-      {data.settings.hardMode && <p className="overslept__penalty">Hard mode: −{OVERSLEPT_XP} XP.</p>}
       <div className="overslept__now">
         <p>
           <strong>Now fix it:</strong>
@@ -161,7 +159,7 @@ export function MorningPromise() {
   const answer = (day: string, kept: boolean) => {
     update((d) => {
       d.promises[day] = { ...d.promises[day], kept };
-      if (!kept) d.shop.spent += penalty;
+      if (!kept && penalty > 0) d.shop.spent += penalty;
     });
     if (kept) {
       sfx('levelup');
@@ -169,7 +167,7 @@ export function MorningPromise() {
       toast('Simba: "You kept your word. I knew you would."', 'level');
     } else {
       buzz([40, 60, 40]);
-      toast(`−${penalty} coins. Simba: "You promised me…"`, 'warn');
+      toast(penalty > 0 ? `−${penalty} coins (hard mode). Simba: "You promised me…"` : 'Simba: "Okay. Tomorrow, then. I believe in you."', penalty > 0 ? 'warn' : 'info');
     }
   };
   const make = (e: FormEvent) => {
@@ -186,7 +184,7 @@ export function MorningPromise() {
         I kept it ✓
       </button>
       <button type="button" className="btn btn--danger grow" onClick={() => answer(day, false)}>
-        I broke it (−{penalty} coins)
+        {penalty > 0 ? `I broke it (−${penalty} coins)` : 'I broke it'}
       </button>
     </div>
   );
@@ -212,7 +210,7 @@ export function MorningPromise() {
     <Panel title="Promise Simba one hard thing" icon="cat" className="promise-card">
       <form className="form" onSubmit={make}>
         <p className="muted small">
-          Keep it: +{PROMISE_XP} XP. Break it: −{penalty} coins. Pick something a bit hard.
+          Keep it: +{PROMISE_XP} XP.{penalty > 0 ? ` Break it: −${penalty} coins (hard mode).` : ''} Pick something a bit hard.
         </p>
         <div className="chips">
           {promiseIdeas(data, today).map((idea) => (

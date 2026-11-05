@@ -164,7 +164,7 @@ export default function Home() {
             {lvl.into} / {lvl.needed} XP to level {lvl.level + 1}
           </p>
           <p className="muted small">
-            <PixelIcon name="clock" size={14} /> {studiedToday} min studied today · Tasks +10 · Top 3 +15 · Pomodoro +25 · Prayer +15
+            <PixelIcon name="clock" size={14} /> {studiedToday} min studied today · Tasks +10 · Top 3 +15 · Pomodoro +25
           </p>
           <CabinUnlocks level={lvl.level} />
           <div className="level-links">

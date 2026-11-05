@@ -21,8 +21,6 @@ import { PixelIcon } from '../ui/icons';
 import { Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 import { Quran, Tasbih } from './Devotion';
 
-const PRAYER_XP = 15;
-const FULL_DAY_XP = 25;
 
 /** Short, gentle reminders shown with the call and on the lanterns. */
 const REMINDERS = [
@@ -56,7 +54,7 @@ export function useUkMinutes(): number {
 
 /** Everything the prayer UI needs: times, what's due, what's done, and actions. */
 export function usePrayer() {
-  const { data, update, today, gainXp, toast } = useStore();
+  const { data, update, today, toast } = useStore();
   const settings = data.settings.prayer;
   const nowMins = useUkMinutes();
   const state = useMemo(() => prayerNow(today, nowMins, settings), [today, nowMins, settings]);
@@ -70,19 +68,14 @@ export function usePrayer() {
     });
     sfx('bell');
     buzz(15);
-    gainXp(PRAYER_XP, `${PRAYER_INFO[name].name} prayed`);
-    if (PRAYERS.every((p) => after.includes(p))) {
-      gainXp(FULL_DAY_XP, 'all five prayers');
-      toast('All five lanterns lit today. MashaAllah!', 'level');
-    }
+    // Worship is never scored: lanterns are a private record, not XP.
+    if (PRAYERS.every((p) => after.includes(p))) toast('All five lanterns lit today. MashaAllah!', 'level');
   };
   const unmark = (name: PrayerName, date = today) => {
     if (!prayed(name, date)) return;
-    const wasFull = PRAYERS.every((p) => prayed(p, date));
     update((d) => {
       d.prayers[date] = (d.prayers[date] ?? []).filter((p) => p !== name);
     });
-    gainXp(-(PRAYER_XP + (wasFull ? FULL_DAY_XP : 0)));
   };
 
   /** Days in a row (ending yesterday, or today if complete) with all five prayers. */
@@ -358,7 +351,7 @@ function PrayersToday() {
               </div>
             ))}
           </div>
-          <p className="muted small">Forgot to tick one you prayed? Tap it here. Each prayer +{PRAYER_XP} XP, all five in a day +{FULL_DAY_XP}.</p>
+          <p className="muted small">Forgot to tick one you prayed? Tap it here. This is your private record; prayers are never scored.</p>
         </Panel>
 
         <Panel title="Qibla" icon="globe">

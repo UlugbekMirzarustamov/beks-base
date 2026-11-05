@@ -17,7 +17,6 @@ import { Panel } from '../ui/kit';
 import { useUkMinutes } from './Prayer';
 
 const PREVIEW_KEY = 'beks-ramadan-preview';
-const FAST_XP = 20;
 
 const readPreview = () => {
   try {
@@ -54,18 +53,17 @@ export function useRamadan(): RamadanInfo & { preview: boolean } {
 
 /** Today's fast: tick it off, and taraweeh. */
 function useFast() {
-  const { data, update, today, gainXp, toast } = useStore();
+  const { data, update, today, toast } = useStore();
   const fast: FastDay = data.fasts[today] ?? { fasted: false, taraweeh: false };
   const set = (key: keyof FastDay) => {
     const value = !fast[key];
-    const xp = key === 'fasted' ? FAST_XP : 10;
     update((d) => void (d.fasts[today] = { ...fast, [key]: value }));
     if (value) {
+      // A private record — fasting and taraweeh are never scored.
       sfx('bell');
       buzz(15);
-      gainXp(xp, key === 'fasted' ? 'fasting today' : 'taraweeh');
       if (key === 'fasted') toast('May Allah accept your fast.', 'pop');
-    } else gainXp(-xp);
+    }
   };
   return { fast, set };
 }

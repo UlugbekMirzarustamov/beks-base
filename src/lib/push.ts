@@ -13,13 +13,12 @@ import type { AppData } from './types';
 /** What hard mode changes (shown on its switch, so the rules are clear). */
 export const HARD_RULES = [
   'The ghost of last week gets 10% faster: you must beat last week by 10%.',
-  'A broken morning promise costs 50 coins instead of 20.',
-  'Sleeping through Fajr costs 25 XP.',
+  'A broken morning promise costs 50 coins (normally it costs nothing).',
   'Wishes only unlock when your wish fund covers them + 10% safety.',
 ];
 export const PROMISE_XP = 25;
-export const promisePenalty = (hard: boolean) => (hard ? 50 : 20);
-export const OVERSLEPT_XP = 25;
+/** Only hard mode (which you switch on yourself) takes coins for a broken promise. */
+export const promisePenalty = (hard: boolean) => (hard ? 50 : 0);
 export const wishReady = (fund: number, cost: number, hard: boolean) => fund >= Math.round(cost * (hard ? 110 : 100)) / 100;
 
 // ---------------------------------------------------------------- you vs last week

@@ -20,7 +20,7 @@ const DHIKR = [
 const BEADS = 33;
 
 export function Tasbih() {
-  const { data, update, today, gainXp } = useStore();
+  const { data, update, today, toast } = useStore();
   const [mode, setMode] = useState<'after-prayer' | 'free'>('after-prayer');
   const [phase, setPhase] = useState(0);
   const [count, setCount] = useState(0);
@@ -38,7 +38,7 @@ export function Tasbih() {
     if (mode === 'after-prayer' && next >= d.target) {
       sfx('bell');
       if (phase === DHIKR.length - 1) {
-        gainXp(5, 'tasbih complete');
+        toast('Tasbih complete. SubhanAllah.', 'pop');
         setPhase(0);
       } else setPhase(phase + 1);
       setCount(0);
@@ -119,7 +119,7 @@ export function Tasbih() {
 
 // ---------------------------------------------------------------- Qur'an
 export function Quran() {
-  const { data, update, today, toast, gainXp } = useStore();
+  const { data, update, today, toast } = useStore();
   const q = data.quran;
   const [pageInput, setPageInput] = useState('');
   const readToday = q.log[today] ?? 0;
@@ -138,9 +138,8 @@ export function Quran() {
     if (finished) {
       sfx('bell');
       toast('Khatm complete! You finished the whole Qur’an. MashaAllah!', 'level');
-      gainXp(100, 'khatm');
     } else if (before < q.dailyGoal && before + pages >= q.dailyGoal) {
-      gainXp(10, "today's Qur'an goal");
+      toast("Today's Qur'an goal reached. MashaAllah.", 'pop');
     }
   };
 
