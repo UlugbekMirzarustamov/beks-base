@@ -5370,3 +5370,72 @@ button.list__main {
   gap: 6px;
   flex-wrap: wrap;
 }
+
+/* =====================================================================
+ * Quick Capture + Inbox
+ * ===================================================================== */
+.capture {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--panel);
+  border: var(--bevel) solid var(--edge);
+}
+.capture__row {
+  display: flex;
+  gap: 8px;
+}
+.capture__input {
+  flex: 1;
+  min-width: 0;
+}
+.capture__kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.capture__kinds .chip {
+  min-height: 0;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.capture__kinds .chip.is-on {
+  background: var(--gold);
+  color: #2f1d0c;
+}
+.capture__preview {
+  margin: 0;
+}
+.inbox__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.inbox__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px dashed var(--panel-lo);
+}
+.inbox__item.is-due {
+  box-shadow: inset 4px 0 0 var(--gold);
+  padding-left: 6px;
+}
+.inbox__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.inbox__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}

@@ -13,6 +13,7 @@ import { InstallCard } from '../ui/AppFeel';
 import { BackupCard, OnePercent, SimbaNeeds, WindDown } from './Daily';
 import { CampfireCard } from './Campfire';
 import { FajrRise, GhostRace, MorningPromise } from './Push';
+import { InboxPanel, QuickCapture } from './Capture';
 import { RamadanCard, useRamadan } from './Ramadan';
 import { openPhotos, photoOfTheDay, usePhotos } from './Photos';
 import { BossMini } from './Study';
@@ -78,6 +79,7 @@ export default function Home() {
         <Clocks />
         <InstallCard compact />
       </div>
+      <QuickCapture />
       <WindDown />
       <div className="grid grid--home">
         <FajrRise />
@@ -87,6 +89,7 @@ export default function Home() {
         <OnePercent />
         <TodayClasses />
         <ComingUp />
+        <InboxPanel compact />
         <SafeToSpendCard />
         <GhostRace />
         <SimbaNeeds />

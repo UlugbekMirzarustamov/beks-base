@@ -155,6 +155,23 @@ export interface CalEvent extends Base {
   notes: string;
 }
 
+/** Things captured quickly that wait in the inbox until you sort them (tasks and expenses go straight to their lists). */
+export type InboxKind = 'idea' | 'note' | 'link' | 'reminder';
+
+export interface InboxItem extends Base {
+  kind: InboxKind;
+  text: string;
+  /** For links. */
+  url: string;
+  /** For reminders: local UK time "YYYY-MM-DDTHH:MM"; empty otherwise. */
+  remindAt: string;
+  created: string; // YYYY-MM-DD
+  /** The day it was dealt with; it then leaves the inbox. */
+  done?: string;
+  /** The reminder pop-up has been shown. */
+  notified?: boolean;
+}
+
 // ---------- Phase 2 ----------
 export interface VocabWord extends Base {
   word: string;
@@ -414,6 +431,8 @@ export interface AppData {
   catches: Catch[];
   /** "YYYY-MM-DD" → meals and water (Simba's needs) */
   care: Record<string, Care>;
+  /** Quick Capture inbox (ideas, notes, links, reminders). */
+  inbox: InboxItem[];
   /** The universal calendar's own events (classes, appointments, travel, birthdays, events). */
   events: CalEvent[];
   /** "YYYY-MM-DD" → when you got up (Fajr rise) */

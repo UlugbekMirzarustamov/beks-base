@@ -17,6 +17,7 @@ import { PotCloseout } from './screens/Plan';
 import Campfire from './screens/Campfire';
 import { PhotoWall } from './screens/Photos';
 import { HardBadge, OversleptCall } from './screens/Push';
+import { ReminderWatcher } from './screens/Capture';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Study from './screens/Study';
@@ -236,6 +237,7 @@ export default function App() {
       <Splash />
       <PrayerCall />
       <OversleptCall />
+      <ReminderWatcher />
       <Toaster />
     </div>
   );

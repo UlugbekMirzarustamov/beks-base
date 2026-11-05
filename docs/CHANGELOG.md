@@ -4,6 +4,13 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Quick Capture:** one box on Home — type a line and it goes to the right place, with a live preview
+  and one-tap kind chips to correct the guess. "£4.50 coffee" → a purchase (pounds converted to dollars
+  as usual, category guessed), "essay due fri" → a task due Friday, "remind me to … at 6pm" → a reminder,
+  links and "idea:"/"note:" lines → the **Inbox** (Home card + Planner → Today), where each item can become
+  a task, a calendar event or a journal note, or be marked done. Reminders pop up while the app is open
+  (phone notifications need a push service — Phase 5). No XP (new life tools add no gamification).
+  Tests: 111 passing.
 - **Universal calendar (Task 3):** Planner → Calendar with Day / Week / Month views. One calendar for
   everything: your own events (classes, appointments, multi-day travel, birthdays, events, with daily /
   weekly / monthly / yearly repeats and an optional end date) merged with the classes, exams, task

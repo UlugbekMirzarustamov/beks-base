@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Task 3 (universal calendar): 101 tests passing, production build passing.
+Last verified: **2026-11-05** — Quick Capture: 111 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -28,7 +28,10 @@ Paths are relative to `src/`.
 | One calendar for everything (classes, exams, deadlines, study blocks read from their own lists) | Implemented | `itemsOn()` in `lib/calendar.ts`; exams and deadlines added in the calendar go to Tests / tasks |
 | Conflict detection | Implemented | `conflicts()` in `lib/calendar.ts`; flagged in day/week/month views and on Home |
 | "Coming up" card on Home (next 14 days) | Implemented | `ComingUp` in `screens/Home.tsx` |
-| Appointment-style reminders / notifications | Not started | Phase 5 (notifications) |
+| Quick Capture (one line → task, purchase, idea, note, link or reminder, with a live preview) | Implemented | `lib/capture.ts` (tests in `lib/capture.test.ts`), `QuickCapture` in `screens/Capture.tsx` (Home) |
+| Inbox: sort into task, calendar event or journal note, or mark done | Implemented | `InboxPanel` in `screens/Capture.tsx` (Home card + Planner → Today) |
+| In-app reminders (pop up while the app is open) | Implemented | `ReminderWatcher` in `screens/Capture.tsx` |
+| Phone notifications when the app is closed | Not started | Needs a push service — Phase 5, ask Bek first |
 | Campfire "due" card on a real Friday evening | Needs verification | `campfireDue()` in `screens/Campfire.tsx` — only the review page was checked |
 
 ## University and engineering tools

@@ -4,6 +4,7 @@
  */
 import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { occursOn } from '../lib/calendar';
+import { InboxPanel } from './Capture';
 import { addDays, daysBetween, formatDay, fromMinutes, relativeDays, startOfWeek, toMinutes, weekdayOf, WEEKDAYS, WEEKDAYS_LONG } from '../lib/dates';
 import { uid } from '../lib/id';
 import type { AppData, Task, Weekday } from '../lib/types';
@@ -41,6 +42,7 @@ export default function Planner({ sub }: { sub?: string }) {
             <TopThree editable />
           </Panel>
           <Tasks />
+          <InboxPanel />
         </div>
       )}
       {tab === 'calendar' && (
