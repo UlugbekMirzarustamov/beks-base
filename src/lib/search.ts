@@ -42,7 +42,7 @@ export function buildIndex(d: AppData): SearchEntry[] {
   const add = (e: SearchEntry) => out.push(e);
   for (const t of d.tasks) add({ key: `task-${t.id}`, kind: 'Task', title: t.title, sub: [t.done ? 'done' : 'to do', t.due ? `due ${t.due}` : ''].filter(Boolean).join(' · '), href: '#/planner/today', date: t.due ?? '' });
   for (const a of d.assignments) add({ key: `assignment-${a.id}`, kind: 'Assignment', title: a.title, sub: [moduleName(a.subjectId), `due ${a.due}`, a.status].filter(Boolean).join(' · '), href: '#/study/assignments', date: a.due, text: a.notes });
-  for (const t of d.tests) add({ key: `test-${t.id}`, kind: 'Exam', title: t.name, sub: [moduleName(t.subjectId), t.date].filter(Boolean).join(' · '), href: '#/study/tests', date: t.date });
+  for (const t of d.tests) add({ key: `test-${t.id}`, kind: 'Exam', title: t.name, sub: [moduleName(t.subjectId), t.date, t.time, t.room].filter(Boolean).join(' · '), href: '#/study/tests', date: t.date });
   for (const e of d.events) add({ key: `event-${e.id}`, kind: 'Event', title: e.title, sub: [e.date, e.start, e.location].filter(Boolean).join(' · '), href: '#/planner/calendar', date: e.date, text: `${e.kind} ${e.notes}` });
   for (const x of d.expenses) {
     const cat = d.categories.find((c) => c.id === x.categoryId)?.name ?? '';
@@ -53,6 +53,7 @@ export function buildIndex(d: AppData): SearchEntry[] {
   for (const p of d.pantry) add({ key: `pantry-${p.id}`, kind: 'Pantry', title: p.name, sub: [p.qty > 0 ? `${p.qty}${p.unit ? ` ${p.unit}` : ''}` : 'run out', p.expires ? `use by ${p.expires}` : ''].filter(Boolean).join(' · '), href: '#/kitchen/pantry', date: p.expires });
   for (const r of d.recipes) add({ key: `recipe-${r.id}`, kind: 'Recipe', title: r.name, sub: r.minutes ? `${r.minutes} min` : `${r.ingredients.length} ingredients`, href: '#/kitchen/recipes', date: '', text: `${r.ingredients.join(' ')} ${r.steps}` });
   for (const a of d.admin) add({ key: `admin-${a.id}`, kind: 'Admin', title: a.title, sub: [a.date ? `${a.dateLabel.toLowerCase()} ${a.date}` : '', a.finished ? 'finished' : `${a.steps.filter((x) => x.done).length}/${a.steps.length} steps`].filter(Boolean).join(' · '), href: '#/planner/admin', date: a.date, text: `${a.steps.map((x) => x.text).join(' ')} ${a.notes}` });
+  for (const n of d.lectureNotes) add({ key: `lecture-${n.id}`, kind: 'Lecture note', title: n.title, sub: [moduleName(n.subjectId), n.date].filter(Boolean).join(' · '), href: '#/study/notes', date: n.date, text: n.body });
   for (const n of d.notes) add({ key: `note-${n.id}`, kind: 'Journal', title: n.title || 'Untitled note', sub: n.updated.slice(0, 10), href: '#/more/journal', date: n.updated.slice(0, 10), text: n.body });
   for (const i of d.inbox) if (!i.done) add({ key: `inbox-${i.id}`, kind: 'Inbox', title: i.text, sub: i.kind, href: '#/planner/today', date: i.created, text: i.url });
   for (const v of d.vocab) add({ key: `word-${v.id}`, kind: 'Word', title: v.word, sub: v.meaning, href: '#/more/words', date: '', text: v.sentence });
@@ -87,7 +88,7 @@ export type ArchiveArea = 'study' | 'money' | 'planner' | 'reflect' | 'kitchen' 
 
 export const ARCHIVE_AREAS: { id: ArchiveArea; label: string; kinds: string[] }[] = [
   { id: 'planner', label: 'Planner', kinds: ['Task', 'Event', 'Inbox', 'Inbox (done)'] },
-  { id: 'study', label: 'Study', kinds: ['Assignment', 'Exam', 'Mistake', 'Formula', 'Topic', 'Word'] },
+  { id: 'study', label: 'Study', kinds: ['Lecture note', 'Assignment', 'Exam', 'Mistake', 'Formula', 'Topic', 'Word'] },
   { id: 'money', label: 'Money', kinds: ['Purchase', 'Bill', 'Subscription', 'Wish', 'Savings jar'] },
   { id: 'reflect', label: 'Journal & reflect', kinds: ['Journal', 'Night log', 'Week review', 'Campfire', 'Vision', 'Letter'] },
   { id: 'kitchen', label: 'Kitchen', kinds: ['Recipe', 'Meal', 'Pantry', 'Shopping'] },
@@ -159,6 +160,8 @@ export const COMMANDS: Command[] = [
   go('Student admin', '#/planner/admin', 'visa passport documents accommodation tenancy paperwork checklist'),
   go('Assignments & grades', '#/study/assignments', 'coursework grade calculator marks module'),
   go('Tests & bosses', '#/study/tests', 'exams'),
+  go('Lecture notes', '#/study/notes', 'notes lecture module linked'),
+  go('Revision planner', '#/study/tests', 'revision plan exam schedule'),
   go('Topics', '#/study/topics', 'red amber green subjects modules'),
   go('Mistakes', '#/study/mistakes', 'notebook'),
   go('Formula cards', '#/study/cards', 'flashcards'),

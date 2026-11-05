@@ -136,3 +136,14 @@ describe('admin in the calendar', () => {
     expect(itemsOn(d, '2026-11-20')).toHaveLength(0);
   });
 });
+
+describe('exam times and rooms', () => {
+  it('shows an exam at its time, with its length and room, so clashes are found', () => {
+    const d = emptyData('2026-11-05');
+    d.tests = [{ id: 'x', name: 'Maths exam', date: '2026-11-20', subjectId: null, time: '09:30', duration: 120, room: 'Hall A' }];
+    d.events = [{ ...newEvent('2026-11-20', 'appointment'), id: 'dr', title: 'Dentist', start: '11:00', end: '11:30' }];
+    const items = itemsOn(d, '2026-11-20');
+    expect(items[0]).toMatchObject({ kind: 'exam', start: '09:30', end: '11:30', location: 'Hall A' });
+    expect(conflicts(items)).toHaveLength(1);
+  });
+});

@@ -12,10 +12,12 @@ import { PixelArt, PixelIcon } from '../ui/icons';
 import { bossFor, POMODORO_HIT, type Boss, type BossKind } from '../lib/boss';
 import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
-const TABS = ['tests', 'assignments', 'topics', 'mistakes', 'cards', 'timer', 'tools'] as const;
+const TABS = ['tests', 'assignments', 'notes', 'topics', 'mistakes', 'cards', 'timer', 'tools'] as const;
 // Loads on first open (prefetched for offline use in App.tsx).
 const AssignmentsTab = lazy(() => import('./Assignments'));
 const ToolsTab = lazy(() => import('./Toolbox'));
+const NotesTab = lazy(() => import('./Notes'));
+const RevisionPlanner = lazy(() => import('./Revision'));
 type Tab = (typeof TABS)[number];
 
 export default function Study({ sub }: { sub?: string }) {
@@ -32,6 +34,7 @@ export default function Study({ sub }: { sub?: string }) {
         tabs={[
           { id: 'tests', label: 'Tests', icon: 'calendar' },
           { id: 'assignments', label: 'Assignments', icon: 'scroll' },
+          { id: 'notes', label: 'Notes', icon: 'pencil' },
           { id: 'topics', label: 'Topics', icon: 'book' },
           { id: 'mistakes', label: 'Mistakes', icon: 'cross' },
           { id: 'cards', label: 'Formulas', icon: 'card' },
@@ -48,6 +51,11 @@ export default function Study({ sub }: { sub?: string }) {
       {tab === 'topics' && <Topics />}
       {tab === 'mistakes' && <Mistakes />}
       {tab === 'cards' && <Cards />}
+      {tab === 'notes' && (
+        <Suspense fallback={<p className="muted center">Opening…</p>}>
+          <NotesTab />
+        </Suspense>
+      )}
       {tab === 'timer' && <Timer />}
       {tab === 'tools' && (
         <Suspense fallback={<p className="muted center">Opening…</p>}>
@@ -74,6 +82,9 @@ function Tests() {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [subjectId, setSubjectId] = useState<string>('');
+  const [time, setTime] = useState('');
+  const [duration, setDuration] = useState('');
+  const [room, setRoom] = useState('');
 
   const sorted = [...data.tests].sort((a, b) => a.date.localeCompare(b.date));
   const upcoming = sorted.filter((t) => t.date >= today);
@@ -84,12 +95,18 @@ function Tests() {
     setName(t.name);
     setDate(t.date);
     setSubjectId(t.subjectId ?? '');
+    setTime(t.time ?? '');
+    setDuration(t.duration ? String(t.duration) : '');
+    setRoom(t.room ?? '');
   };
   const clear = () => {
     setEditing(null);
     setName('');
     setDate('');
     setSubjectId('');
+    setTime('');
+    setDuration('');
+    setRoom('');
   };
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -97,10 +114,18 @@ function Tests() {
       toast('Give the test a name and a date', 'error');
       return;
     }
+    const mins = Math.round(Number(duration));
     update((d) => {
       const value = { name: name.trim(), date, subjectId: subjectId || null };
-      if (editing) Object.assign(d.tests.find((t) => t.id === editing.id) ?? {}, value);
-      else d.tests.push({ id: uid(), ...value });
+      // Time, length and room are optional: an empty box removes them.
+      const extra = { ...(time ? { time } : {}), ...(mins > 0 ? { duration: mins } : {}), ...(room.trim() ? { room: room.trim() } : {}) };
+      const t = editing && d.tests.find((x) => x.id === editing.id);
+      if (t) {
+        delete t.time;
+        delete t.duration;
+        delete t.room;
+        Object.assign(t, value, extra);
+      } else d.tests.push({ id: uid(), ...value, ...extra });
     });
     toast(editing ? 'Test updated' : 'Test added', 'pop');
     clear();
@@ -125,6 +150,8 @@ function Tests() {
           <strong>{t.name}</strong>
           <small className="muted">
             {formatDay(t.date)}
+            {t.time ? ` · ${t.time}${t.duration ? ` (${t.duration} min)` : ''}` : ''}
+            {t.room ? ` · ${t.room}` : ''}
             {t.subjectId ? ` · ${data.subjects.find((s) => s.id === t.subjectId)?.name ?? ''}` : ''}
           </small>
         </div>
@@ -160,6 +187,11 @@ function Tests() {
           </details>
         )}
       </Panel>
+      {upcoming.length > 0 && (
+        <Suspense fallback={null}>
+          <RevisionPlanner />
+        </Suspense>
+      )}
       <Panel title={editing ? 'Edit test' : 'Add a test'} icon="plus">
         <form className="form" onSubmit={save}>
           <Field label="Test name">
@@ -180,6 +212,17 @@ function Tests() {
               </select>
             </Field>
           </div>
+          <div className="form__row">
+            <Field label="Starts (optional)" className="grow">
+              <input className="input" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            </Field>
+            <Field label="Minutes" className="grow">
+              <input className="input" inputMode="numeric" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="120" />
+            </Field>
+          </div>
+          <Field label="Room (optional)">
+            <input className="input" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Exam hall, seat 42" maxLength={60} />
+          </Field>
           <div className="form__actions">
             {editing && (
               <button type="button" className="btn" onClick={clear}>

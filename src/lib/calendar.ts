@@ -10,7 +10,7 @@
  *   - student admin key dates and checklist step dates (`admin`).
  * Plain functions, so they're easy to test.
  */
-import { addDays, daysBetween, daysInMonth, toMinutes, weekdayOf } from './dates';
+import { addDays, daysBetween, daysInMonth, fromMinutes, toMinutes, weekdayOf } from './dates';
 import { billDueOn, formatMoney } from './money';
 import type { AppData, CalEvent, CalKind } from './types';
 
@@ -88,7 +88,10 @@ export function itemsOn(d: AppData, date: string): CalItem[] {
     if (c.day === weekdayOf(date)) items.push({ key: `timetable-${c.id}`, id: c.id, source: 'timetable', kind: 'class', title: c.name, date, start: c.start, end: c.end, location: c.room });
   }
   for (const t of d.tests) {
-    if (t.date === date) items.push({ key: `test-${t.id}`, id: t.id, source: 'test', kind: 'exam', title: t.name, date, start: '', end: '', location: '' });
+    if (t.date !== date) continue;
+    const start = t.time ?? '';
+    const end = start && t.duration ? fromMinutes((toMinutes(start) + t.duration) % 1440) : '';
+    items.push({ key: `test-${t.id}`, id: t.id, source: 'test', kind: 'exam', title: t.name, date, start, end, location: t.room ?? '' });
   }
   for (const t of d.tasks) {
     if (t.due === date) items.push({ key: `task-${t.id}`, id: t.id, source: 'task', kind: 'deadline', title: t.title, date, start: '', end: '', location: '', done: t.done });

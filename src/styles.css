@@ -5901,3 +5901,37 @@ button.list__main {
   gap: 2px;
   white-space: nowrap;
 }
+
+/* ---------- Lecture notes & revision ---------- */
+.note-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.wiki-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 1px;
+  padding: 0 4px;
+  font: inherit;
+  color: var(--sky-lo, #2a6fa8);
+  background: rgba(42, 111, 168, 0.12);
+  border: 0;
+  border-bottom: 2px solid currentColor;
+  cursor: pointer;
+  text-decoration: none;
+}
+.wiki-link.is-missing {
+  color: inherit;
+  background: none;
+  border-bottom-style: dashed;
+  opacity: 0.8;
+}
+:root[data-theme='night'] .wiki-link {
+  color: #8cc8ff;
+}
+.revision-plan li {
+  display: flex;
+  flex-direction: column;
+}

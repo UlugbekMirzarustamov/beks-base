@@ -71,6 +71,10 @@ export interface Subject extends Base {
 export interface Test extends Base {
   name: string;
   date: string; // YYYY-MM-DD
+  /** Start time "HH:MM", length in minutes and room — all optional. */
+  time?: string;
+  duration?: number;
+  room?: string;
   subjectId: string | null;
   /** How much of the module's final mark this exam is worth, in % (optional). */
   weight?: number;
@@ -166,6 +170,8 @@ export interface StudyBlock extends Base {
   start: string;
   end: string;
   title: string;
+  /** Made by the revision planner (so a new plan can replace it). */
+  revision?: boolean;
 }
 
 /** What kind of thing a calendar event is (exams live in Study → Tests, deadlines in tasks). */
@@ -287,6 +293,16 @@ export interface VocabWord extends Base {
 export interface Habit extends Base {
   name: string;
   icon: 'moon' | 'heart' | 'phone' | 'check';
+}
+
+/** A lecture note for a module. [[Title]] in the body links to another note (or a topic). */
+export interface LectureNote extends Base {
+  subjectId: string | null;
+  title: string;
+  /** The lecture's date (YYYY-MM-DD). */
+  date: string;
+  body: string;
+  updated: string; // ISO timestamp
 }
 
 export interface Note extends Base {
@@ -545,6 +561,8 @@ export interface AppData {
   pantry: PantryItem[];
   recipes: Recipe[];
   meals: Record<string, Partial<Record<MealSlot, Meal>>>;
+  /** Lecture notes per module, linked with [[Title]]. */
+  lectureNotes: LectureNote[];
   /** Student admin: documents, visa, accommodation… as dated checklists. */
   admin: AdminItem[];
   /** The universal calendar's own events (classes, appointments, travel, birthdays, events). */

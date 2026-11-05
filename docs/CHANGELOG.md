@@ -4,6 +4,14 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Lecture notes, revision planner, exam times:** Study → **Notes**: notes per module and lecture date,
+  with search and a module filter. Type `[[Another note]]` to link notes; links to a missing note offer to
+  create it, links to one of your topics show its red/amber/green colour, each note lists the notes linking
+  back to it, and renaming a note updates the links. Study → Tests gains a **revision planner** (30-minute
+  sessions each day until your exams in the next four weeks, more time for red topics and close exams; one
+  tap puts them in the week plan and calendar, and a new plan replaces the old one), and exams can have a
+  **start time, length and room** (shown on the countdown and timed in the calendar, so clashes are
+  flagged). Lecture notes are searchable and in the archive. Tests: 169 passing.
 - **Engineering toolbox:** Study → Tools. A **scientific calculator** (keypad or typing: brackets, powers,
   sin/cos/tan in degrees or radians, ln/log, √, n!, %, π, e, "2pi"-style multiplying, `ans` and a tap-to-reuse
   history; it uses its own small parser, never `eval`), a **unit converter** (length, mass, time, speed, force,
