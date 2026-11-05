@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Knowledge garden: 195 tests passing, production build passing.
+Last verified: **2026-11-05** — Physics mastery tools: 200 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -65,6 +65,7 @@ Paths are relative to `src/`.
 | Mock exams in exam conditions (full screen, countdown, auto hand-in, question grid, leaving the app noted without penalty), self-marking against model answers, lost marks → mistakes | Implemented | `screens/Mock.tsx` (Study → Mock exam); `questionPool`, `pickQuestions`, `suggestedMinutes` in `lib/mock.ts` (tests in `lib/mock.test.ts`) |
 | Question bank per module/topic (past-paper questions + model answers + marks) | Implemented | `QuestionBank` in `screens/Mock.tsx`; `examQuestions` in `lib/types.ts` |
 | Predicted grade (recent mocks 60%, topic confidence 25%, coursework 15%; shows how sure it is) | Implemented | `predictGrade` in `lib/mock.ts` |
+| Physics: formula sheet (44 formulas, 8 topics, every symbol + unit, → formula cards), solve any formula for any quantity, endless practice problems checked within 2% (missed → mistakes), uncertainty calculator | Implemented | `screens/PhysicsTools.tsx` (Study → Tools → Physics); `lib/physics.ts` (tests in `lib/physics.test.ts`: every formula solved for every quantity) |
 | Engineering toolbox: scientific calculator (safe parser, DEG/RAD, ans, history), unit converter (12 kinds), constants, solvers (SUVAT with both answers, quadratic, 2×2/3×3 simultaneous, f(x) = 0) | Implemented | `screens/Toolbox.tsx` (Study → Tools, loads on demand); `lib/engineering.ts` (tests in `lib/engineering.test.ts`) |
 | MATLAB snippets, graph plotting, lab checklist | Not started | Not requested for now |
 | Focus guard, speaking practice | Not started | Spec: *Proposed* (past papers: use the mock exam question bank) |

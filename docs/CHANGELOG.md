@@ -4,6 +4,12 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Physics mastery** (Study → Tools → Physics): a **formula sheet** of 44 core formulas across mechanics,
+  materials, circular motion & SHM, waves & light, electricity, thermal, fields and nuclear — every symbol and
+  unit explained, searchable, one tap to add to your formula cards (spaced repetition); **solve any formula for
+  any quantity** (fill in what you know); **practice problems** with random values, checked instantly within 2%
+  with the worked formula (missed ones can go to the mistakes notebook); and an **uncertainty calculator** for
+  lab reports. A test solves every formula for every one of its quantities. Tests: 200 passing.
 - **Knowledge garden:** Study → Notes now has a **🌱 Garden** view. Every lecture note is a pixel plant in its
   module's flower bed, growing taller the more it's connected; `[[links]]` grow as vines between plants.
   **Seeds to plant** are notes you've linked to but not written yet (tap one to write it — it lands in the same

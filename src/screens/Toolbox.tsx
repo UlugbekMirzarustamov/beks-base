@@ -1,5 +1,5 @@
 /**
- * 🔧 Study → Tools: the engineering toolbox — scientific calculator, unit converter, constants
+ * 🔧 Study → Tools: the engineering toolbox — physics (formula sheet, solver, practice, uncertainty), scientific calculator, unit converter, constants
  * and solvers (SUVAT, quadratic, simultaneous equations, f(x) = 0). The maths lives in
  * lib/engineering.ts. Nothing here is saved except your degrees/radians choice.
  */
@@ -21,8 +21,9 @@ import {
 import { fold } from '../lib/search';
 import { PixelIcon } from '../ui/icons';
 import { Field, Panel, Segmented } from '../ui/kit';
+import PhysicsTools from './PhysicsTools';
 
-type Section = 'calc' | 'units' | 'constants' | 'solve';
+type Section = 'physics' | 'calc' | 'units' | 'constants' | 'solve';
 
 const ANGLE_KEY = 'beks:angle';
 const savedAngle = (): AngleMode => {
@@ -44,7 +45,7 @@ const num = (text: string): number | undefined => {
 };
 
 export default function Toolbox() {
-  const [section, setSection] = useState<Section>('calc');
+  const [section, setSection] = useState<Section>('physics');
   const [expr, setExpr] = useState('');
   // Kept here (not in the calculator) so the last answer and history survive switching tools.
   const [ans, setAns] = useState(0);
@@ -65,12 +66,14 @@ export default function Toolbox() {
         value={section}
         onChange={setSection}
         options={[
+          { value: 'physics', label: 'Physics' },
           { value: 'calc', label: 'Calculator' },
           { value: 'units', label: 'Units' },
           { value: 'constants', label: 'Constants' },
           { value: 'solve', label: 'Solvers' },
         ]}
       />
+      {section === 'physics' && <PhysicsTools />}
       {section === 'calc' && <Calculator expr={expr} setExpr={setExpr} angle={angle} setAngle={setAngle} ans={ans} setAns={setAns} history={history} setHistory={setHistory} />}
       {section === 'units' && <Units />}
       {section === 'constants' && (

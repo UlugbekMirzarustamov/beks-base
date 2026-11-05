@@ -6351,3 +6351,35 @@ body.exam-mode {
 .kgarden__plant:focus-visible {
   outline: 2px solid var(--gold);
 }
+
+/* ---------- Physics ---------- */
+.formula-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.formula-card {
+  padding: 8px 10px;
+  background: var(--panel-hi);
+  border: 2px solid var(--panel-lo);
+}
+.formula-card__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.formula-card__eq {
+  margin: 4px 0;
+  font-size: 22px;
+}
+.formula-card__vars {
+  margin: 0 0 6px;
+  padding-left: 18px;
+  font-size: 14px;
+}
+.practice-q p {
+  margin: 4px 0;
+  font-size: 17px;
+}

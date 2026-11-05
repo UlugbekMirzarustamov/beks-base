@@ -173,6 +173,7 @@ export const COMMANDS: Command[] = [
   go('Mistakes', '#/study/mistakes', 'notebook'),
   go('Formula cards', '#/study/cards', 'flashcards'),
   go('Pomodoro timer', '#/study/timer', 'focus study'),
+  go('Physics formula sheet & practice', '#/study/tools', 'physics formulas practice problems solve uncertainty mechanics electricity waves'),
   go('Engineering tools', '#/study/tools', 'calculator scientific unit converter constants suvat quadratic simultaneous equation solver'),
   go('Money plan', '#/money/plan', 'pot allowance budget'),
   go('Wishes', '#/money/wishes', 'wish fund'),
