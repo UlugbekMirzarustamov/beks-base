@@ -272,6 +272,29 @@ export interface Care {
   water: number;
 }
 
+/** Fajr rise: when you tapped "I'm up" that morning, and whether it was before sunrise. */
+export interface Rise {
+  time: string; // HH:MM
+  onTime: boolean;
+}
+
+/** One hard thing promised to Simba in the morning. `kept` is set once you say how it went. */
+export interface Promise_ {
+  text: string;
+  kept?: boolean;
+}
+
+/** A big goal on the vision board: what, why, by when, and a picture. */
+export interface VisionGoal extends Base {
+  title: string;
+  why: string;
+  /** Target date (YYYY-MM-DD), optional. */
+  by: string;
+  /** A small JPEG (data: URL), optional. */
+  photo: string;
+  done?: string;
+}
+
 /** A Ramadan day: did you fast, did you pray taraweeh. */
 export interface FastDay {
   fasted: boolean;
@@ -299,6 +322,8 @@ export interface Settings {
   gbpToUzs?: number;
   pomodoroWork: number;
   pomodoroBreak: number;
+  /** Hard mode: stricter rules for weeks when you want to go all in. */
+  hardMode: boolean;
 }
 
 import type { Pot } from './pot';
@@ -366,6 +391,12 @@ export interface AppData {
   catches: Catch[];
   /** "YYYY-MM-DD" → meals and water (Simba's needs) */
   care: Record<string, Care>;
+  /** "YYYY-MM-DD" → when you got up (Fajr rise) */
+  rise: Record<string, Rise>;
+  /** "YYYY-MM-DD" → that morning's promise to Simba */
+  promises: Record<string, Promise_>;
+  /** The vision board: your big goals. */
+  vision: VisionGoal[];
   /** Cabin shop: items you own, which item is shown in each spot, coins spent. */
   shop: { owned: string[]; placed: Record<string, string>; spent: number };
   /** One-time updates already applied to this data (e.g. "usic-nov-2026"). */

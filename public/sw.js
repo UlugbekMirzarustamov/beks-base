@@ -10,7 +10,7 @@
  * Your DATA is not stored here — that's in IndexedDB. This only stores the app itself.
  * Bump VERSION to force phones to drop the old cached files.
  */
-const VERSION = 'ulus-base-v4';
+const VERSION = 'ulus-base-v5';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

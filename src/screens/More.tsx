@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { backupPhotos, parseBackup } from '../lib/backup';
 import { lastBackup, shareBackup } from './Daily';
 import { setPhotos, usePhotos } from './Photos';
+import { HardModeToggle } from './Push';
 import { createInitialData, upgrade } from '../lib/seed';
 import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
@@ -116,6 +117,8 @@ export function SettingsPanel() {
         <p className="field__label">Background sound</p>
         <SoundMixer />
       </Panel>
+
+      <HardModeToggle />
 
       <AvatarEditor />
 

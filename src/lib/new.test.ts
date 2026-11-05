@@ -4,6 +4,7 @@ import { bossFor, STAMINA_HP } from './boss';
 import { careStatus, onTimeBedtime } from './care';
 import { biting, casts, catchFish } from './fish';
 import { pixelLevel } from './pixels';
+import { brutalLine, ghostRace, oversleptRecently, riseOnTime, riseStreak, unresolvedPromise, wishReady } from './push';
 import { hijri, ramadanInfo } from './ramadan';
 import { emptyData } from './seed';
 
@@ -101,5 +102,57 @@ describe('older saved data', () => {
     const out = normalize(d, TODAY);
     expect(out.settings.mixer).toEqual({ rain: 2, fire: 3, wind: 0, lofi: 0 });
     expect(out.catches).toEqual([]);
+  });
+});
+
+describe('you vs last week', () => {
+  it('races this week so far against last week up to the same day', () => {
+    const d = emptyData(TODAY); // Thursday 5 Nov → Mon 2–Thu 5 vs Mon 26–Thu 29 Oct
+    d.studyLog.push({ id: 'a', subjectId: null, minutes: 25, date: '2026-10-27' }, { id: 'b', subjectId: null, minutes: 25, date: '2026-10-30' });
+    d.studyLog.push({ id: 'c', subjectId: null, minutes: 25, date: '2026-11-03' }, { id: 'd', subjectId: null, minutes: 25, date: '2026-11-04' });
+    d.expenses.push({ id: 'e1', amount: 30, categoryId: 'food', note: '', date: '2026-10-28' }, { id: 'e2', amount: 20, categoryId: 'food', note: '', date: '2026-11-03' });
+    const race = ghostRace(d, TODAY, false);
+    const pom = race.rows.find((r) => r.id === 'pomodoros')!;
+    expect(pom).toMatchObject({ you: 2, ghost: 1, status: 'ahead' }); // Fri 30 Oct is after "Thursday" last week
+    expect(race.rows.find((r) => r.id === 'spent')).toMatchObject({ you: 20, ghost: 30, status: 'ahead' });
+    // Hard mode: the ghost is 10% faster (and spends 10% less).
+    const hard = ghostRace(d, TODAY, true);
+    expect(hard.rows.find((r) => r.id === 'pomodoros')!.ghost).toBe(1.1);
+    expect(hard.rows.find((r) => r.id === 'spent')!.ghost).toBe(27);
+  });
+});
+
+describe('Fajr rise & promises', () => {
+  it('is on time only before sunrise', () => {
+    expect(riseOnTime('06:10', 7 * 60)).toBe(true);
+    expect(riseOnTime('07:20', 7 * 60)).toBe(false);
+  });
+  it('counts the streak and the oversleeps', () => {
+    const d = emptyData(TODAY);
+    d.rise['2026-11-03'] = { time: '06:00', onTime: true };
+    d.rise['2026-11-04'] = { time: '06:05', onTime: true };
+    d.rise[TODAY] = { time: '08:30', onTime: false };
+    expect(riseStreak(d, TODAY)).toBe(0);
+    delete d.rise[TODAY];
+    expect(riseStreak(d, TODAY)).toBe(2);
+    d.rise[TODAY] = { time: '08:30', onTime: false };
+    expect(oversleptRecently(d, TODAY)).toBe(1);
+  });
+  it('fills the brutal line with real times', () => {
+    const line = brutalLine(TODAY, '05:13', '07:05');
+    expect(line).not.toContain('{');
+  });
+  it('asks about yesterday’s promise until it is answered', () => {
+    const d = emptyData(TODAY);
+    expect(unresolvedPromise(d, TODAY)).toBeNull();
+    d.promises['2026-11-04'] = { text: 'Two Pomodoros' };
+    expect(unresolvedPromise(d, TODAY)).toBe('2026-11-04');
+    d.promises['2026-11-04'].kept = true;
+    expect(unresolvedPromise(d, TODAY)).toBeNull();
+  });
+  it('makes wishes need a 10% buffer in hard mode', () => {
+    expect(wishReady(100, 100, false)).toBe(true);
+    expect(wishReady(100, 100, true)).toBe(false);
+    expect(wishReady(110, 100, true)).toBe(true);
   });
 });

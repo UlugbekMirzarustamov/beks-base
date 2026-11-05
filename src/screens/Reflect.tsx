@@ -6,6 +6,7 @@
  *  - Sky      your own night sky: every logged night is a star, nights in a
  *             row join into constellations. Tap a star to re-read that night.
  *  - Year     year in pixels: one square per day, coloured by mood / prayers / money / study.
+ *  - Vision   your vision board: big goals with a picture and a why.
  *  - Letters  sealed letters to future you that only open on a chosen date.
  */
 import { useState, type FormEvent } from 'react';
@@ -17,10 +18,11 @@ import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Empty, Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 import { WeekReflect } from './Extras';
+import { VisionBoard } from './Push';
 import { pixelLevel, type PixelKind } from '../lib/pixels';
 import { spendByDay } from '../lib/pot';
 
-const TABS = ['tonight', 'week', 'sky', 'year', 'letters'] as const;
+const TABS = ['tonight', 'week', 'sky', 'year', 'vision', 'letters'] as const;
 type Tab = (typeof TABS)[number];
 
 /** XP for lighting a star (logging a night). */
@@ -42,6 +44,7 @@ export default function Reflect({ sub }: { sub?: string }) {
           { id: 'week', label: 'Week', icon: 'calendar' },
           { id: 'sky', label: 'My sky', icon: 'star' },
           { id: 'year', label: 'Year', icon: 'calendar' },
+          { id: 'vision', label: 'Vision', icon: 'photo' },
           { id: 'letters', label: 'Letters', icon: 'letter' },
         ]}
       />
@@ -49,6 +52,7 @@ export default function Reflect({ sub }: { sub?: string }) {
       {tab === 'week' && <WeekReflect />}
       {tab === 'sky' && <Sky />}
       {tab === 'year' && <YearPixels />}
+      {tab === 'vision' && <VisionBoard />}
       {tab === 'letters' && <Letters />}
     </div>
   );

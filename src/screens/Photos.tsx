@@ -50,7 +50,7 @@ export function usePhotos(): Photo[] {
 export const photoOfTheDay = (list: Photo[], today: string): Photo | null => (list.length ? list[dayHash(today, 'photo') % list.length] : null);
 
 /** Shrink a picture to at most `max` px on its longest side, as a JPEG data: URL. */
-async function shrink(file: File, max = 1000): Promise<string> {
+export async function shrink(file: File, max = 1000): Promise<string> {
   const url = URL.createObjectURL(file);
   try {
     const img = new Image();

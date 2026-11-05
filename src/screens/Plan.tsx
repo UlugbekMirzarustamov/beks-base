@@ -12,6 +12,7 @@ import { formatMoney, parseAmount } from '../lib/money';
 import { daysUntil, potStatus, spendByDay, type Pot } from '../lib/pot';
 import { sfx } from '../lib/sound';
 import type { Wish } from '../lib/types';
+import { wishReady } from '../lib/push';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Bar, Empty, Field, Panel, useConfirm } from '../ui/kit';
@@ -270,11 +271,13 @@ export function Wishes() {
       </Panel>
 
       {open.map((w) => {
-        const pct = Math.max(0, Math.min(100, (s.fund / w.cost) * 100));
-        const wait = daysUntil(w.cost, s.fund, perDay);
-        const ready = s.fund >= w.cost;
-        const sooner = !ready && savingPerDay > 0 ? daysUntil(w.cost, s.fund, savingPerDay + 3) : null;
-        const now = !ready && savingPerDay > 0 ? daysUntil(w.cost, s.fund, savingPerDay) : null;
+        // Hard mode: a wish only unlocks once the fund covers it + 10% safety.
+        const target = data.settings.hardMode ? Math.round(w.cost * 110) / 100 : w.cost;
+        const pct = Math.max(0, Math.min(100, (s.fund / target) * 100));
+        const wait = daysUntil(target, s.fund, perDay);
+        const ready = wishReady(s.fund, w.cost, data.settings.hardMode);
+        const sooner = !ready && savingPerDay > 0 ? daysUntil(target, s.fund, savingPerDay + 3) : null;
+        const now = !ready && savingPerDay > 0 ? daysUntil(target, s.fund, savingPerDay) : null;
         return (
           <Panel key={w.id} title={w.name} icon={w.icon} className={`wish ${ready ? 'is-ready' : ''}`} actions={<button type="button" className="icon-btn" onClick={() => remove(w)} aria-label={`Remove ${w.name}`}><PixelIcon name="trash" size={16} /></button>}>
             <div className="wish__stars" aria-hidden="true">

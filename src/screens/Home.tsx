@@ -12,6 +12,7 @@ import { Clocks, MoodCheckIn } from './Extras';
 import { InstallCard } from '../ui/AppFeel';
 import { BackupCard, OnePercent, SimbaNeeds, WindDown } from './Daily';
 import { CampfireCard } from './Campfire';
+import { FajrRise, GhostRace, MorningPromise } from './Push';
 import { RamadanCard, useRamadan } from './Ramadan';
 import { openPhotos, photoOfTheDay, usePhotos } from './Photos';
 import { BossMini } from './Study';
@@ -78,11 +79,14 @@ export default function Home() {
       </div>
       <WindDown />
       <div className="grid grid--home">
+        <FajrRise />
         <RamadanCard />
+        <MorningPromise />
         <CampfireCard />
         <OnePercent />
         <TodayClasses />
         <SafeToSpendCard />
+        <GhostRace />
         <SimbaNeeds />
         <WeatherCard />
         <SavingsMini />

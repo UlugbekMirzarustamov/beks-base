@@ -18,6 +18,7 @@ import { PotCloseout } from './screens/Plan';
 import Pond from './screens/Pond';
 import Campfire from './screens/Campfire';
 import { PhotoWall } from './screens/Photos';
+import { HardBadge, OversleptCall } from './screens/Push';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Reflect from './screens/Reflect';
@@ -133,6 +134,7 @@ export default function App() {
           <span>BEK'S BASE</span>
         </a>
         <div className="topbar__right">
+          <HardBadge />
           <MiniTimer />
           <a href="#/home" className="lvl" aria-label={`Level ${lvl.level}, ${lvl.into} of ${lvl.needed} XP`}>
             <span className="lvl__num">LV{lvl.level}</span>
@@ -199,6 +201,7 @@ export default function App() {
       <PhotoWall />
       <Splash />
       <PrayerCall />
+      <OversleptCall />
       <Toaster />
     </div>
   );
