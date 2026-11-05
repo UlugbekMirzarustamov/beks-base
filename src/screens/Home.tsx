@@ -74,6 +74,9 @@ export default function Home() {
             <button type="button" className="btn btn--small" onClick={() => window.dispatchEvent(new Event('beks:briefing'))}>
               <PixelIcon name="sun" size={16} /> Today's briefing
             </button>
+            <a href="#/rooms" className="btn btn--small">
+              <PixelIcon name="house" size={16} /> Rooms
+            </a>
             <a href="#/kitchen" className="btn btn--small">
               <PixelIcon name="apple" size={16} /> Kitchen
             </a>

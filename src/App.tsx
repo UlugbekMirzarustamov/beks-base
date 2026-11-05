@@ -26,6 +26,7 @@ import { useStore, useTimer } from './state/store';
 import { PixelIcon, type IconName } from './ui/icons';
 import { Toaster } from './ui/kit';
 import { Splash } from './ui/AppFeel';
+import { BreakReminder } from './ui/BreakReminder';
 import { SoundMixer } from './ui/SoundMixer';
 
 // Screens nothing else needs are loaded on first visit (smaller start-up). `prefetchScreens`
@@ -35,13 +36,15 @@ const loadMore = () => import('./screens/More');
 const loadPond = () => import('./screens/Pond');
 const loadKitchen = () => import('./screens/Kitchen');
 const loadArchive = () => import('./screens/Archive');
+const loadRooms = () => import('./screens/Rooms');
 const Reflect = lazy(loadReflect);
 const More = lazy(loadMore);
 const Pond = lazy(loadPond);
 const Kitchen = lazy(loadKitchen);
 const Archive = lazy(loadArchive);
+const Rooms = lazy(loadRooms);
 export function prefetchScreens() {
-  void Promise.all([loadReflect(), loadMore(), loadPond(), loadKitchen(), loadArchive(), import('./screens/Calendar'), import('./screens/Assignments'), import('./screens/Admin'), import('./screens/Toolbox'), import('./screens/Notes'), import('./screens/Revision'), import('./screens/Deen')]).catch(() => {
+  void Promise.all([loadReflect(), loadMore(), loadPond(), loadKitchen(), loadArchive(), loadRooms(), import('./screens/Calendar'), import('./screens/Assignments'), import('./screens/Admin'), import('./screens/Toolbox'), import('./screens/Notes'), import('./screens/Revision'), import('./screens/Deen')]).catch(() => {
     /* offline: they'll be fetched next time */
   });
 }
@@ -65,7 +68,7 @@ class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolea
   }
 }
 
-const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire', 'kitchen', 'archive'] as const;
+const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire', 'kitchen', 'archive', 'rooms'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: { id: Screen; label: string; icon: IconName }[] = [
@@ -219,6 +222,7 @@ export default function App() {
             {route.screen === 'calm' && <CalmCorner />}
             {route.screen === 'pond' && <Pond />}
             {route.screen === 'kitchen' && <Kitchen sub={route.sub} />}
+            {route.screen === 'rooms' && <Rooms sub={route.sub} />}
             {route.screen === 'archive' && <Archive key={route.sub ?? ''} sub={route.sub} />}
             {route.screen === 'campfire' && <Campfire />}
           </Suspense>
@@ -249,6 +253,7 @@ export default function App() {
       <OversleptCall />
       <ReminderWatcher />
       <CommandPalette />
+      <BreakReminder />
       <Toaster />
     </div>
   );

@@ -15,6 +15,7 @@ import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 import { SoundMixer } from '../ui/SoundMixer';
+import { BreakSetting } from '../ui/BreakReminder';
 import { InstallCard } from '../ui/AppFeel';
 import { BEK_H, BEK_W, drawBek } from '../scene/Cabin';
 import type { BekPose } from '../lib/cabin';
@@ -118,6 +119,8 @@ export function SettingsPanel() {
         <p className="muted small">Auto switches to night mode from 19:00 to 07:00 UK time.</p>
         <p className="field__label">Background sound</p>
         <SoundMixer />
+        <p className="field__label">Breaks</p>
+        <BreakSetting />
       </Panel>
 
       <HardModeToggle />

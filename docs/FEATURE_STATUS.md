@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Deen additions (Jumu'ah, hifz, methods, Hijri): 175 tests passing, production build passing.
+Last verified: **2026-11-05** — Rooms, Life Museum, Garden of Years, Simba gifts, break reminders: 180 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -138,7 +138,12 @@ Paths are relative to `src/`.
 | Pond & 15-fish book | Implemented | `lib/fish.ts` (tests), `screens/Pond.tsx` |
 | Sound mixer, lo-fi radio, effects | Implemented | `lib/sound.ts`, `ui/SoundMixer.tsx` |
 | Lo-fi radio sound on a phone | Needs verification | Toggle checked; audio not listened to on a device |
-| Additional rooms | Not started | Spec: *To be defined* (one cabin room today) |
+| More rooms: Library, Kitchen, Workshop, Bedroom, Observatory, Garden of Years, attic Life Museum — each drawn from real data (books = notes/words/cards/recipes, jars = pantry, finished work, last night's bedtime, stars = night logs) | Implemented | `screens/Rooms.tsx` (`#/rooms`, Home → Rooms; loads on demand); `roomStats` in `lib/rooms.ts` (tests in `lib/rooms.test.ts`) |
+| Garden of Years (a flower per month, growing with good days; past years) | Implemented | `gardenOfYear`, `gardenYears` in `lib/rooms.ts` |
+| Life Museum / memory timeline (badges, savings reached, dreams reached, graded work, campfire wins, first catches, Simba's gifts; worship never displayed) | Implemented | `museum()` in `lib/rooms.ts` |
+| Simba activities per room (reading, waiting by the bowl, batting a bolt, napping, stargazing, chasing a butterfly, exploring), tap reactions, a daily gift | Implemented | `ROOMS`, `giftFor` in `lib/rooms.ts`; `simbaGifts` in `lib/types.ts` |
+| Break reminders after N minutes in the app (off / 30–90 min; waits during Pomodoro; time away counts as a break) | Implemented | `ui/BreakReminder.tsx` (mounted in `App.tsx`); setting in More → Settings and the Bedroom |
+| Break reminder after a real 50 minutes on a phone | Needs verification | Checked in the browser with sped-up timers only |
 
 ## AI and automation
 | Feature | Status | Evidence |

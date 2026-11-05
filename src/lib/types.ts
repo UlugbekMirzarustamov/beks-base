@@ -500,6 +500,8 @@ export interface Settings {
   gbpToUzs?: number;
   pomodoroWork: number;
   pomodoroBreak: number;
+  /** Remind me to take a short break after this many minutes in the app (0 = off). */
+  breakEvery: number;
   /** Hard mode: stricter rules for weeks when you want to go all in. */
   hardMode: boolean;
 }
@@ -586,6 +588,8 @@ export interface AppData {
   friday: Record<string, string[]>;
   /** Qur'an memorisation (hifz), one entry per surah. Private, never scored. */
   hifz: HifzItem[];
+  /** Little things Simba brought you, one a day when you visit the rooms. */
+  simbaGifts: { date: string; gift: string }[];
   /** Lecture notes per module, linked with [[Title]]. */
   lectureNotes: LectureNote[];
   /** Student admin: documents, visa, accommodation… as dated checklists. */

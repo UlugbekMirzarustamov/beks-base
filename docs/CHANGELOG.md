@@ -4,6 +4,17 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Rooms, Life Museum, Garden of Years, Simba, breaks:** a new **Rooms** button on Home opens seven more
+  rooms in original pixel art, each drawn from your real life: the **Library** fills with a book for every
+  lecture note, word, formula card and recipe; the **Kitchen** shelf holds a jar for each thing in your pantry
+  and the pot steams when a meal is planned; the **Workshop** bench shows finished coursework and admin; the
+  **Bedroom** bed is made when you were in bed on time; the **Observatory** has a star for every night you
+  wrote; the **Garden of Years** grows a flower per month from your good days (with past years); and the
+  attic's **Life Museum** is a timeline of milestones (badges, savings and dreams reached, graded work,
+  campfire wins, first catches) — prayer and Qur'an are never put on display. **Simba** does something
+  different in each room, answers when tapped, and leaves you a small gift once a day (kept in the museum).
+  **Break reminders** suggest a short break after 50 minutes in the app (change or switch off in Settings or
+  the Bedroom; they wait during a Pomodoro). No points or penalties. Tests: 180 passing.
 - **Deen: Jumu'ah, hifz, calculation methods, Hijri date** (all private — nothing scored): Prayer settings
   can switch the **Fajr/Isha method** (Muslim World League stays the default, so times don't change unless you
   pick another: ISNA, Egyptian, Karachi or Umm al-Qura). The **Hijri date** shows on Home and the Prayer page,

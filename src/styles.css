@@ -5959,3 +5959,149 @@ button.list__main {
 .hifz-item__count .input {
   width: 64px;
 }
+
+/* ---------- Rooms ---------- */
+.room-doors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.room-gift {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.room {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: var(--bevel) solid var(--edge);
+  background: linear-gradient(to bottom, var(--room-wall, #8b6b4a) 0 70%, var(--room-floor, #6b4423) 70% 100%);
+  image-rendering: pixelated;
+}
+.room::before {
+  /* Planks on the wall, a shadow line where wall meets floor. */
+  content: '';
+  position: absolute;
+  inset: 0 0 30% 0;
+  background: repeating-linear-gradient(to bottom, transparent 0 18px, rgba(0, 0, 0, 0.08) 18px 20px);
+  border-bottom: 4px solid rgba(0, 0, 0, 0.25);
+}
+.room--library {
+  --room-wall: #6b4a2b;
+  --room-floor: #8a5a2e;
+}
+.room--kitchen {
+  --room-wall: #d9cbb0;
+  --room-floor: #9a7b55;
+}
+.room--workshop {
+  --room-wall: #5a5f66;
+  --room-floor: #4a3b2c;
+}
+.room--bedroom {
+  --room-wall: #7a8fb5;
+  --room-floor: #8a5a2e;
+}
+.room--observatory {
+  --room-wall: #1d2340;
+  --room-floor: #3a2c4a;
+}
+.room--garden {
+  --room-wall: #9fd4ff;
+  --room-floor: #5fa83b;
+}
+.room--garden.is-night {
+  --room-wall: #24305a;
+  --room-floor: #2f5a24;
+}
+.room--garden::before,
+.room--observatory::before {
+  background: none;
+}
+.room--attic {
+  --room-wall: #8b6b4a;
+  --room-floor: #5a3e24;
+}
+.room__sprite {
+  position: absolute;
+  height: auto;
+  display: block;
+}
+.room__star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #fff3a0;
+  box-shadow: 0 0 3px #fff3a0;
+}
+.room__simba {
+  position: absolute;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.room__simba:focus-visible {
+  outline: 3px solid var(--gold);
+}
+.room__bubble {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  transform: translateX(-50%);
+  max-width: 80%;
+  margin: 0;
+  padding: 4px 8px;
+  font-size: 14px;
+  color: #2f1d0c;
+  background: #fff3d6;
+  border: 2px solid var(--edge);
+  text-align: center;
+}
+.garden-months {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2px;
+  text-align: center;
+}
+.garden-months li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 12px;
+}
+.break-card {
+  position: fixed;
+  left: 50%;
+  bottom: 84px;
+  z-index: 50;
+  transform: translateX(-50%);
+  width: min(420px, calc(100% - 24px));
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  color: #2f1d0c;
+  background: var(--panel, #fff3d6);
+  border: var(--bevel) solid var(--edge);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+}
+:root[data-theme='night'] .break-card {
+  color: inherit;
+}
+.room-doors .segmented__btn[aria-selected='true'] {
+  background: #fff3d6;
+  box-shadow: inset 0 4px 0 rgba(0, 0, 0, 0.12);
+  color: #2f1d0c;
+}
+:root[data-theme='night'] .room-doors .segmented__btn[aria-selected='true'] {
+  background: var(--gold);
+  color: #2f1d0c;
+}
