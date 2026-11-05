@@ -1,0 +1,123 @@
+# Feature status
+
+What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
+Last verified: **2026-11-05** — commit `ac8d47a` plus the Task 1 privacy cleanup (84 tests passing, production build passing; cleanup not yet deployed).
+Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
+
+**Statuses**
+- **Implemented** — in the code and exercised (tests and/or checked in the browser).
+- **Partially implemented** — some of the spec item exists; the gap is stated.
+- **Planned** — agreed next step, not built yet.
+- **Not started** — in the spec (often *Proposed* or *To be defined*), no code.
+- **Needs verification** — code exists, but hasn't been checked in the real situation (usually a real phone or a real date).
+
+Paths are relative to `src/`.
+
+## Life Command Centre
+| Feature | Status | Evidence |
+|---|---|---|
+| Cabin home with station links | Implemented | `scene/Cabin.tsx` (`stations()`), `screens/Home.tsx` |
+| Morning briefing (incl. photo, focus, vision goal) | Implemented | `screens/Briefing.tsx` |
+| Today cards (classes now/next, money, weather, next test, top 3, due, mood, level) | Implemented | `screens/Home.tsx` |
+| 1% quest, word of the day, morning recall | Implemented | `screens/Daily.tsx`, `lib/daily.ts` |
+| Night wind-down | Implemented | `screens/Daily.tsx` (`WindDown`) |
+| UK / Tashkent clocks | Implemented | `screens/Extras.tsx` (`Clocks`) |
+| Friday campfire review | Implemented | `screens/Campfire.tsx` |
+| Campfire "due" card on a real Friday evening | Needs verification | `campfireDue()` in `screens/Campfire.tsx` — only the review page was checked |
+
+## University and engineering tools
+| Feature | Status | Evidence |
+|---|---|---|
+| Tests & countdowns | Implemented | `screens/Study.tsx` (`Tests`) |
+| Exam bosses (HP from topics + Pomodoros) | Implemented | `lib/boss.ts`, `BossCard` in `screens/Study.tsx`, tests in `lib/new.test.ts` |
+| Topics red/amber/green, mistakes notebook, formula flashcards | Implemented | `screens/Study.tsx` |
+| Vocabulary | Implemented | `screens/Extras.tsx` (`Vocab`) |
+| Pomodoro + full-screen focus | Implemented | `state/store.tsx` (`TimerProvider`), `screens/Study.tsx` (`FocusScreen`) |
+| Real timetable, week view, study blocks | Implemented | Dated classes live in the user's data (`sessions`); shown by `screens/Planner.tsx`. `lib/timetable.ts` keeps only the generic builder |
+| Entering a new dated timetable in the app (instead of in code) | Not started | Needed for next month; planned with the universal calendar |
+| Engineering tools beyond formula cards | Not started | Spec: *To be defined* |
+| Auto revision plan, focus guard, past-paper tracker, speaking practice | Not started | Spec: *Proposed* |
+
+## Finance
+| Feature | Status | Evidence |
+|---|---|---|
+| USD amounts with £ entry; so'm converter | Implemented | `screens/Money.tsx`, `lib/money.ts` |
+| Money plan (pot → daily allowance) | Implemented | `lib/pot.ts`, `screens/Plan.tsx`, tests in `lib/money.test.ts` |
+| Wish fund, wishes, ETA, slider, buy from fund | Implemented | `screens/Plan.tsx` (`Wishes`), `lib/pot.ts` |
+| Runway, money calendar, nightly "you saved" | Implemented | `screens/Plan.tsx` |
+| Budget & category limits, savings jars, bills, charts, CSV import, insights | Implemented | `screens/Money.tsx`, `lib/csv.ts`, `lib/daily.ts` (`moneyInsights`) |
+| Hard-mode wish buffer (+10%) | Implemented | `lib/push.ts` (`wishReady`), `screens/Plan.tsx` |
+| Cook-at-home counter | Not started | Spec: *Proposed* |
+
+## Health, fitness and football
+| Feature | Status | Evidence |
+|---|---|---|
+| Simba needs you (meals, water, sleep → hearts, hungry mood) | Implemented | `lib/care.ts`, `screens/Daily.tsx` (`SimbaNeeds`), `lib/cabin.ts` |
+| Mood check-in & week, calm corner | Implemented | `screens/Extras.tsx`, `screens/Calm.tsx` |
+| Fitness | Partially implemented | Only an "Exercise" habit (default habits in `lib/seed.ts`); no fitness features |
+| Football | Not started | Spec: *To be defined* |
+| Move quests | Not started | Spec: *Proposed* |
+
+## Deen and personal development
+| Feature | Status | Evidence |
+|---|---|---|
+| Prayer times, lanterns, strip, full-screen call, qibla, offsets | Implemented | `lib/prayer.ts` (tests in `lib/prayer.test.ts`), `screens/Prayer.tsx` |
+| Tasbih, Qur'an tracker | Implemented | `screens/Devotion.tsx`, `lib/quran.ts` |
+| Ramadan mode (countdown, preview, times, fasts, taraweeh, juz, dua, lanterns) | Implemented | `lib/ramadan.ts` (tests), `screens/Ramadan.tsx`, `scene/Cabin.tsx` |
+| Ramadan mode switching on during the real Ramadan | Needs verification | Checked only with the preview; the calendar maths is tested |
+| Fajr rise + harsh oversleep call | Implemented | `lib/push.ts` (tests), `screens/Push.tsx` (`FajrRise`, `OversleptCall`) |
+| Fajr rise "I'm up" before sunrise | Needs verification | Only the after-sunrise path was checked in the browser |
+| Reflect: tonight & stars, my sky, week, year in pixels, vision board, letters | Implemented | `screens/Reflect.tsx`, `lib/pixels.ts`, `screens/Push.tsx` (`VisionBoard`) |
+| Gratitude jar, journal, habits | Implemented | `screens/Calm.tsx`, `screens/Extras.tsx` |
+| Morning promise, you vs last week, hard mode | Implemented | `lib/push.ts` (tests), `screens/Push.tsx` |
+| XP, levels, coins, 25 badges | Implemented | `lib/xp.ts`, `lib/badges.ts`, `screens/Badges.tsx` |
+| Adhkar, sadaqah jar, if-then plans, family report card, weekly challenges | Not started | Spec: *Proposed* |
+
+## Everyday life
+| Feature | Status | Evidence |
+|---|---|---|
+| Real weather (7-day) in window and on Home | Implemented | `lib/weather.ts`, `ui/Weather.tsx` |
+| Planner: top 3, tasks, week | Implemented | `screens/Planner.tsx` |
+| Family photo wall, photo of the day | Implemented | `screens/Photos.tsx`, `scene/Cabin.tsx` (mantel frame) |
+| Explore-the-city map | Not started | Spec: *Proposed* |
+
+## Projects and career
+| Feature | Status | Evidence |
+|---|---|---|
+| Projects and career | Not started | Spec: *To be defined* |
+
+## Cabin, rooms and Simba
+| Feature | Status | Evidence |
+|---|---|---|
+| Responsive cabin, day/night sky, seasons, real weather effects | Implemented | `scene/Cabin.tsx` |
+| Real winter (snow, snowman, frost, scarf, hot chocolate) | Implemented | `scene/Cabin.tsx`, `screens/Home.tsx` |
+| Winter triggered by real local snow | Needs verification | Checked only with a simulated forecast |
+| Simba moods & petting, Bek avatar & editor | Implemented | `lib/cabin.ts` (tests), `scene/Cabin.tsx`, `screens/More.tsx` (`AvatarEditor`) |
+| Unlocks, cabin shop (10 items), growth (tulips, books, garden, jar) | Implemented | `lib/cabin.ts`, `lib/shop.ts`, `screens/Shop.tsx` |
+| Pond & 15-fish book | Implemented | `lib/fish.ts` (tests), `screens/Pond.tsx` |
+| Sound mixer, lo-fi radio, effects | Implemented | `lib/sound.ts`, `ui/SoundMixer.tsx` |
+| Lo-fi radio sound on a phone | Needs verification | Toggle checked; audio not listened to on a device |
+| Additional rooms | Not started | Spec: *To be defined* (one cabin room today) |
+
+## AI and automation
+| Feature | Status | Evidence |
+|---|---|---|
+| AI and automation | Not started | Spec: *To be defined*; no AI code exists |
+
+## Technical foundations, privacy and backups
+| Feature | Status | Evidence |
+|---|---|---|
+| Vite + React + TS, plain CSS, static hosting | Implemented | `package.json`, `.github/workflows/deploy.yml` |
+| Tests + build gate before deploy | Implemented | `deploy.yml` (`npm test`, `npm run build`) |
+| Offline service worker, manifest, shortcuts, splash, install card | Implemented | `public/sw.js`, `public/manifest.webmanifest`, `ui/AppFeel.tsx` |
+| Install and offline on Bek's real phone after this update | Needs verification | Verified only in a desktop browser |
+| Safe loading + recovery screen | Implemented | `lib/persist.ts`, `ui/Recovery.tsx`, `state/store.tsx`; tests in `lib/persist.test.ts` |
+| Visible save errors (data and photos) | Implemented | `state/store.tsx`, `screens/Photos.tsx` |
+| Verified snapshots (newest 3) + restore | Implemented | `lib/persist.ts`, `screens/More.tsx` (`SafetyCopies`) |
+| Deep normalise + import validation | Implemented | `lib/backup.ts` (`normalize`, `validateData`) |
+| JSON export/import incl. photos; Sunday reminder | Implemented | `lib/backup.ts`, `screens/Daily.tsx` (`shareBackup`, `BackupCard`) |
+| Share-sheet backup (AirDrop) on iPhone | Needs verification | Uses `navigator.share` with files; only the download fallback was exercised |
+| Personal data removed from the public repo (current code) | Implemented | Task 1: no real timetable, money figures or institution names in `src/`, `README.md` or docs |
+| Personal data removed from git history; commit author email | Not started | Old commits still contain them; waiting for Bek's decision (history rewrite or private repo) |
+| Consolidate duplicated helpers (streaks, week stats, clocks) | Planned | See "Known follow-ups" in [CHANGELOG.md](CHANGELOG.md) |
+| Lazy-load rarely used screens; move vision photos out of AppData | Planned | Single ~510 KB JS bundle today |
