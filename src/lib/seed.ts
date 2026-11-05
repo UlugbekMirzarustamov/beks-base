@@ -168,14 +168,9 @@ export function upgrade(data: AppData, today: string): AppData {
       settings: { ...result.settings, sound: 'off', mixer: { rain: sound === 'rain' ? 4 : 0, fire: sound === 'fire' ? 4 : 0, wind: 0, lofi: 0 } },
     };
   }
-  // Bek's real money: $3,700 that has to last 5 months, starting the day this update arrives.
-  if (!result.applied.includes('pot-3700')) {
-    result = {
-      ...result,
-      applied: [...result.applied, 'pot-3700'],
-      pot: result.pot ?? { total: 3700, start: today, months: 5, lastCloseout: today },
-    };
-  }
+  // (Older versions also had a one-time step that set up a personal money plan. It has been
+  // removed from the public code; data that already ran it keeps its plan and its `applied` entry.
+  // New installs set up their own plan in Money → Plan.)
   if (!result.applied.includes('usd')) {
     const s = result.settings;
     const hasMoney = result.expenses.length > 0 || result.recurring.length > 0 || result.monthlyBudget !== DEFAULT_BUDGET;

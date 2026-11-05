@@ -470,7 +470,7 @@ function Timetable() {
     <div className="grid grid--2">
       <Panel title="School timetable" icon="calendar">
         <p className="muted small">
-          {lastDay ? `Your USIC classes, day by day, up to ${formatDay(lastDay)}.` : 'No school classes from today on.'} When next month's
+          {lastDay ? `Your school classes, day by day, up to ${formatDay(lastDay)}.` : 'No school classes from today on.'} When next month's
           timetable comes out, add it here (or send the screenshots to get it added in one go).
         </p>
         {days.slice(0, 5).map(dayGroup)}
@@ -521,7 +521,7 @@ function Timetable() {
             </Field>
             <div className="form__row">
               <Field label="Room" className="grow">
-                <input className="input" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="e.g. SOL711" />
+                <input className="input" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="e.g. Room 2.14" />
               </Field>
               {!form.repeat && (
                 <Field label="Teacher" className="grow">

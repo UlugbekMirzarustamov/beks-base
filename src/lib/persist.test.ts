@@ -158,7 +158,7 @@ describe('imports', () => {
     expect(() => parseBackup(wrap({ hello: 1 }), TODAY)).toThrow(/doesn't look like/);
     expect(() => parseBackup(wrap({ ...good, tasks: 'none' }), TODAY)).toThrow(/damaged/);
     expect(() => parseBackup(wrap({ ...good, expenses: [{ id: 'e', amount: 'ten', date: TODAY }] }), TODAY)).toThrow(/purchase/);
-    expect(() => parseBackup(wrap({ ...good, pot: { total: 3700 } }), TODAY)).toThrow(/money plan/);
+    expect(() => parseBackup(wrap({ ...good, pot: { total: 1000 } }), TODAY)).toThrow(/money plan/);
     expect(parseBackup(exportJson(good), TODAY)).toEqual(good);
   });
 

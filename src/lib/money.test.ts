@@ -124,50 +124,51 @@ describe('dollars', () => {
   });
 });
 
-describe('money plan ($3,700 for 5 months)', () => {
-  const pot = { total: 3700, start: '2026-11-04', months: 5 };
+describe('money plan (a pot that must last 5 months)', () => {
+  // Example figures only: $3,020 over 151 days = exactly $20 a day.
+  const pot = { total: 3020, start: '2026-11-04', months: 5 };
 
   it('splits the pot into a daily allowance', () => {
     const s = potStatus(pot, [], '2026-11-04');
     expect(s.end).toBe('2027-04-03');
     expect(s.totalDays).toBe(151);
-    expect(s.daily).toBe(24.5);
-    expect(s.remaining).toBe(3700);
-    expect(s.leftToday).toBe(24.5);
+    expect(s.daily).toBe(20);
+    expect(s.remaining).toBe(3020);
+    expect(s.leftToday).toBe(20);
     expect(s.fund).toBe(0);
   });
 
   it('takes purchases out of the pot and saves what you do not spend', () => {
     const spent = [exp(10, '2026-11-04'), exp(30, '2026-11-05'), exp(4.5, '2026-11-06')];
     const s = potStatus(pot, spent, '2026-11-06');
-    expect(s.remaining).toBe(3655.5); // 3700 − 44.50
-    expect(s.leftToday).toBe(20); // 24.50 − 4.50
-    // Day 1: saved 14.50; day 2: overspent 5.50 → fund = 9.00
-    expect(s.fund).toBe(9);
+    expect(s.remaining).toBe(2975.5); // 3020 − 44.50
+    expect(s.leftToday).toBe(15.5); // 20 − 4.50
+    // Day 1: saved 10; day 2: overspent 10 → fund = 0
+    expect(s.fund).toBe(0);
     expect(s.underStreak).toBe(0); // yesterday was over
   });
 
   it('takes wishes out of the wish fund, not out of the day', () => {
     const coat: Expense = { ...exp(40, '2026-11-06'), fromWish: true };
     const s = potStatus(pot, [exp(10, '2026-11-04'), exp(30, '2026-11-05'), exp(4.5, '2026-11-06'), coat], '2026-11-06');
-    expect(s.fund).toBe(9 - 40); // the coat comes straight out of the fund
-    expect(s.leftToday).toBe(20); // today's allowance is untouched
-    expect(s.remaining).toBe(3615.5); // but it still comes out of the pot
+    expect(s.fund).toBe(0 - 40); // the coat comes straight out of the fund
+    expect(s.leftToday).toBe(15.5); // today's allowance is untouched
+    expect(s.remaining).toBe(2935.5); // but it still comes out of the pot
   });
 
   it('overspending today lowers the wish fund straight away', () => {
     const s = potStatus(pot, [exp(30, '2026-11-04')], '2026-11-04');
-    expect(s.leftToday).toBe(-5.5);
-    expect(s.fund).toBe(-5.5);
+    expect(s.leftToday).toBe(-10);
+    expect(s.fund).toBe(-10);
   });
 
   it('ignores spending from before the plan started', () => {
-    expect(potStatus(pot, [exp(500, '2026-11-01')], '2026-11-04').remaining).toBe(3700);
+    expect(potStatus(pot, [exp(500, '2026-11-01')], '2026-11-04').remaining).toBe(3020);
   });
 
   it('says when the money would run out at your pace', () => {
     const s = potStatus(pot, [exp(100, '2026-11-04')], '2026-11-05');
-    expect(s.runsOutOn).not.toBeNull(); // $50/day on average → runs out long before April
+    expect(s.runsOutOn).not.toBeNull(); // $100/day on average → runs out long before April
     expect(daysUntil(100, 40, 5)).toBe(12);
     expect(daysUntil(100, 120, 5)).toBe(0);
     expect(daysUntil(100, 40, 0)).toBeNull();

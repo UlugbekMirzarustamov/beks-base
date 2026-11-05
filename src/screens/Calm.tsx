@@ -127,7 +127,7 @@ export default function CalmCorner() {
             {calledToday ? 'Called home today ✓' : 'I called / messaged home'}
           </button>
           <p className="muted small">
-            If things feel heavy for more than a few days, please talk to someone — a friend, USIC student support, or your GP. You don't have to carry it alone.
+            If things feel heavy for more than a few days, please talk to someone — a friend, student support, or your GP. You don't have to carry it alone.
           </p>
         </Panel>
       </div>

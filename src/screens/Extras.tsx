@@ -109,7 +109,7 @@ export function MoodWeek() {
       </ol>
       {lowDays >= 3 && (
         <p className="alert alert--warn" role="status">
-          {lowDays} low days this week. That's a burnout warning sign. Sleep, eat properly, call home, and think about talking to USIC student support — you don't
+          {lowDays} low days this week. That's a burnout warning sign. Sleep, eat properly, call home, and think about talking to student support — you don't
           have to push through alone.
         </p>
       )}

@@ -87,7 +87,7 @@ describe('year in pixels', () => {
     expect(pixelLevel(d, 'prayer', TODAY)).toBe(2);
     d.studyLog.push({ id: 's', subjectId: null, minutes: 100, date: TODAY });
     expect(pixelLevel(d, 'study', TODAY)).toBe(4);
-    d.pot = { total: 3700, start: '2026-11-04', months: 5 };
+    d.pot = { total: 3020, start: '2026-11-04', months: 5 };
     expect(pixelLevel(d, 'money', TODAY)).toBe(5);
     d.expenses.push({ id: 'e', amount: 40, categoryId: 'food', note: '', date: TODAY });
     expect(pixelLevel(d, 'money', TODAY)).toBe(1);

@@ -1,6 +1,6 @@
 /**
  * The money plan: one pot of money that has to last a set number of months
- * (e.g. $3,700 for 5 months). Every purchase comes out of the pot.
+ * (e.g. $2,000 for 4 months). Every purchase comes out of the pot.
  *
  * The idea in one line: you get the same allowance every day
  * (pot ÷ days). Whatever you DON'T spend goes into your WISH FUND;

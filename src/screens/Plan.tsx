@@ -1,5 +1,5 @@
 /**
- * 💰 The money plan: one pot (e.g. $3,700) that has to last N months.
+ * 💰 The money plan: one pot (e.g. $2,000) that has to last N months.
  *  - <PotToday>     today's allowance, what's left today, the pot and the wish fund
  *  - <PlanTab>      the pot, a "runway" to the end date, and a money calendar
  *  - <Wishes>       things you're saving for with the money you don't spend
@@ -146,7 +146,7 @@ export function PlanTab() {
 
 function PlanSetup({ current, onSaved }: { current?: Pot; onSaved?: (p: Pot) => void }) {
   const { update, today, toast } = useStore();
-  const [form, setForm] = useState({ total: String(current?.total ?? 3700), start: current?.start ?? today, months: String(current?.months ?? 5) });
+  const [form, setForm] = useState({ total: current ? String(current.total) : '', start: current?.start ?? today, months: String(current?.months ?? 5) });
   const save = (e: FormEvent) => {
     e.preventDefault();
     const total = parseAmount(form.total);
@@ -166,7 +166,7 @@ function PlanSetup({ current, onSaved }: { current?: Pot; onSaved?: (p: Pot) => 
     <form className="form" onSubmit={save}>
       <div className="form__row form__row--wrap">
         <Field label="Money in the pot ($)" className="grow">
-          <input className="input" inputMode="decimal" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} />
+          <input className="input" inputMode="decimal" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} placeholder="e.g. 2000" />
         </Field>
         <Field label="Starting">
           <input className="input" type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />

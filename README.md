@@ -5,7 +5,7 @@ A cozy, blocky pixel-art home base for life as an international student:
 **reflecting** (the Telescope: nightly log, weekly look back, your own night sky of stars,
 and sealed letters to future you), **prayer** (the Prayer mat: Sheffield prayer times,
 five lanterns a day, a call to prayer when you open the app, qibla compass),
-your **USIC timetable** day by day, a rain/fire/wind **sound mixer**,
+your **school timetable** day by day, a rain/fire/wind **sound mixer**,
 money in **US dollars** (with a $ / £ switch when you pay in pounds),
 savings jars, a morning briefing, a tasbih counter and Qur'an tracker,
 plus words, habits, mood and a journal.
@@ -132,7 +132,7 @@ src/
     sound.ts      rain / fire background sound (made in code)
     xp.ts         XP and levels
     prayer.ts     prayer times for Sheffield (+ prayer.test.ts)
-    timetable.ts  your USIC timetable, by date
+    timetable.ts  dated school timetables (none stored in code)
     cabin.ts      cabin unlocks, seasons, streaks, Simba's moods
     weather.ts    Sheffield weather (Open-Meteo, no key; only the city's location is sent)
     quran.ts      Qur'an pages/juz helpers

@@ -107,7 +107,7 @@ function Tonight({ onLit }: { onLit: () => void }) {
                   className="input"
                   aria-label={`Good thing ${i + 1}`}
                   value={g}
-                  placeholder={['Nice chat with a classmate', 'Cooked plov', 'Sunny walk to USIC'][i]}
+                  placeholder={['Nice chat with a classmate', 'Cooked plov', 'Sunny walk to class'][i]}
                   onChange={(e) => edit({ good: log.good.map((x, j) => (j === i ? e.target.value : x)) })}
                 />
               </label>

@@ -117,13 +117,13 @@ export interface ClassSlot extends Base {
   room: string;
 }
 
-/** One real class on a real date (from the USIC timetable). Unlike ClassSlot it doesn't repeat. */
+/** One real class on a real date (from a school timetable). Unlike ClassSlot it doesn't repeat. */
 export interface ClassSession extends Base {
   date: string; // YYYY-MM-DD
   start: string; // HH:MM
   end: string;
   name: string; // e.g. "Physics"
-  room: string; // e.g. "SOL711"
+  room: string; // e.g. "Room 2.14"
   teacher: string;
 }
 
@@ -399,6 +399,6 @@ export interface AppData {
   vision: VisionGoal[];
   /** Cabin shop: items you own, which item is shown in each spot, coins spent. */
   shop: { owned: string[]; placed: Record<string, string>; spent: number };
-  /** One-time updates already applied to this data (e.g. "usic-nov-2026"). */
+  /** One-time updates already applied to this data (e.g. "mixer", "usd"). */
   applied: string[];
 }

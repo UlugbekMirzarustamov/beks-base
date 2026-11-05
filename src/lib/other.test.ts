@@ -3,6 +3,7 @@ import { exportJson, parseBackup } from './backup';
 import { guessColumns, parseCsv, rowsToPurchases } from './csv';
 import { daysBetween, startOfWeek, todayUK, weekdayOf } from './dates';
 import { clearExampleData, createInitialData, emptyData, hasExampleData, upgrade } from './seed';
+import { sessionsFromWeeks, type Row, type Week } from './timetable';
 import { levelInfo } from './xp';
 
 const TODAY = '2026-11-03';
@@ -47,16 +48,28 @@ describe('upgrading saved data', () => {
     expect(clearExampleData(up, TODAY)).toEqual(up);
   });
 
-  it('adds the November timetable exactly once', () => {
-    const first = createInitialData(TODAY);
-    const again = upgrade(first, TODAY);
-    expect(again.sessions.length).toBe(first.sessions.length);
-    const on = (date: string) => first.sessions.filter((s) => s.date === date).map((s) => `${s.start} ${s.name} ${s.room}`);
-    expect(on('2026-11-03')).toEqual(['09:00 Academic English Skills Online', '11:00 Physics SOL703', '13:00 Physics SOL403LT', '14:00 Physics SOL713']);
-    expect(on('2026-11-12')).toContain('15:30 Progress Coach Workshop KH06');
-    // Week 4 is the same as week 3
-    expect(on('2026-11-26')).toEqual(on('2026-11-19'));
+  it('turns timetable weeks into dated classes (made-up example timetable)', () => {
+    const mon: Row = ['09:00', '10:00', 'Maths', 'Room A', ''];
+    const fri: Row = ['14:00', '15:30', 'Physics lab', 'Lab 2', ''];
+    const week: Week = [[mon], [], [], [], [fri]];
+    const sessions = sessionsFromWeeks([
+      { monday: '2026-11-02', week },
+      { monday: '2026-11-09', week },
+    ]);
+    const on = (date: string) => sessions.filter((s) => s.date === date).map((s) => `${s.start} ${s.name} ${s.room}`);
+    expect(on('2026-11-02')).toEqual(['09:00 Maths Room A']);
+    expect(on('2026-11-13')).toEqual(['14:00 Physics lab Lab 2']);
     expect(on('2026-11-07')).toEqual([]); // Saturday
+    expect(sessions).toHaveLength(4);
+  });
+
+  it("keeps classes already in someone's data and never adds a timetable twice", () => {
+    const data = createInitialData(TODAY);
+    data.sessions = [{ id: 's1', date: TODAY, start: '09:00', end: '10:00', name: 'Maths', room: 'Room A', teacher: '' }];
+    data.applied = [...data.applied, 'timetable-2026-11'];
+    const up = upgrade(data, TODAY);
+    expect(up.sessions).toEqual(data.sessions);
+    expect(up.applied).toContain('timetable-2026-11');
   });
 
   it('asks about old pound amounts only if there is money data from before', () => {
