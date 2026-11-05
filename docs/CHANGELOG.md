@@ -4,6 +4,14 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Mock exams + predicted grade:** Study → **Mock exam**. Build a question bank (past-paper questions with
+  model answers and marks, per module and topic); your mistakes notebook and formula cards can join the pool,
+  and weak topics come up more often. A mock runs in **exam conditions**: full screen, a countdown (about
+  1.5 minutes per mark), no notes, a question grid, a warning if you try to leave, automatic hand-in when time
+  is up, and leaving the app is noted honestly (never a penalty). Then you **mark your paper** against the model
+  answers, see your score, and send lost-mark questions to the mistakes notebook. A **predicted grade** combines
+  recent mocks (60%), topic confidence (25%) and coursework marks (15%), shows the breakdown and how sure it is.
+  Tests: 191 passing.
 - **Islamic library** (Prayer → Library, all private, nothing scored): a **dua collection** of 20 well-known duas
   by situation (study, daily life, hard times, travel, family, forgiveness, mosque, Ramadan) with Arabic,
   transliteration, meaning and source; search, star favourites, and save your own duas. A **private good deeds

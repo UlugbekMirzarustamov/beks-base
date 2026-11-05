@@ -308,6 +308,30 @@ export interface LearningItem extends Base {
   notes: string;
 }
 
+// ---------- Mock exams ----------
+/** A question in your own bank (e.g. from a past paper), with its model answer. */
+export interface ExamQuestion extends Base {
+  subjectId: string | null;
+  topicId: string | null;
+  question: string;
+  answer: string;
+  marks: number;
+}
+/** One finished mock exam. */
+export interface MockResult extends Base {
+  subjectId: string | null;
+  testId: string | null;
+  date: string; // YYYY-MM-DD
+  /** Minutes allowed and seconds actually used. */
+  minutes: number;
+  used: number;
+  score: number;
+  max: number;
+  /** How many times you left the app during the exam (just recorded, never a penalty). */
+  leftApp: number;
+  items: { question: string; answer: string; given: string; marks: number; got: number }[];
+}
+
 /** Things captured quickly that wait in the inbox until you sort them (tasks and expenses go straight to their lists). */
 export type InboxKind = 'idea' | 'note' | 'link' | 'reminder';
 
@@ -624,6 +648,9 @@ export interface AppData {
   friday: Record<string, string[]>;
   /** Qur'an memorisation (hifz), one entry per surah. Private, never scored. */
   hifz: HifzItem[];
+  /** Mock exams: your question bank and finished mocks. */
+  examQuestions: ExamQuestion[];
+  mocks: MockResult[];
   /** Islamic library: starred duas (ids), your own duas, private good deeds, learning list. */
   duaFavs: string[];
   myDuas: MyDua[];

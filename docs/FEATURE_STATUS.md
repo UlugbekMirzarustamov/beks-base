@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Islamic library: 187 tests passing, production build passing.
+Last verified: **2026-11-05** — Mock exams + predicted grade: 191 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -60,9 +60,12 @@ Paths are relative to `src/`.
 | Lecture notes per module (lecture date, search, module filter) with [[links]] between notes and to topics, backlinks, rename keeps links | Implemented | `screens/Notes.tsx` (Study → Notes, loads on demand); `lib/notes.ts` (tests in `lib/notes.test.ts`) |
 | Revision planner: 30-min sessions before exams (weak topics and close exams first) → week plan + calendar, replace or remove | Implemented | `screens/Revision.tsx` (Study → Tests); `lib/revision.ts` (tests in `lib/notes.test.ts`); `StudyBlock.revision` |
 | Exam start time, length and room (shown on countdowns; timed in the calendar, so clashes are flagged) | Implemented | `Tests` in `screens/Study.tsx`; `itemsOn()` in `lib/calendar.ts` |
+| Mock exams in exam conditions (full screen, countdown, auto hand-in, question grid, leaving the app noted without penalty), self-marking against model answers, lost marks → mistakes | Implemented | `screens/Mock.tsx` (Study → Mock exam); `questionPool`, `pickQuestions`, `suggestedMinutes` in `lib/mock.ts` (tests in `lib/mock.test.ts`) |
+| Question bank per module/topic (past-paper questions + model answers + marks) | Implemented | `QuestionBank` in `screens/Mock.tsx`; `examQuestions` in `lib/types.ts` |
+| Predicted grade (recent mocks 60%, topic confidence 25%, coursework 15%; shows how sure it is) | Implemented | `predictGrade` in `lib/mock.ts` |
 | Engineering toolbox: scientific calculator (safe parser, DEG/RAD, ans, history), unit converter (12 kinds), constants, solvers (SUVAT with both answers, quadratic, 2×2/3×3 simultaneous, f(x) = 0) | Implemented | `screens/Toolbox.tsx` (Study → Tools, loads on demand); `lib/engineering.ts` (tests in `lib/engineering.test.ts`) |
 | MATLAB snippets, graph plotting, lab checklist | Not started | Not requested for now |
-| Focus guard, past-paper tracker, speaking practice | Not started | Spec: *Proposed* |
+| Focus guard, speaking practice | Not started | Spec: *Proposed* (past papers: use the mock exam question bank) |
 
 ## Finance
 | Feature | Status | Evidence |

@@ -12,11 +12,12 @@ import { PixelArt, PixelIcon } from '../ui/icons';
 import { bossFor, POMODORO_HIT, type Boss, type BossKind } from '../lib/boss';
 import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
-const TABS = ['tests', 'assignments', 'notes', 'topics', 'mistakes', 'cards', 'timer', 'tools'] as const;
+const TABS = ['tests', 'mock', 'assignments', 'notes', 'topics', 'mistakes', 'cards', 'timer', 'tools'] as const;
 // Loads on first open (prefetched for offline use in App.tsx).
 const AssignmentsTab = lazy(() => import('./Assignments'));
 const ToolsTab = lazy(() => import('./Toolbox'));
 const NotesTab = lazy(() => import('./Notes'));
+const MockTab = lazy(() => import('./Mock'));
 const RevisionPlanner = lazy(() => import('./Revision'));
 type Tab = (typeof TABS)[number];
 
@@ -33,6 +34,7 @@ export default function Study({ sub }: { sub?: string }) {
         onChange={setTab}
         tabs={[
           { id: 'tests', label: 'Tests', icon: 'calendar' },
+          { id: 'mock', label: 'Mock exam', icon: 'sword' },
           { id: 'assignments', label: 'Assignments', icon: 'scroll' },
           { id: 'notes', label: 'Notes', icon: 'pencil' },
           { id: 'topics', label: 'Topics', icon: 'book' },
@@ -51,6 +53,11 @@ export default function Study({ sub }: { sub?: string }) {
       {tab === 'topics' && <Topics />}
       {tab === 'mistakes' && <Mistakes />}
       {tab === 'cards' && <Cards />}
+      {tab === 'mock' && (
+        <Suspense fallback={<p className="muted center">Opening…</p>}>
+          <MockTab />
+        </Suspense>
+      )}
       {tab === 'notes' && (
         <Suspense fallback={<p className="muted center">Opening…</p>}>
           <NotesTab />
