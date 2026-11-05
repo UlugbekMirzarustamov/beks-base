@@ -61,12 +61,13 @@ export function plantStage(prayerStreak: number): 0 | 1 | 2 | 3 | 4 {
 }
 
 // ---------------------------------------------------------------- Simba
-export type SimbaMood = 'sleep' | 'study' | 'prayer' | 'worried' | 'cosy';
+export type SimbaMood = 'sleep' | 'study' | 'prayer' | 'hungry' | 'worried' | 'cosy';
 
 /** What Simba is up to, most important first. */
-export function simbaMood(s: { prayerDue: boolean; studying: boolean; overBudget: boolean; starLit: boolean; night: boolean }): SimbaMood {
+export function simbaMood(s: { prayerDue: boolean; studying: boolean; overBudget: boolean; starLit: boolean; night: boolean; hungry?: boolean }): SimbaMood {
   if (s.prayerDue) return 'prayer';
   if (s.studying) return 'study';
+  if (s.hungry) return 'hungry';
   if (s.overBudget) return 'worried';
   if (s.starLit || s.night) return 'cosy';
   return 'sleep';
@@ -74,11 +75,12 @@ export function simbaMood(s: { prayerDue: boolean; studying: boolean; overBudget
 
 /** What Bek is doing in each of Simba's moods (they hang out together). */
 export type BekPose = 'stand' | 'book' | 'pray' | 'think' | 'tea';
-export const BEK_POSE: Record<SimbaMood, BekPose> = { sleep: 'stand', study: 'book', prayer: 'pray', worried: 'think', cosy: 'tea' };
+export const BEK_POSE: Record<SimbaMood, BekPose> = { sleep: 'stand', study: 'book', prayer: 'pray', hungry: 'think', worried: 'think', cosy: 'tea' };
 
 export const SIMBA_LINES: Record<SimbaMood, string[]> = {
   prayer: ["It's {prayer} time, Bek. I saved you a spot on the mat.", 'Mrrp! The lantern is waiting for you.', 'Five minutes for {prayer}? I’ll keep it warm.'],
   study: ['Shh… I’m studying too.', 'You focus. I’ll guard the books.', 'One more page, Bek. You’ve got this.'],
+  hungry: ['Mrow… my bowl is empty. Is yours too? Eat something proper, Bek.', 'Lunch? For both of us? Please?', '*sits by the empty bowl and stares at you*'],
   worried: ['Our chest feels a bit light… cook at home today?', 'Mrow… the money bar is red.', 'Maybe skip the coffee today? Just saying.'],
   cosy: ['Purrr… cosy night by the fire.', 'Proud of you today, Bek.', 'The fire is warm. Rest well.'],
   sleep: ['Zzz…', '*stretches* …five more minutes.', '*slow blink* (that means I love you)'],

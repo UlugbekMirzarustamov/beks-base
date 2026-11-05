@@ -1,7 +1,8 @@
 /**
  * The morning briefing: the first time you open the app each day, one cosy
- * card with today at a glance — weather, classes, prayers, money, tests,
- * your top 3, Qur'an goal, and a word from Simba. Also opens from Home.
+ * card with today at a glance — a family photo, weather, classes, prayers,
+ * Ramadan times, money, tests, this week's focus, your top 3, Qur'an goal,
+ * and a word from Simba. Also opens from Home.
  */
 import { useEffect, useState } from 'react';
 import { pick } from '../lib/cabin';
@@ -9,13 +10,16 @@ import { potStatus } from '../lib/pot';
 import { todaysQuest } from '../lib/daily';
 import { daysBetween, formatDay, UK_TZ, zonedParts } from '../lib/dates';
 import { formatMoney, safeToSpend } from '../lib/money';
-import { minsToClock, PRAYER_INFO } from '../lib/prayer';
+import { minsToClock, PRAYER_INFO, prayerTimes } from '../lib/prayer';
 import { WEATHER_INFO, weatherKind } from '../lib/weather';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { useWeather } from '../ui/Weather';
 import { classesOn } from './Planner';
 import { usePrayer } from './Prayer';
+import { weekFocus } from './Campfire';
+import { photoOfTheDay, usePhotos } from './Photos';
+import { useRamadan } from './Ramadan';
 
 const SEEN_KEY = 'beks-briefing-day';
 
@@ -41,6 +45,8 @@ export function MorningBriefing() {
   const weather = useWeather();
   const prayer = usePrayer();
   const [simba] = useState(() => pick(SIMBA_MORNING));
+  const photos = usePhotos();
+  const ramadan = useRamadan();
 
   // A new day while the app is open → show it again; "Today's briefing" button → open it.
   useEffect(() => {
@@ -77,6 +83,9 @@ export function MorningBriefing() {
   const money = safeToSpend(data.monthlyBudget, data.expenses, today);
   const test = data.tests.filter((t) => t.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
   const top = data.priorities.items.filter((x) => x.trim());
+  const photo = photoOfTheDay(photos, today);
+  const focus = weekFocus(data, today);
+  const fastTimes = prayerTimes(today, data.settings.prayer);
   const prayedToday = Object.keys(PRAYER_INFO).filter((p) => data.prayers[today]?.includes(p as never)).length;
 
   return (
@@ -86,6 +95,12 @@ export function MorningBriefing() {
         <h2 id="briefing-title" className="briefing__title">
           {hello}, Bek!
         </h2>
+        {photo && (
+          <figure className="briefing__photo">
+            <img src={photo.src} alt={photo.caption || 'Your family'} />
+            <figcaption>{photo.caption || 'They’re proud of you.'}</figcaption>
+          </figure>
+        )}
 
         <ul className="briefing__list">
           <li>
@@ -129,6 +144,14 @@ export function MorningBriefing() {
               · {prayedToday}/5 lanterns lit
             </span>
           </li>
+          {ramadan.now && (
+            <li className="briefing__quest">
+              <PixelIcon name="moon" size={26} />
+              <span>
+                <strong>Ramadan day {ramadan.day}</strong> · suhoor ends {minsToClock(fastTimes.fajr)} · iftar {minsToClock(fastTimes.maghrib)}
+              </span>
+            </li>
+          )}
           <li>
             <PixelIcon name="coin" size={26} />
             <span>
@@ -149,6 +172,14 @@ export function MorningBriefing() {
               <PixelIcon name="calendar" size={26} />
               <span>
                 <strong>{test.name}</strong> in {daysBetween(today, test.date)} day{daysBetween(today, test.date) === 1 ? '' : 's'}
+              </span>
+            </li>
+          )}
+          {focus && (
+            <li>
+              <PixelIcon name="flame" size={26} />
+              <span>
+                <strong>This week's focus:</strong> {focus}
               </span>
             </li>
           )}

@@ -5,6 +5,7 @@
  *  - Week     the weekly look back (with that week's real numbers).
  *  - Sky      your own night sky: every logged night is a star, nights in a
  *             row join into constellations. Tap a star to re-read that night.
+ *  - Year     year in pixels: one square per day, coloured by mood / prayers / money / study.
  *  - Letters  sealed letters to future you that only open on a chosen date.
  */
 import { useState, type FormEvent } from 'react';
@@ -14,10 +15,12 @@ import { sfx } from '../lib/sound';
 import type { Letter, NightLog } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Empty, Field, Panel, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Empty, Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 import { WeekReflect } from './Extras';
+import { pixelLevel, type PixelKind } from '../lib/pixels';
+import { spendByDay } from '../lib/pot';
 
-const TABS = ['tonight', 'week', 'sky', 'letters'] as const;
+const TABS = ['tonight', 'week', 'sky', 'year', 'letters'] as const;
 type Tab = (typeof TABS)[number];
 
 /** XP for lighting a star (logging a night). */
@@ -38,12 +41,14 @@ export default function Reflect({ sub }: { sub?: string }) {
           { id: 'tonight', label: 'Tonight', icon: 'moon' },
           { id: 'week', label: 'Week', icon: 'calendar' },
           { id: 'sky', label: 'My sky', icon: 'star' },
+          { id: 'year', label: 'Year', icon: 'calendar' },
           { id: 'letters', label: 'Letters', icon: 'letter' },
         ]}
       />
       {tab === 'tonight' && <Tonight onLit={() => setTab('sky')} />}
       {tab === 'week' && <WeekReflect />}
       {tab === 'sky' && <Sky />}
+      {tab === 'year' && <YearPixels />}
       {tab === 'letters' && <Letters />}
     </div>
   );
@@ -334,5 +339,82 @@ function Letters() {
         </form>
       </Panel>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- Year in pixels
+const PIXEL_KINDS: { value: PixelKind; label: string; legend: string[] }[] = [
+  { value: 'mood', label: 'Mood', legend: ['Awful', 'Bad', 'Okay', 'Good', 'Great'] },
+  { value: 'prayer', label: 'Prayers', legend: ['1 prayer', '2', '3', '4', 'All 5'] },
+  { value: 'money', label: 'Money', legend: ['Way over', 'A bit over', 'Within', 'Under half', 'Spent $0'] },
+  { value: 'study', label: 'Study', legend: ['', '< 50 min', '50 min+', '100 min+', '150 min+'] },
+];
+const MONTH_LETTERS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+
+function YearPixels() {
+  const { data, today } = useStore();
+  const [kind, setKind] = useState<PixelKind>('mood');
+  const [year, setYear] = useState(Number(today.slice(0, 4)));
+  const info = PIXEL_KINDS.find((k) => k.value === kind)!;
+  const spent = data.pot ? spendByDay(data.expenses, data.pot.start, today) : undefined;
+  return (
+    <div className="grid grid--2">
+      <Panel
+        title={`${year} in pixels`}
+        icon="calendar"
+        actions={
+          <div className="month-picker">
+            <button type="button" className="btn btn--small" onClick={() => setYear(year - 1)} aria-label="Previous year">
+              <PixelIcon name="arrowL" size={16} />
+            </button>
+            <button type="button" className="btn btn--small" onClick={() => setYear(year + 1)} aria-label="Next year" disabled={year >= Number(today.slice(0, 4))}>
+              <PixelIcon name="arrowR" size={16} />
+            </button>
+          </div>
+        }
+      >
+        <Segmented<PixelKind> label="Colour days by" value={kind} onChange={setKind} options={PIXEL_KINDS.map((k) => ({ value: k.value, label: k.label }))} />
+        <div className="year-grid" role="img" aria-label={`Every day of ${year}, coloured by ${info.label.toLowerCase()}`}>
+          <span />
+          {MONTH_LETTERS.map((m, i) => (
+            <span key={i} className="year-grid__head">
+              {m}
+            </span>
+          ))}
+          {Array.from({ length: 31 }, (_, d) => (
+            <YearRow key={d} day={d + 1} year={year} kind={kind} spent={spent} today={today} />
+          ))}
+        </div>
+        <ul className="year-legend">
+          {info.legend.map((l, i) =>
+            l ? (
+              <li key={i}>
+                <span className={`year-px year-px--${kind} lv${i + 1}`} /> {l}
+              </li>
+            ) : null,
+          )}
+        </ul>
+      </Panel>
+      <Panel title="Why squares?" icon="star">
+        <p>One square per day. After a few months you can see patterns no single day shows: which weeks were heavy, when prayers slipped, how exam weeks felt.</p>
+        <p className="muted small">Mood comes from Home's check-in, prayers from your lanterns, money from your daily allowance, study from Pomodoros. Empty squares are days with nothing logged.</p>
+      </Panel>
+    </div>
+  );
+}
+
+function YearRow({ day, year, kind, spent, today }: { day: number; year: number; kind: PixelKind; spent?: Map<string, number>; today: string }) {
+  const { data } = useStore();
+  return (
+    <>
+      <span className="year-grid__day">{day % 5 === 0 || day === 1 ? day : ''}</span>
+      {MONTH_LETTERS.map((_, m) => {
+        const date = `${year}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const exists = new Date(`${date}T12:00:00Z`).getUTCDate() === day;
+        if (!exists) return <span key={m} className="year-px year-px--none" />;
+        const level = date <= today ? pixelLevel(data, kind, date, spent) : null;
+        return <span key={m} className={`year-px year-px--${kind} ${level ? `lv${level}` : ''} ${date === today ? 'is-today' : ''}`} title={date} />;
+      })}
+    </>
   );
 }

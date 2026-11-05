@@ -10,7 +10,12 @@ import { PixelIcon } from '../ui/icons';
 import { Bar, Empty, Panel } from '../ui/kit';
 import { Clocks, MoodCheckIn } from './Extras';
 import { InstallCard } from '../ui/AppFeel';
-import { OnePercent, WindDown } from './Daily';
+import { BackupCard, OnePercent, SimbaNeeds, WindDown } from './Daily';
+import { CampfireCard } from './Campfire';
+import { RamadanCard, useRamadan } from './Ramadan';
+import { openPhotos, photoOfTheDay, usePhotos } from './Photos';
+import { BossMini } from './Study';
+import { careStatus } from '../lib/care';
 import { openJar } from './Calm';
 import { BadgeSummary } from './Badges';
 import { coins } from '../lib/shop';
@@ -39,7 +44,7 @@ function greeting(): string {
 
 export default function Home() {
   const { data, today } = useStore();
-  const { scene, bubble, petSimba, bekLine, tapBek } = useCabinScene();
+  const { scene, bubble, petSimba, bekLine, tapBek, toggleRadio } = useCabinScene();
   const lvl = levelInfo(data.xp);
   const upcoming = data.tests.filter((t) => t.date >= today).sort((a, b) => a.date.localeCompare(b.date));
   const nextTest = upcoming[0];
@@ -53,7 +58,7 @@ export default function Home() {
       <PrayerLanterns />
       <div className="home__top">
         <div className="home__scene">
-          <Cabin scene={scene} bubble={bubble} onPetSimba={petSimba} bekBubble={bekLine} onTapBek={tapBek} onOpenJar={openJar} />
+          <Cabin scene={scene} bubble={bubble} onPetSimba={petSimba} bekBubble={bekLine} onTapBek={tapBek} onOpenJar={openJar} onOpenPhotos={openPhotos} onToggleRadio={toggleRadio} />
         </div>
         <div className="greeting-row">
           <p className="greeting">
@@ -73,11 +78,15 @@ export default function Home() {
       </div>
       <WindDown />
       <div className="grid grid--home">
+        <RamadanCard />
+        <CampfireCard />
         <OnePercent />
         <TodayClasses />
         <SafeToSpendCard />
+        <SimbaNeeds />
         <WeatherCard />
         <SavingsMini />
+        <BackupCard />
 
         <Panel title="Next test" icon="calendar">
           {nextTest ? (
@@ -91,6 +100,9 @@ export default function Home() {
                 <small className="muted">{formatDay(nextTest.date)}</small>
               </span>
             </a>
+          ) : null}
+          {nextTest ? (
+            <BossMini test={nextTest} />
           ) : (
             <Empty>
               No tests coming up. <a href="#/study/tests">Add one →</a>
@@ -216,8 +228,20 @@ function TodayClasses() {
  * Works out everything the cabin shows: Simba's mood, streaks, unlocks, season
  * and real weather. Also handles petting Simba (a purr + something cute).
  */
+/** Remember the last day it snowed, so the hills stay white for a few days. */
+const SNOW_KEY = 'beks-last-snow';
+function lastSnowDay(): string | null {
+  try {
+    return localStorage.getItem(SNOW_KEY);
+  } catch {
+    return null;
+  }
+}
+
 function useCabinScene() {
-  const { data, today } = useStore();
+  const { data, today, update, toast } = useStore();
+  const ramadan = useRamadan();
+  const photos = usePhotos();
   const prayer = usePrayer();
   const { running, timer } = useTimer();
   const weather = useWeather();
@@ -228,7 +252,9 @@ function useCabinScene() {
     (pot ? pot.leftToday < 0 || pot.fund < 0 : safeToSpend(data.monthlyBudget, data.expenses, today).left < 0) ||
     data.categories.some((c) => c.limit > 0 && barLevel(spentInMonth(data.expenses, month, c.id), c.limit) === 'over');
   const studyStreak = streak((d) => data.studyLog.some((s) => s.date === d), today);
+  const care = careStatus(data, today, zonedParts(new Date(), UK_TZ).hour);
   const mood = simbaMood({
+    hungry: care.hungry,
     prayerDue: Boolean(prayer.dueNow),
     studying: running && timer.mode === 'work',
     overBudget,
@@ -237,12 +263,49 @@ function useCabinScene() {
   });
   const level = levelInfo(data.xp).level;
   const kind = windowWeather(weather);
+  // Real winter: snow in Sheffield now (or in the last 3 days) and near-freezing temperatures.
+  const snowingNow = kind === 'snow';
+  useEffect(() => {
+    if (!snowingNow) return;
+    const before = lastSnowDay();
+    try {
+      localStorage.setItem(SNOW_KEY, today);
+    } catch {
+      /* ignore */
+    }
+    // First snow of this winter → a little celebration.
+    const winterStart = `${Number(today.slice(5, 7)) >= 7 ? today.slice(0, 4) : Number(today.slice(0, 4)) - 1}-07-01`;
+    if (!before || before < winterStart) toast('❄ First snow in Sheffield this winter! Hot chocolate time.', 'level');
+  }, [snowingNow, today, toast]);
+  const lastSnow = lastSnowDay();
+  const snowy = snowingNow || Boolean(lastSnow && daysBetween(lastSnow, today) <= 3);
+  const cold = Boolean(weather && windowWeather(weather) !== null && weather.current.temp <= 3);
+  const photo = photoOfTheDay(photos, today)?.src ?? null;
+  const fed = care.meals > 0;
+
   const goodThings = Object.values(data.nightLogs).reduce((n, l) => n + l.good.filter((g) => g.trim()).length, 0);
 
   // Memoised so the cabin animation isn't restarted on every re-render.
   const scene = useMemo<CabinScene>(
-    () => ({ mix: data.settings.mixer, level, prayerStreak: prayer.streak, studyStreak, simba: mood, season: seasonOf(today), weather: kind, avatar: data.settings.avatar, decor: data.shop.placed, flowers: data.studyLog.length, jarNotes: goodThings }),
-    [data.settings.mixer, level, prayer.streak, studyStreak, mood, today, kind, data.settings.avatar, data.shop.placed, data.studyLog.length, goodThings],
+    () => ({
+      mix: data.settings.mixer,
+      level,
+      prayerStreak: prayer.streak,
+      studyStreak,
+      simba: mood,
+      season: seasonOf(today),
+      weather: kind,
+      avatar: data.settings.avatar,
+      decor: data.shop.placed,
+      flowers: data.studyLog.length,
+      jarNotes: goodThings,
+      photo,
+      ramadan: ramadan.now,
+      snowy,
+      cold,
+      fed,
+    }),
+    [data.settings.mixer, level, prayer.streak, studyStreak, mood, today, kind, data.settings.avatar, data.shop.placed, data.studyLog.length, goodThings, photo, ramadan.now, snowy, cold, fed],
   );
 
   // Simba speaks up on his own for important moods (once per mood change).
@@ -287,7 +350,15 @@ function useCabinScene() {
     bekTimer.current = setTimeout(() => setBekLine(null), 4000);
   };
 
-  return { scene, bubble: petLine ?? autoLine, petSimba, bekLine, tapBek };
+  // The radio on the hearth: tap to play / stop lo-fi.
+  const toggleRadio = () => {
+    const on = data.settings.mixer.lofi > 0;
+    update((d) => void (d.settings.mixer = { ...d.settings.mixer, lofi: on ? 0 : 4 }));
+    sfx('tick');
+    toast(on ? 'Radio off' : 'Lo-fi radio on · change the volume with the sound button', 'info');
+  };
+
+  return { scene, bubble: petLine ?? autoLine, petSimba, bekLine, tapBek, toggleRadio };
 }
 
 /** What you've unlocked in the cabin, and what's next. */

@@ -16,6 +16,7 @@ import { daySlots, minsToClock, minsToWait, PRAYER_INFO, PRAYERS, prayerNow, pra
 import { buzz, sfx } from '../lib/sound';
 import type { PrayerName } from '../lib/types';
 import { useStore } from '../state/store';
+import { RamadanTab } from './Ramadan';
 import { PixelIcon } from '../ui/icons';
 import { Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 import { Quran, Tasbih } from './Devotion';
@@ -35,7 +36,7 @@ const REMINDERS = [
 
 // ---------------------------------------------------------------- shared state
 /** Minutes after midnight in the UK, refreshed every 20 seconds. */
-function useUkMinutes(): number {
+export function useUkMinutes(): number {
   const read = () => {
     const p = zonedParts(new Date(), UK_TZ);
     return p.hour * 60 + p.minute;
@@ -267,7 +268,7 @@ export function PrayerLanterns() {
 }
 
 // ---------------------------------------------------------------- the Prayer page
-const PAGE_TABS = ['today', 'tasbih', 'quran'] as const;
+const PAGE_TABS = ['today', 'tasbih', 'quran', 'ramadan'] as const;
 type PageTab = (typeof PAGE_TABS)[number];
 
 export default function PrayerPage({ sub }: { sub?: string }) {
@@ -285,11 +286,13 @@ export default function PrayerPage({ sub }: { sub?: string }) {
           { id: 'today', label: 'Prayers', icon: 'lantern' },
           { id: 'tasbih', label: 'Tasbih', icon: 'bead' },
           { id: 'quran', label: "Qur'an", icon: 'quran' },
+          { id: 'ramadan', label: 'Ramadan', icon: 'moon' },
         ]}
       />
       {tab === 'today' && <PrayersToday />}
       {tab === 'tasbih' && <Tasbih />}
       {tab === 'quran' && <Quran />}
+      {tab === 'ramadan' && <RamadanTab />}
     </div>
   );
 }

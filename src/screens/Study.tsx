@@ -8,7 +8,8 @@ import { uid } from '../lib/id';
 import type { Confidence, Flashcard, Mistake, Test, Topic } from '../lib/types';
 import { XP } from '../lib/xp';
 import { useStore, useTimer } from '../state/store';
-import { PixelIcon } from '../ui/icons';
+import { PixelArt, PixelIcon } from '../ui/icons';
+import { bossFor, POMODORO_HIT, type Boss, type BossKind } from '../lib/boss';
 import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
 const TABS = ['tests', 'topics', 'mistakes', 'cards', 'timer'] as const;
@@ -124,6 +125,16 @@ function Tests() {
 
   return (
     <div className="grid grid--2">
+      {upcoming.length > 0 && (
+        <Panel title="Boss battles" icon="sword" className="bosses">
+          <p className="muted small">Every test is a boss. Beat it before test day: turn its topics green and study for it.</p>
+          <ul className="boss-list">
+            {upcoming.slice(0, 3).map((t) => (
+              <BossCard key={t.id} test={t} />
+            ))}
+          </ul>
+        </Panel>
+      )}
       <Panel title="Countdowns" icon="calendar">
         {upcoming.length === 0 && <Empty>No tests coming up. Add one →</Empty>}
         <ul className="test-list">{upcoming.map(row)}</ul>
@@ -167,6 +178,80 @@ function Tests() {
         </form>
       </Panel>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- Exam bosses
+/** 12×12 boss sprites. a = body, b = shade, e = eyes, w = white, k = outline. */
+const BOSS_ART: Record<BossKind, string[]> = {
+  golem: ['...kkkkkk...', '..kaaaaaak..', '..kaeaaeak..', '..kaaaaaak..', 'kkkbbbbbbkkk', 'kaakaaaakaak', 'kaakaaaakaak', 'kbbkaaaakbbk', '.kkkbbbbkkk.', '...kaakaak..', '...kaakaak..', '..kkk..kkk..'],
+  dragon: ['.k.......k..', 'kak.....kak.', 'kaakkkkkaak.', '.kaaaaaaak..', '.kaeaaaeak.k', '.kaaawaaakkb', '..kaaaaaakbk', '.kbkaaaakbk.', 'kbbkaaaakk..', '.k.kaaaak...', '...kak.kak..', '...kk...kk..'],
+  slime: ['.....kk.....', '....kwwk....', '...kaaaak...', '..kaaaaaak..', '.kaeaaaaeak.', '.kaaaaaaaak.', 'kaaawwwwaaak', 'kaaaaaaaaaak', 'kbaaaaaaaabk', 'kbbaaaaaabbk', '.kbbbbbbbbk.', '..kkkkkkkk..'],
+  knight: ['...kkkkkk...', '..kaaaaaak..', '..kakkkkak..', '..kaeaaeak..', '..kaaaaaak..', '.kkbbbbbbkk.', 'kaakbbbbkaak', 'kaakbbbbkaak', '.kkkbbbbkkk.', '...kbbbbk...', '...kbkkbk...', '..kkk..kkk..'],
+};
+const BOSS_COLOURS: Record<BossKind, [string, string]> = { golem: ['#8c8c8c', '#5f6b5a'], dragon: ['#5fa83b', '#c0392b'], slime: ['#7ed957', '#3f7a26'], knight: ['#4a4a6a', '#7a4fa3'] };
+
+export function BossSprite({ boss, size = 64 }: { boss: Boss; size?: number }) {
+  const [a, b] = BOSS_COLOURS[boss.kind];
+  const beaten = boss.hp === 0;
+  return (
+    <span className={`boss-sprite ${beaten ? 'is-beaten' : ''}`}>
+      <PixelArt rows={BOSS_ART[boss.kind]} palette={{ a, b, e: beaten ? '#2b1d0e' : '#ff3b3b', w: '#ffffff', k: '#1a1110' }} size={size} label={boss.name} />
+    </span>
+  );
+}
+
+/** The boss for one upcoming test: health bar, what hurts it, and its weak spots. */
+function BossCard({ test }: { test: Test }) {
+  const { data, today } = useStore();
+  const boss = bossFor(test, data);
+  const days = daysBetween(today, test.date);
+  const pct = boss.maxHp ? boss.hp / boss.maxHp : 0;
+  return (
+    <li className="boss-card">
+      <BossSprite boss={boss} />
+      <div className="boss-card__info">
+        <strong>{boss.name}</strong>
+        <small className="muted">
+          {test.name} · {daysLeftLabel(days)}
+        </small>
+        <span className="hp-bar" role="img" aria-label={`${boss.hp} of ${boss.maxHp} HP left`}>
+          <span className={`hp-bar__fill ${pct > 0.6 ? '' : pct > 0.25 ? 'is-mid' : 'is-low'}`} style={{ width: `${pct * 100}%` }} />
+          <span className="hp-bar__text">
+            {boss.hp === 0 ? 'DEFEATED!' : `${boss.hp} / ${boss.maxHp} HP`}
+          </span>
+        </span>
+        {boss.hp > 0 ? (
+          <small>
+            Each Pomodoro{test.subjectId ? ` on ${data.subjects.find((s) => s.id === test.subjectId)?.name}` : ''} = −{POMODORO_HIT} HP ({boss.pomodoros} so far). Each topic you turn green = −10 HP.
+            {boss.weakSpots.length > 0 && (
+              <>
+                {' '}
+                Weak spots: <strong>{boss.weakSpots.slice(0, 3).join(', ')}</strong>
+                {boss.weakSpots.length > 3 ? ` +${boss.weakSpots.length - 3} more` : ''}.
+              </>
+            )}
+          </small>
+        ) : (
+          <small>You're ready. Sleep well before the test and go get it!</small>
+        )}
+      </div>
+    </li>
+  );
+}
+
+/** A small HP line for Home's "Next test" card. */
+export function BossMini({ test }: { test: Test }) {
+  const { data } = useStore();
+  const boss = bossFor(test, data);
+  return (
+    <a href="#/study/tests" className="boss-mini">
+      <BossSprite boss={boss} size={36} />
+      <span className="hp-bar hp-bar--small" role="img" aria-label={`${boss.name}: ${boss.hp} of ${boss.maxHp} HP`}>
+        <span className="hp-bar__fill" style={{ width: `${boss.maxHp ? (boss.hp / boss.maxHp) * 100 : 0}%` }} />
+        <span className="hp-bar__text">{boss.hp === 0 ? 'DEFEATED' : `${boss.name.replace(/^The /, '')} · ${boss.hp} HP`}</span>
+      </span>
+    </a>
   );
 }
 

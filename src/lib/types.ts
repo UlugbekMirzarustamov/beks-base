@@ -245,6 +245,37 @@ export interface Mixer {
   rain: number;
   fire: number;
   wind: number;
+  /** The lo-fi cabin radio (soft piano, slow beat, vinyl crackle). */
+  lofi: number;
+}
+
+/** A Friday-night look back by the campfire, saved under that week's Monday. */
+export interface Campfire {
+  /** The one thing you're proud of this week. */
+  win: string;
+  /** The ONE thing to focus on next week. */
+  focus: string;
+  /** When you sat by the fire (YYYY-MM-DD). */
+  date: string;
+}
+
+/** A fish caught at the pond. */
+export interface Catch {
+  id: string;
+  fish: string;
+  date: string;
+}
+
+/** Looking after yourself (= looking after Simba): meals and glasses of water that day. */
+export interface Care {
+  meals: number;
+  water: number;
+}
+
+/** A Ramadan day: did you fast, did you pray taraweeh. */
+export interface FastDay {
+  fasted: boolean;
+  taraweeh: boolean;
 }
 
 // ---------- Settings & the whole thing ----------
@@ -327,6 +358,14 @@ export interface AppData {
   pot: Pot | null;
   /** Things you're saving for with the wish fund. */
   wishes: Wish[];
+  /** Friday campfire reviews, by the Monday of that week. */
+  campfires: Record<string, Campfire>;
+  /** "YYYY-MM-DD" → that Ramadan day */
+  fasts: Record<string, FastDay>;
+  /** Fish caught at the pond (the fish book). */
+  catches: Catch[];
+  /** "YYYY-MM-DD" → meals and water (Simba's needs) */
+  care: Record<string, Care>;
   /** Cabin shop: items you own, which item is shown in each spot, coins spent. */
   shop: { owned: string[]; placed: Record<string, string>; spent: number };
   /** One-time updates already applied to this data (e.g. "usic-nov-2026"). */

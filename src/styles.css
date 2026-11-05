@@ -4188,3 +4188,714 @@ button.list__main {
   background: var(--panel-hi);
   border: 2px solid var(--gold);
 }
+
+/* =====================================================================
+ * Family photo wall
+ * ===================================================================== */
+.polaroid {
+  position: relative;
+  width: min(86vw, 380px);
+  margin: 0;
+  padding: 12px 12px 0;
+  background: #fdfaf1;
+  border: 4px solid #2b1d0e;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.45);
+  touch-action: pan-y;
+  transition: transform 0.25s;
+}
+.polaroid__pin {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  background: var(--red);
+  border: 3px solid #2b1d0e;
+}
+.polaroid__img {
+  display: block;
+  width: 100%;
+  max-height: 58vh;
+  object-fit: cover;
+  border: 2px solid #2b1d0e;
+  user-select: none;
+}
+.polaroid__caption {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+}
+.polaroid__text {
+  width: 100%;
+  padding: 4px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: #2f1d0c;
+  text-align: center;
+  cursor: text;
+  background: none;
+  border: 0;
+}
+.polaroid__input {
+  width: 100%;
+  text-align: center;
+}
+.photo-strip {
+  display: flex;
+  gap: 6px;
+  max-width: 100%;
+  margin: 0;
+  padding: 4px;
+  overflow-x: auto;
+  list-style: none;
+}
+.photo-strip__thumb {
+  display: block;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  cursor: pointer;
+  background: #fdfaf1;
+  border: 3px solid #2b1d0e;
+  opacity: 0.6;
+}
+.photo-strip__thumb.is-on {
+  opacity: 1;
+  border-color: var(--gold);
+}
+.photo-strip__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-empty {
+  max-width: 340px;
+  text-align: center;
+  font-size: 17px;
+}
+.photo-wall__date {
+  color: #cfc4e6;
+}
+.file-btn.is-busy {
+  opacity: 0.6;
+}
+.briefing__photo {
+  margin: 0 0 10px;
+  padding: 6px 6px 0;
+  background: #fdfaf1;
+  border: 3px solid var(--edge);
+  transform: rotate(-1.5deg);
+}
+.briefing__photo img {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+}
+.briefing__photo figcaption {
+  padding: 4px;
+  font-size: 15px;
+  color: #2f1d0c;
+  text-align: center;
+}
+
+/* =====================================================================
+ * Ramadan
+ * ===================================================================== */
+.ramadan-card {
+  background: linear-gradient(180deg, #1d2450, #2d2a5a);
+  color: #fff3d6;
+}
+.ramadan-card .muted,
+.ramadan-card .more-link {
+  color: #e2d8f5;
+}
+.ramadan-times {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ramadan-times span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border: 3px solid #c9a04a;
+  background: rgba(255, 255, 255, 0.06);
+}
+.ramadan-times span.is-next {
+  background: rgba(255, 217, 59, 0.18);
+}
+.ramadan-times strong {
+  font-family: var(--font-num);
+  font-size: 34px;
+  line-height: 1;
+  color: var(--gold);
+}
+.ramadan-card__count,
+.ramadan-card__big {
+  margin: 8px 0;
+}
+.ramadan-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.ready-list {
+  display: grid;
+  gap: 8px;
+  padding-left: 18px;
+}
+.ramadan-preview {
+  grid-column: 1 / -1;
+  padding: 8px 12px;
+  color: var(--ink);
+  background: var(--panel);
+  border: var(--bevel) solid var(--edge);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.fast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fast-grid__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-num);
+  font-size: 15px;
+}
+.fast-grid__lantern {
+  width: 16px;
+  height: 22px;
+  background: #4a4058;
+  border: 3px solid var(--edge);
+  box-shadow: inset 0 4px 0 rgba(0, 0, 0, 0.25);
+}
+.fast-grid__day.is-lit .fast-grid__lantern {
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(255, 200, 80, 0.8);
+}
+.fast-grid__day.is-today small {
+  color: var(--red);
+  font-weight: 700;
+}
+
+/* =====================================================================
+ * Exam bosses
+ * ===================================================================== */
+.bosses {
+  grid-column: 1 / -1;
+}
+.boss-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.boss-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.boss-card__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.boss-sprite {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.boss-sprite.is-beaten {
+  filter: grayscale(1);
+  opacity: 0.5;
+  transform: rotate(90deg);
+}
+.hp-bar {
+  position: relative;
+  display: block;
+  height: 20px;
+  background: #3a1a1a;
+  border: 3px solid var(--edge);
+}
+.hp-bar--small {
+  flex: 1;
+  height: 18px;
+}
+.hp-bar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--red);
+  box-shadow: inset 0 3px 0 var(--red-hi);
+  transition: width 0.4s;
+}
+.hp-bar__fill.is-mid {
+  background: var(--amber);
+}
+.hp-bar__fill.is-low {
+  background: var(--xp);
+}
+.hp-bar__text {
+  position: relative;
+  display: block;
+  padding: 0 6px;
+  font-family: var(--font-num);
+  font-size: 16px;
+  line-height: 14px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.boss-mini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .boss-sprite:not(.is-beaten) {
+    animation: boss-bob 1.6s steps(2) infinite;
+  }
+}
+@keyframes boss-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* =====================================================================
+ * Simba needs you · backups · this week's focus
+ * ===================================================================== */
+.simba-needs__hearts {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+}
+.simba-needs__hearts .is-empty {
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+.simba-needs__line {
+  font-style: italic;
+}
+.simba-needs__rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.simba-needs__rows .btn {
+  justify-content: center;
+  font-size: 15px;
+}
+.campfire-card__focus {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* =====================================================================
+ * The campfire (weekly review)
+ * ===================================================================== */
+.campfire {
+  position: relative;
+  min-height: calc(100vh - 140px);
+  margin: -12px -16px 0;
+  padding: 24px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #fff3d6;
+  background: linear-gradient(180deg, #0b1030 0%, #1d2450 55%, #2a1a14 100%);
+  overflow: hidden;
+}
+.campfire__sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.campfire__star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #fff8d0;
+}
+.campfire__fire {
+  position: relative;
+  width: 96px;
+  height: 90px;
+  flex-shrink: 0;
+}
+.campfire__flame {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  background: #e8501a;
+  transform-origin: bottom center;
+}
+.campfire__flame--1 {
+  width: 48px;
+  height: 56px;
+  margin-left: -24px;
+  clip-path: polygon(50% 0, 70% 30%, 100% 100%, 0 100%, 25% 35%);
+}
+.campfire__flame--2 {
+  width: 32px;
+  height: 40px;
+  margin-left: -16px;
+  background: #ffa53a;
+  clip-path: polygon(50% 0, 75% 40%, 100% 100%, 0 100%, 25% 40%);
+}
+.campfire__flame--3 {
+  width: 16px;
+  height: 22px;
+  margin-left: -8px;
+  background: #ffe27a;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.campfire__logs {
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  right: 8px;
+  height: 14px;
+  background: #6e4522;
+  border: 3px solid #2b1d0e;
+}
+.campfire__fire::after {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(circle at 50% 60%, rgba(255, 160, 70, 0.35), transparent 60%);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .campfire__flame {
+    animation: flicker 0.5s steps(2) infinite alternate;
+  }
+  .campfire__flame--2 {
+    animation-duration: 0.35s;
+  }
+  .campfire__star {
+    animation: twinkle 2.4s steps(2) infinite;
+  }
+}
+@keyframes flicker {
+  to {
+    transform: scaleY(0.85) scaleX(1.06);
+  }
+}
+@keyframes twinkle {
+  50% {
+    opacity: 0.2;
+  }
+}
+.campfire__card {
+  position: relative;
+  width: min(100%, 520px);
+  padding: 16px;
+  color: var(--ink);
+  background: var(--panel);
+  border: var(--bevel) solid var(--edge);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
+}
+.campfire__week {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.campfire__title {
+  margin: 4px 0 12px;
+  font-family: var(--font-title);
+  font-size: clamp(13px, 4vw, 18px);
+  line-height: 1.4;
+}
+.campfire-stats {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.campfire-stats li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+}
+.campfire-stats strong {
+  font-family: var(--font-num);
+  font-size: 24px;
+}
+.campfire__simba {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-style: italic;
+}
+.campfire__old {
+  position: relative;
+  width: min(100%, 520px);
+  color: #fff3d6;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.chips .chip {
+  min-height: 0;
+  padding: 6px 10px;
+  flex-direction: row;
+  text-align: left;
+}
+.chips .chip.is-on {
+  background: var(--gold);
+  color: #2f1d0c;
+}
+.postcard {
+  padding: 12px;
+  background: #fdfaf1;
+  color: #2f1d0c;
+  border: 3px dashed #c0392b;
+}
+.postcard--small {
+  margin-bottom: 8px;
+}
+.postcard__label {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a6420;
+}
+.postcard__text {
+  margin: 2px 0 10px;
+  font-size: 18px;
+}
+.postcard__text--focus {
+  font-weight: 700;
+}
+
+/* =====================================================================
+ * The pond
+ * ===================================================================== */
+.pond__scene {
+  position: relative;
+  border: var(--bevel) solid var(--edge);
+}
+.pond__canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 160 / 90;
+  image-rendering: pixelated;
+}
+.pond__controls {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 12px;
+  color: var(--ink);
+  background: var(--panel);
+  border: var(--bevel) solid var(--edge);
+}
+.pond__controls p {
+  margin: 0;
+}
+.pond__casts {
+  margin: 0;
+  font-size: 18px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pond__reel {
+    animation: shake 0.25s steps(2) infinite;
+  }
+  .catch-card {
+    animation: pop-in 0.3s steps(3);
+  }
+}
+@keyframes shake {
+  50% {
+    transform: translateX(3px);
+  }
+}
+@keyframes pop-in {
+  from {
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+}
+.catch-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(80%, 260px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px;
+  text-align: center;
+  background: var(--panel);
+  color: var(--ink);
+  border: var(--bevel) solid var(--edge);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
+}
+.catch-card--rare {
+  border-color: #2a6fa8;
+}
+.catch-card--legend {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--edge), 0 0 24px rgba(255, 217, 59, 0.8);
+}
+.fish-book {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fish-book__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 14px;
+  background: var(--field);
+  border: 3px solid var(--edge);
+}
+:root[data-theme='night'] .fish-book__item {
+  background: var(--panel-lo);
+}
+.fish-book__item--rare:not(.is-unknown) {
+  border-color: #2a6fa8;
+}
+.fish-book__item--legend:not(.is-unknown) {
+  border-color: var(--gold);
+}
+
+/* =====================================================================
+ * Year in pixels
+ * ===================================================================== */
+.year-grid {
+  display: grid;
+  grid-template-columns: 20px repeat(12, 1fr);
+  gap: 2px;
+  margin: 12px 0;
+  font-family: var(--font-num);
+  font-size: 13px;
+}
+.year-grid__head {
+  text-align: center;
+}
+.year-grid__day {
+  line-height: 12px;
+  text-align: right;
+  padding-right: 3px;
+}
+.year-px {
+  display: block;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.1);
+}
+:root[data-theme='night'] .year-px {
+  background: rgba(255, 255, 255, 0.08);
+}
+.year-px--none {
+  background: transparent !important;
+}
+.year-px.is-today {
+  outline: 2px solid var(--red);
+}
+.year-px--mood.lv1,
+.year-px--money.lv1 {
+  background: #9a2a24;
+}
+.year-px--mood.lv2,
+.year-px--money.lv2 {
+  background: #e8762a;
+}
+.year-px--mood.lv3,
+.year-px--money.lv3 {
+  background: #e8c21a;
+}
+.year-px--mood.lv4,
+.year-px--money.lv4 {
+  background: #8ad35e;
+}
+.year-px--mood.lv5,
+.year-px--money.lv5 {
+  background: #3f8f3a;
+}
+.year-px--prayer.lv1 {
+  background: #f6dfa0;
+}
+.year-px--prayer.lv2 {
+  background: #f0c860;
+}
+.year-px--prayer.lv3 {
+  background: #f0a83a;
+}
+.year-px--prayer.lv4 {
+  background: #e0802a;
+}
+.year-px--prayer.lv5 {
+  background: #ffd93b;
+  box-shadow: 0 0 4px #ffb347;
+}
+.year-px--study.lv2 {
+  background: #9fdcff;
+}
+.year-px--study.lv3 {
+  background: #4aa3df;
+}
+.year-px--study.lv4 {
+  background: #2a6fa8;
+}
+.year-px--study.lv5 {
+  background: #1d3a6a;
+}
+.year-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.year-legend li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.year-legend .year-px {
+  width: 14px;
+}
+.simba-needs .small > .picon,
+.campfire__simba > .picon {
+  display: inline-block;
+  vertical-align: -2px;
+}

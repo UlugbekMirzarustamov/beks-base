@@ -70,6 +70,10 @@ const ICONS = {
   bead: ['........', '..kkkk..', '.kGggGk.', '.kggwGk.', '.kgggGk.', '.kGGGGk.', '..kkkk..', '........'],
   quran: ['kkkkkkkk', 'kGGGGGGk', 'kGyyyyGk', 'kGyGGyGk', 'kGyGGyGk', 'kGyyyyGk', 'kGGGGGGk', 'kkkkkkkk'],
   cat: ['.k....k.', '.kk..kk.', '.kssssk.', '.kyssyk.', '.kssssk.', '..kssk..', '.kssssk.', 'kkkkkkkk'],
+  radio: ['......k.', '.....k..', 'kkkkkkkk', 'knnnnnnk', 'kNkknyyk', 'kNkknnnk', 'knnnnnnk', 'kkkkkkkk'],
+  fish: ['........', '.....kk.', 'k..kbbbk', 'kkkblbwk', 'kkkbbbbk', 'k..kbbk.', '.....k..', '........'],
+  sword: ['......sk', '.....sk.', '....sk..', '.k.sk...', '..kk....', '..ok....', '.o..k...', 'o.......'],
+  photo: ['kkkkkkkk', 'kllllllk', 'klyllllk', 'kllllllk', 'klgllgGk', 'kgGggGGk', 'kGGGGGGk', 'kkkkkkkk'],
   globe: ['..kkkk..', '.kbgbbk.', 'kbggbbbk', 'kbbgggbk', 'kbbbggbk', 'kgbbbgbk', '.kbbbbk.', '..kkkk..'],
   // Faces for the mood check-in (great → awful)
   face5: ['.kkkkkk.', 'kffffffk', 'kfkffkfk', 'kffffffk', 'kkffffkk', 'kfkkkkfk', 'kffffffk', '.kkkkkk.'],
@@ -120,6 +124,30 @@ export function PixelIcon({ name, size = 24, title, fill, className }: Props) {
       focusable="false"
     >
       {rects}
+    </svg>
+  );
+}
+
+/**
+ * Any little pixel picture from text rows (like the icons above), with its own
+ * colours: `palette` maps each letter to a colour. Used for fish and exam bosses.
+ */
+export function PixelArt({ rows, palette, size = 48, label }: { rows: string[]; palette: Record<string, string>; size?: number; label?: string }) {
+  const w = Math.max(...rows.map((r) => r.length));
+  const h = rows.length;
+  return (
+    <svg
+      className="picon"
+      width={size}
+      height={(size * h) / w}
+      viewBox={`0 0 ${w} ${h}`}
+      shapeRendering="crispEdges"
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+      focusable="false"
+    >
+      {rows.flatMap((row, y) => [...row].map((ch, x) => (ch === '.' || !palette[ch] ? null : <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={palette[ch]} />)))}
     </svg>
   );
 }

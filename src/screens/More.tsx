@@ -3,7 +3,9 @@
  * backups (Export / Import) and example-data cleanup.
  */
 import { useEffect, useRef, useState } from 'react';
-import { backupFileName, exportJson, parseBackup } from '../lib/backup';
+import { backupPhotos, parseBackup } from '../lib/backup';
+import { lastBackup, shareBackup } from './Daily';
+import { setPhotos, usePhotos } from './Photos';
 import { createInitialData, upgrade } from '../lib/seed';
 import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
@@ -67,26 +69,22 @@ export function SettingsPanel() {
   const [importError, setImportError] = useState('');
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) => update((d) => void (d.settings[key] = value));
 
-  const doExport = () => {
-    const blob = new Blob([exportJson(data)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = backupFileName(today);
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast('Backup downloaded', 'pop');
+  const photos = usePhotos();
+  const doExport = async () => {
+    const r = await shareBackup(data, photos, today);
+    if (r !== 'cancelled') toast(r === 'shared' ? 'Backup sent' : 'Backup downloaded', 'pop');
   };
 
   const doImport = async (file: File | undefined) => {
     if (!file) return;
     setImportError('');
     try {
-      const restored = upgrade(parseBackup(await file.text(), today), today);
+      const text = await file.text();
+      const restored = upgrade(parseBackup(text, today), today);
       if (!(await ask('Replace ALL current data with this backup? (Tip: export first if unsure.)', { ok: 'Replace', danger: false }))) return;
       replaceAll(restored);
+      const restoredPhotos = backupPhotos(text);
+      if (restoredPhotos.length) setPhotos(restoredPhotos);
       toast('Backup restored!', 'pop');
     } catch (e) {
       setImportError(e instanceof Error ? e.message : 'Could not read that file');
@@ -126,9 +124,13 @@ export function SettingsPanel() {
           Your data lives <strong>only on this device</strong>, in this browser. Export a backup now and then (e.g. every Sunday) and keep the file
           somewhere safe (Google Drive, email it to yourself…).
         </p>
+        <p className="muted small">
+          <strong>Phone ↔ laptop:</strong> tap “Send / export backup”, choose AirDrop (or Telegram to yourself), then on the other device open Bek's Base and tap
+          “Import backup”. Your family photos travel with it. {lastBackup() ? `Last backup: ${lastBackup()}.` : ''}
+        </p>
         <div className="form__actions">
           <button type="button" className="btn btn--primary grow" onClick={doExport}>
-            <PixelIcon name="arrowR" size={16} /> Export backup
+            <PixelIcon name="arrowR" size={16} /> Send / export backup
           </button>
           <label className="btn grow file-btn">
             <PixelIcon name="arrowL" size={16} /> Import backup

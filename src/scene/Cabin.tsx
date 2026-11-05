@@ -105,6 +105,16 @@ export interface CabinScene {
   flowers: number;
   /** Good things written in Reflect → Tonight → notes in the gratitude jar. */
   jarNotes: number;
+  /** Today's family photo for the frame on the mantel (a data: URL), if you've added any. */
+  photo: string | null;
+  /** Ramadan: lanterns and a crescent hang from the ceiling beam. */
+  ramadan: boolean;
+  /** Snow fell in Sheffield recently → snowy hills and a snowman outside. */
+  snowy: boolean;
+  /** It's near freezing → frost on the glass, a scarf for Bek and hot chocolate. */
+  cold: boolean;
+  /** You've eaten today → Simba's bowl is full. */
+  fed: boolean;
 }
 
 /* ---------------------------------------------------------------------------
@@ -311,6 +321,15 @@ function bekSpot(W: number, mood: SimbaMood): { x: number; y: number } {
   return { x: 4, y: 90 - h };
 }
 
+/** Simba's food bowl on the floor (top-left). */
+const BOWL = { x: 21, y: 89 };
+
+/** The family photo frame on the mantel (outer edge, scene pixels). */
+const frameSpot = (W: number) => ({ x: layout(W).fireX + 12, y: 19, w: 12, h: 11 });
+
+/** The lo-fi radio on the hearth, right of the fire. */
+const radioSpot = (W: number) => ({ x: layout(W).fireX + 26, y: 78 });
+
 /** Where the gratitude jar sits on the windowsill (scene pixels, top-left of the lid). */
 function jarSpot(W: number) {
   return { x: layout(W).win.x + 7, y: 37 };
@@ -326,6 +345,8 @@ function simbaSpot(W: number, mood: SimbaMood): { x: number; y: number; sitting:
       return { x: 88 + C, y: 74, sitting: true }; // on the prayer mat by the arch, next to Bek
     case 'worried':
       return { x: 43, y: 47, sitting: true }; // on top of the chest
+    case 'hungry':
+      return { x: 27, y: 79, sitting: true }; // next to his (empty) bowl
     case 'cosy':
       return { x: fireX + 3, y: 79, sitting: false }; // curled up by the fire
     default:
@@ -336,7 +357,7 @@ function simbaSpot(W: number, mood: SimbaMood): { x: number; y: number; sitting:
 /** Simba sitting up, 9×10. c = ginger fur, d = stripes, e = eyes, p = pink nose, t = tail. */
 const SIMBA_SIT = ['.c....c..', '.cc..cc..', '.cccccc..', '.ceccec..', '.ccppcc..', '..cccc...', '.cdccdc..', '.cccccc.t', '.cccccc.t', '.cc..cttt'];
 
-function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number, scene: CabinScene, motion: boolean) {
+function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number, scene: CabinScene, motion: boolean, photo: HTMLImageElement | null) {
   const levels = scene.mix;
   const has = unlockedIds(scene.level);
   const { season, weather } = scene;
@@ -415,8 +436,9 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   }
   // Hills, coloured by season
   const [far0, near0] = HILLS[phase];
-  const far = season === 'autumn' ? mix(far0, '#8a6a2a', 0.35) : far0;
-  const near = season === 'autumn' ? mix(near0, '#7a5a20', 0.3) : near0;
+  const snowWhite = phase === 'night' ? '#8a95b8' : '#eef4fb';
+  const far = scene.snowy ? mix(far0, snowWhite, 0.8) : season === 'autumn' ? mix(far0, '#8a6a2a', 0.35) : far0;
+  const near = scene.snowy ? mix(near0, snowWhite, 0.9) : season === 'autumn' ? mix(near0, '#7a5a20', 0.3) : near0;
   for (let x = 0; x < WW; x++) {
     const hf = 7 + Math.round(Math.sin(x * 0.25) * 2 + Math.sin(x * 0.11) * 2);
     r(WX + x, WY + WH - hf, 1, hf, far);
@@ -428,7 +450,7 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   r(WX + 31, WY + 19, 6, 1, '#7a3b2e');
   r(WX + 33, WY + 21, 1, 1, phase === 'night' || phase === 'dusk' ? '#ffd27a' : '#6a7a8a');
   // The tree changes with the seasons: orange in autumn, white in winter, blossom in spring.
-  const treeColours = { autumn: ['#d9822b', '#b5541f'], winter: ['#e8eef5', '#c9d3de'], spring: ['#f2a6c8', '#7cc35a'], summer: [near, near] }[season];
+  const treeColours = scene.snowy ? ['#e8eef5', '#c9d3de'] : { autumn: ['#d9822b', '#b5541f'], winter: ['#e8eef5', '#c9d3de'], spring: ['#f2a6c8', '#7cc35a'], summer: [near, near] }[season];
   // The study garden: one little flower outside for every Pomodoro you've finished (up to 60).
   const flowerCols = ['#ff6b8a', '#ffd93b', '#ffffff', '#c38bff', '#ff9f43'];
   for (let i = 0; i < Math.min(60, scene.flowers); i++) {
@@ -450,6 +472,18 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
       r(fx0, fy0, n % 3 === 0 ? 2 : 1, 1, col);
     }
   });
+  if (scene.snowy) {
+    // A snowman in the garden (carrot nose, coal eyes, a little red scarf)
+    const sx = WX + 14;
+    const sb = WY + WH - 1;
+    r(sx, sb - 4, 5, 4, snowWhite);
+    r(sx + 1, sb - 7, 3, 3, snowWhite);
+    r(sx + 1, sb - 6, 1, 1, '#2b1d0e');
+    r(sx + 3, sb - 6, 1, 1, '#2b1d0e');
+    r(sx + 4, sb - 5, 1, 1, '#f0a020');
+    r(sx + 1, sb - 4, 3, 1, '#c0392b');
+    r(WX, WY + WH - 1, WW, 1, snowWhite); // snow lying on the ground
+  }
   if (weather === 'snow') {
     for (let i = 0; i < 22; i++) r(WX + Math.floor(rand(i * 5) * WW), WY + ((Math.floor(rand(i * 9) * WH) + Math.round(flick * 0.6)) % WH), 1, 1, '#ffffff');
   }
@@ -465,6 +499,12 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
     for (let y = WY + 4; y < WY + WH; y += 6) r(WX, y, WW, 2, 'rgba(225,228,232,0.35)');
   }
   if (weather === 'storm' && motion && frame % 53 === 0) r(WX, WY, WW, WH, 'rgba(255,255,255,0.65)'); // lightning
+  if (scene.cold) {
+    // Frost creeping in from the corners of each pane
+    for (const [ox, oy, dx, dy] of [[WX, WY, 1, 1], [WX + WW - 1, WY, -1, 1], [WX, WY + WH - 1, 1, -1], [WX + WW - 1, WY + WH - 1, -1, -1]]) {
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 6 - i; j++) if (rand(i * 7 + j * 3 + ox) > 0.35) r(ox + dx * i, oy + dy * j, 1, 1, 'rgba(235,245,255,0.6)');
+    }
+  }
   ctx.restore();
 
   // Window frame + sill + plant
@@ -575,6 +615,15 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
     r(hx + 4, 21, 1, 1, '#8ad35e');
   }
   if (has.has('lights')) r(3, 5, W - 6, 1, '#3a2a1a'); // wire (bulbs are drawn later so they glow)
+  if (scene.ramadan) {
+    // Ramadan: a crescent and star on the wall, and a garland of little lanterns (lit later)
+    r(3, 4, W - 6, 1, '#c9a04a');
+    const mx = WX + WW / 2 - 3;
+    r(mx, 0, 5, 1, '#ffd93b');
+    r(mx - 1, 1, 2, 3, '#ffd93b');
+    r(mx, 4, 5, 1, '#ffd93b');
+    r(mx + 6, 1, 1, 1, '#ffd93b');
+  }
 
   // ---------- Bookshelf ----------
   r(8, 26, 26, 46, '#5b3a1d');
@@ -682,15 +731,24 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   r(fx + 6, 48, 22, 26, '#1a1110'); // opening
   r(fx + 7, 49, 20, 24, '#2a1712');
   r(fx - 2, 74, 38, 2, '#6b6b6b');
-  // A little framed picture of home (blue domes, sandy walls) on the mantel
+  // The family photo frame on the mantel: today's photo in tiny pixels,
+  // or a little picture of home (blue domes, sandy walls) until you add one.
   r(fx + 12, 19, 12, 11, '#4a2e15');
-  r(fx + 13, 20, 10, 9, '#8fd3ff');
-  r(fx + 14, 22, 1, 6, '#e8cf96');
-  r(fx + 21, 22, 1, 6, '#e8cf96');
-  r(fx + 17, 22, 2, 1, '#2a8fd8');
-  r(fx + 16, 23, 4, 3, '#2a8fd8');
-  r(fx + 15, 26, 6, 3, '#e8cf96');
-  r(fx + 17, 27, 2, 2, '#7a4e2a');
+  r(fx + 12, 19, 12, 1, '#c9a04a');
+  if (photo) {
+    ctx.imageSmoothingEnabled = true; // average the photo down so faces stay recognisable
+    const side = Math.min(photo.naturalWidth, photo.naturalHeight * (10 / 9));
+    ctx.drawImage(photo, (photo.naturalWidth - side) / 2, (photo.naturalHeight - (side * 9) / 10) / 2, side, (side * 9) / 10, fx + 13, 20, 10, 9);
+    ctx.imageSmoothingEnabled = false;
+  } else {
+    r(fx + 13, 20, 10, 9, '#8fd3ff');
+    r(fx + 14, 22, 1, 6, '#e8cf96');
+    r(fx + 21, 22, 1, 6, '#e8cf96');
+    r(fx + 17, 22, 2, 1, '#2a8fd8');
+    r(fx + 16, 23, 4, 3, '#2a8fd8');
+    r(fx + 15, 26, 6, 3, '#e8cf96');
+    r(fx + 17, 27, 2, 2, '#7a4e2a');
+  }
   r(fx + 2, 26, 2, 4, '#f3ead2'); // candle
   r(fx + 28, 26, 3, 4, '#5fa83b'); // tiny cactus
   if (has.has('trophy')) {
@@ -727,6 +785,33 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   if (has.has('cushion')) {
     ['#b8322a', '#e0b030', '#2a6fa8', '#e0b030', '#b8322a', '#2f6b3a', '#b8322a'].forEach((col, i) => r(fx + 1 + i * 2, 80, 2, 4, col));
     r(fx + 1, 84, 14, 1, '#6e4522');
+  }
+
+  // ---------- Simba's bowl (full once you've eaten today) ----------
+  r(BOWL.x, BOWL.y, 7, 3, '#2a6fa8');
+  r(BOWL.x + 1, BOWL.y + 2, 5, 1, '#1d4f7a');
+  r(BOWL.x + 1, BOWL.y, 5, 1, scene.fed ? '#a0603a' : '#1d4f7a');
+  if (scene.fed) r(BOWL.x + 2, BOWL.y - 1, 3, 1, '#b8743e');
+
+  // ---------- The lo-fi radio on the hearth ----------
+  {
+    const { x: rx, y: ry } = radioSpot(W);
+    r(rx + 5, ry - 3, 1, 3, '#3a3a3a'); // aerial
+    r(rx, ry, 7, 5, '#8a5a2e');
+    r(rx, ry, 7, 1, '#b07a3e');
+    r(rx + 1, ry + 1, 3, 3, '#3b2512'); // speaker
+    r(rx + 2, ry + 2, 1, 1, '#6e4522');
+    r(rx + 5, ry + 1, 1, 1, scene.mix.lofi > 0 ? '#7ed957' : '#4a4a4a'); // on light
+    r(rx + 5, ry + 3, 1, 1, '#e0b030'); // dial
+  }
+
+  // ---------- Hot chocolate by the fire on cold days ----------
+  if (scene.cold || season === 'winter') {
+    r(fx + 20, 80, 3, 3, '#c0392b');
+    r(fx + 20, 80, 3, 1, '#5b3a1d');
+    r(fx + 21, 79, 1, 1, '#ffffff'); // marshmallow
+    r(fx + 23, 81, 1, 1, '#c0392b'); // handle
+    if (motion) r(fx + 21 + ((frame >> 2) % 2), 77 - ((frame >> 1) % 4), 1, 1, 'rgba(255,255,255,0.55)');
   }
 
   // ---------- Simba, the ginger cat ----------
@@ -824,10 +909,39 @@ function draw(ctx: CanvasRenderingContext2D, W: number, now: Date, frame: number
   const bek = bekSpot(W, scene.simba);
   const pose = BEK_POSE[scene.simba];
   drawBek(ctx, bek.x, bek.y, pose, scene.avatar, motion && frame % 40 === 0, BEK_SCALE, dark * 0.45);
+  if (scene.cold || season === 'winter') {
+    // A warm red scarf (each of his pixels is 2×2)
+    r(bek.x, bek.y + 12, 16, 2, '#c0392b');
+    r(bek.x + 10, bek.y + 14, 3, 5, '#a02a20');
+    r(bek.x + 2, bek.y + 12, 2, 2, '#e0b030');
+  }
   if (pose === 'tea' && motion) r(bek.x + 15, bek.y + 18 - ((frame >> 1) % 6), 1, 1, 'rgba(255,255,255,0.6)'); // steam from his tea
   if (has.has('lamp')) {
     r(12, 15, 8, 4, phase === 'day' ? '#e0a040' : '#ffcf6a'); // lamp shade
     r(13, 14, 6, 1, '#c98a30');
+  }
+  if (scene.ramadan) {
+    const cols = ['#ffd93b', '#3ad0c0', '#e05a3a', '#ffd93b', '#9b6bff'];
+    for (let x = 10, i = 0; x < W - 10; x += 16, i++) {
+      const lit = !motion || (frame + i * 5) % 30 > 2;
+      r(x + 1, 5, 1, 2, '#c9a04a');
+      r(x, 7, 3, 4, lit ? cols[i % cols.length] : '#6b5a3a');
+      r(x + 1, 8, 1, 2, lit ? '#fff3b0' : '#6b5a3a');
+      r(x, 11, 3, 1, '#c9a04a');
+    }
+  }
+  if (scene.mix.lofi > 0 && motion) {
+    // Little music notes floating up from the radio
+    const { x: rx, y: ry } = radioSpot(W);
+    for (let i = 0; i < 2; i++) {
+      const t = (frame + i * 12) % 24;
+      const nx = rx + 1 + i * 3 - Math.round(Math.sin((frame + i * 9) * 0.3));
+      const ny = ry - 3 - t;
+      if (ny > 50) {
+        r(nx, ny, 2, 1, '#fff3b0');
+        r(nx + 1, ny - 2, 1, 2, '#fff3b0');
+      }
+    }
   }
   if (has.has('lights')) {
     const bulbs = ['#ffd27a', '#ff8c6a', '#9fdcff', '#b8f28a'];
@@ -860,8 +974,9 @@ interface Station {
 }
 
 function stations(W: number): Station[] {
-  const { telescopeX, tableX } = layout(W);
+  const { telescopeX, tableX, win } = layout(W);
   return [
+    { href: '#/pond', label: 'Pond', sub: 'Window', icon: 'fish', x: win.x - 2, y: 10, w: win.w + 4, h: 25 },
     { href: '#/study', label: 'Study', sub: 'Bookshelf', icon: 'shelf', x: 6, y: 24, w: 30, h: 50 },
     { href: '#/money', label: 'Money', sub: 'Chest', icon: 'chest', x: 35, y: 55, w: 24, h: 24, sign: 'bottom' },
     { href: '#/reflect', label: 'Reflect', sub: 'Telescope', icon: 'telescope', x: telescopeX - 3, y: 49, w: 21, h: 32 },
@@ -877,6 +992,8 @@ export function Cabin({
   bekBubble,
   onTapBek,
   onOpenJar,
+  onOpenPhotos,
+  onToggleRadio,
 }: {
   scene: CabinScene;
   bubble?: string | null;
@@ -884,10 +1001,24 @@ export function Cabin({
   bekBubble?: string | null;
   onTapBek?: () => void;
   onOpenJar?: () => void;
+  onOpenPhotos?: () => void;
+  onToggleRadio?: () => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLCanvasElement>(null);
   const [W, setW] = useState(BASE_W);
+
+  // Load today's family photo so it can be painted into the mantel frame.
+  const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    if (!scene.photo) {
+      setPhoto(null);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => setPhoto(img);
+    img.src = scene.photo;
+  }, [scene.photo]);
 
   // Work out how wide the room should be so it exactly fills the box (no stretching).
   useEffect(() => {
@@ -909,8 +1040,8 @@ export function Cabin({
     const motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!motion) {
       // Still picture, refreshed once a minute so the sky and clock keep up with the time.
-      draw(ctx, W, new Date(), 0, scene, false);
-      const id = setInterval(() => draw(ctx, W, new Date(), 0, scene, false), 60_000);
+      draw(ctx, W, new Date(), 0, scene, false, photo);
+      const id = setInterval(() => draw(ctx, W, new Date(), 0, scene, false, photo), 60_000);
       return () => clearInterval(id);
     }
     let frame = 0;
@@ -921,13 +1052,13 @@ export function Cabin({
         // ~8 frames a second: enough for a pixel-art flicker, light on battery
         last = t;
         frame++;
-        draw(ctx, W, new Date(), frame, scene, true);
+        draw(ctx, W, new Date(), frame, scene, true, photo);
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [scene, W]);
+  }, [scene, W, photo]);
 
   const { phase } = skyAt(new Date());
   const words: Record<SkyPhase, string> = { night: 'a starry night', dawn: 'sunrise', day: 'daytime', dusk: 'sunset' };
@@ -977,6 +1108,29 @@ export function Cabin({
                 {bubble}
               </p>
             )}
+          </>
+        );
+      })()}
+      {(() => {
+        const f = frameSpot(W);
+        const rs = radioSpot(W);
+        return (
+          <>
+            <button
+              type="button"
+              className="simba jar-spot"
+              style={{ left: `${((f.x - 1) / W) * 100}%`, top: `${((f.y - 1) / H) * 100}%`, width: `${((f.w + 2) / W) * 100}%`, height: `${((f.h + 2) / H) * 100}%` }}
+              onClick={onOpenPhotos}
+              aria-label="Family photo frame. Tap to see your family photos."
+            />
+            <button
+              type="button"
+              className="simba jar-spot"
+              style={{ left: `${((rs.x - 2) / W) * 100}%`, top: `${((rs.y - 4) / H) * 100}%`, width: `${(11 / W) * 100}%`, height: `${(11 / H) * 100}%` }}
+              onClick={onToggleRadio}
+              aria-label={scene.mix.lofi > 0 ? 'Radio: playing lo-fi. Tap to turn it off.' : 'Radio. Tap to play lo-fi music.'}
+              aria-pressed={scene.mix.lofi > 0}
+            />
           </>
         );
       })()}

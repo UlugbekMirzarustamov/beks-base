@@ -75,7 +75,7 @@ export function emptyData(today: string): AppData {
     settings: {
       theme: 'auto',
       sound: 'off',
-      mixer: { rain: 0, fire: 0, wind: 0 },
+      mixer: { rain: 0, fire: 0, wind: 0, lofi: 0 },
       sfx: true,
       avatar: { skin: '#e0b48a', hair: '#2b1d14', shirt: '#3f8f5a', pants: '#2f3e66', doppi: true },
       prayer: { asr: 'hanafi', offsets: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, call: true },
@@ -125,6 +125,10 @@ export function emptyData(today: string): AppData {
     quests: {},
     pot: null,
     wishes: [],
+    campfires: {},
+    fasts: {},
+    catches: [],
+    care: {},
     sleepLog: {},
     recall: {},
     applied: [],
@@ -157,7 +161,7 @@ export function upgrade(data: AppData, today: string): AppData {
     result = {
       ...result,
       applied: [...result.applied, 'mixer'],
-      settings: { ...result.settings, sound: 'off', mixer: { rain: sound === 'rain' ? 4 : 0, fire: sound === 'fire' ? 4 : 0, wind: 0 } },
+      settings: { ...result.settings, sound: 'off', mixer: { rain: sound === 'rain' ? 4 : 0, fire: sound === 'fire' ? 4 : 0, wind: 0, lofi: 0 } },
     };
   }
   // Bek's real money: $3,700 that has to last 5 months, starting the day this update arrives.

@@ -54,6 +54,25 @@ export async function saveData(data: unknown): Promise<void> {
   }
 }
 
+/**
+ * Family photos are kept under their own key (not inside AppData), so the
+ * main data stays small and quick to save. They never leave this device
+ * unless you export a backup.
+ */
+const PHOTOS_KEY = 'photos';
+
+export async function loadPhotoList(): Promise<unknown> {
+  try {
+    return await run('readonly', (s) => s.get(PHOTOS_KEY));
+  } catch {
+    return undefined;
+  }
+}
+
+export async function savePhotoList(list: unknown): Promise<void> {
+  await run('readwrite', (s) => s.put(list, PHOTOS_KEY));
+}
+
 /** Ask the browser not to delete our data when the device is low on space. */
 export async function requestPersistentStorage(): Promise<void> {
   try {

@@ -1,5 +1,5 @@
 /**
- * The sound mixer: rain, fire and wind, each with its own "volume stairs" —
+ * The sound mixer: rain, fire, wind and the lo-fi radio, each with its own "volume stairs" —
  * eight pixel steps that get taller as it gets louder. Tap or drag across the
  * steps, or use the arrow keys. The cabin reacts too: louder fire = bigger
  * flames, more rain = more drops at the window, more wind = racing clouds.
@@ -14,12 +14,14 @@ const CHANNELS: { id: Channel; label: string; icon: IconName }[] = [
   { id: 'rain', label: 'Rain', icon: 'rain' },
   { id: 'fire', label: 'Fire', icon: 'flame' },
   { id: 'wind', label: 'Wind', icon: 'wind' },
+  { id: 'lofi', label: 'Lo-fi radio', icon: 'radio' },
 ];
 
 const PRESETS: { label: string; mix: Mixer }[] = [
-  { label: 'Cosy night', mix: { rain: 2, fire: 5, wind: 1 } },
-  { label: 'Rainy study', mix: { rain: 6, fire: 2, wind: 0 } },
-  { label: 'Storm outside', mix: { rain: 8, fire: 3, wind: 6 } },
+  { label: 'Cosy night', mix: { rain: 2, fire: 5, wind: 1, lofi: 0 } },
+  { label: 'Rainy study', mix: { rain: 6, fire: 2, wind: 0, lofi: 0 } },
+  { label: 'Lo-fi & rain', mix: { rain: 3, fire: 1, wind: 0, lofi: 5 } },
+  { label: 'Storm outside', mix: { rain: 8, fire: 3, wind: 6, lofi: 0 } },
 ];
 
 /** One channel: a mute button + eight steps. Works like a slider. */
@@ -73,7 +75,7 @@ export function SoundMixer() {
   const { data, update } = useStore();
   const mix = data.settings.mixer;
   const set = (patch: Partial<Mixer>) => update((d) => void (d.settings.mixer = { ...d.settings.mixer, ...patch }));
-  const silent = mix.rain + mix.fire + mix.wind === 0;
+  const silent = mix.rain + mix.fire + mix.wind + mix.lofi === 0;
 
   return (
     <div className="mixer">
@@ -86,7 +88,7 @@ export function SoundMixer() {
             {p.label}
           </button>
         ))}
-        <button type="button" className="btn btn--small btn--danger" onClick={() => set({ rain: 0, fire: 0, wind: 0 })} disabled={silent}>
+        <button type="button" className="btn btn--small btn--danger" onClick={() => set({ rain: 0, fire: 0, wind: 0, lofi: 0 })} disabled={silent}>
           Quiet all
         </button>
       </div>

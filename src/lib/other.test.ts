@@ -73,7 +73,7 @@ describe('upgrading saved data', () => {
   it('turns the old sound setting into mixer levels', () => {
     const data = emptyData(TODAY);
     data.settings.sound = 'fire';
-    expect(upgrade(data, TODAY).settings.mixer).toEqual({ rain: 0, fire: 4, wind: 0 });
+    expect(upgrade(data, TODAY).settings.mixer).toEqual({ rain: 0, fire: 4, wind: 0, lofi: 0 });
   });
 });
 

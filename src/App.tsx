@@ -15,6 +15,9 @@ import More from './screens/More';
 import { MorningBriefing } from './screens/Briefing';
 import CalmCorner, { JarOverlay } from './screens/Calm';
 import { PotCloseout } from './screens/Plan';
+import Pond from './screens/Pond';
+import Campfire from './screens/Campfire';
+import { PhotoWall } from './screens/Photos';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Reflect from './screens/Reflect';
@@ -25,7 +28,7 @@ import { Toaster } from './ui/kit';
 import { Splash } from './ui/AppFeel';
 import { SoundMixer } from './ui/SoundMixer';
 
-const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm'] as const;
+const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: { id: Screen; label: string; icon: IconName }[] = [
@@ -85,18 +88,18 @@ export default function App() {
   }, [night]);
 
   // ----- Background sound mixer (browsers need a tap before sound can play) -----
-  const { rain, fire, wind } = data.settings.mixer;
+  const { rain, fire, wind, lofi } = data.settings.mixer;
   useEffect(() => {
-    const levels = { rain, fire, wind };
-    if (navigator.userActivation?.hasBeenActive || rain + fire + wind === 0) {
+    const levels = { rain, fire, wind, lofi };
+    if (navigator.userActivation?.hasBeenActive || rain + fire + wind + lofi === 0) {
       applyMixer(levels);
       return;
     }
     const begin = () => applyMixer(levels);
     window.addEventListener('pointerdown', begin, { once: true });
     return () => window.removeEventListener('pointerdown', begin);
-  }, [rain, fire, wind]);
-  const soundOn = rain + fire + wind > 0;
+  }, [rain, fire, wind, lofi]);
+  const soundOn = rain + fire + wind + lofi > 0;
   const sfxOn = data.settings.sfx;
   useEffect(() => setSfxEnabled(sfxOn), [sfxOn]);
 
@@ -171,6 +174,8 @@ export default function App() {
         {route.screen === 'more' && <More sub={route.sub} />}
         {route.screen === 'prayer' && <PrayerPage sub={route.sub} />}
         {route.screen === 'calm' && <CalmCorner />}
+        {route.screen === 'pond' && <Pond />}
+        {route.screen === 'campfire' && <Campfire />}
       </main>
 
       <button type="button" className="fab" onClick={() => openExpense()} aria-label="Add a purchase">
@@ -191,6 +196,7 @@ export default function App() {
       <MorningBriefing />
       <PotCloseout />
       <JarOverlay />
+      <PhotoWall />
       <Splash />
       <PrayerCall />
       <Toaster />

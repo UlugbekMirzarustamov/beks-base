@@ -7,8 +7,27 @@
 import { emptyData } from './seed';
 import type { AppData } from './types';
 
-export function exportJson(data: AppData, now: Date = new Date()): string {
-  return JSON.stringify({ app: 'ulus-base', exportedAt: now.toISOString(), data }, null, 2);
+/** A family photo (a small JPEG as a data: URL). */
+export interface Photo {
+  id: string;
+  src: string;
+  caption: string;
+  added: string; // YYYY-MM-DD
+}
+
+/** The backup also carries your family photos (if any), so moving to a new phone keeps them. */
+export function exportJson(data: AppData, now: Date = new Date(), photos: Photo[] = []): string {
+  return JSON.stringify({ app: 'ulus-base', exportedAt: now.toISOString(), data, ...(photos.length ? { photos } : {}) }, null, 2);
+}
+
+/** The photos inside a backup file (an empty list if it has none or looks wrong). */
+export function backupPhotos(text: string): Photo[] {
+  try {
+    const list = (JSON.parse(text) as { photos?: unknown }).photos;
+    return Array.isArray(list) ? list.filter((p): p is Photo => typeof p?.src === 'string' && p.src.startsWith('data:image/')) : [];
+  } catch {
+    return [];
+  }
 }
 
 export const backupFileName = (today: string) => `beks-base-backup-${today}.json`;
@@ -45,5 +64,7 @@ export function normalize(data: Partial<AppData>, today: string): AppData {
     if (Array.isArray(def) ? Array.isArray(value) : typeof value === typeof def) out[key] = value;
   }
   out.settings = { ...base.settings, ...(data.settings ?? {}) };
+  // Older data has no lo-fi radio channel yet.
+  (out.settings as AppData['settings']).mixer = { ...base.settings.mixer, ...(data.settings?.mixer ?? {}) };
   return out as unknown as AppData;
 }
