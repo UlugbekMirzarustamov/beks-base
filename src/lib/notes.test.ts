@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backlinks, findNote, linksIn, splitLinks } from './notes';
+import { backlinks, findNote, gardenGraph, linksIn, splitLinks } from './notes';
 import { planRevision, SESSION_MINUTES } from './revision';
 import { emptyData } from './seed';
 import type { LectureNote } from './types';
@@ -64,5 +64,16 @@ describe('revision planner', () => {
     const d = data();
     d.tests = [{ id: 'far', name: 'Final', date: '2027-05-01', subjectId: 'phy' }];
     expect(planRevision(d, TODAY, { minutesPerDay: 60, startTime: '18:00' })).toEqual([]);
+  });
+});
+
+describe('knowledge garden', () => {
+  it('connects notes, finds seeds to plant and lonely notes', () => {
+    const notes = [note('Momentum', 'p = mv, see [[Impulse]] and [[Collisions]]'), note('Impulse', 'change in [[momentum]]'), note('Waves', 'see [[Interference]] and [[SUVAT]]'), note('Optics', 'nothing linked yet')];
+    const g = gardenGraph(notes, ['SUVAT']);
+    expect(g.vines).toEqual([['Momentum', 'Impulse']]); // one vine, even though both link to each other
+    expect(g.plants.find((p) => p.note.title === 'Momentum')?.links).toBe(1);
+    expect(g.seeds.map((s) => s.title)).toEqual(['Collisions', 'Interference']); // SUVAT is a topic, not a seed
+    expect(g.lonely.map((n) => n.title)).toEqual(['Optics']);
   });
 });

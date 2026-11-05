@@ -167,7 +167,7 @@ export const COMMANDS: Command[] = [
   go('Assignments & grades', '#/study/assignments', 'coursework grade calculator marks module'),
   go('Tests & bosses', '#/study/tests', 'exams'),
   go('Mock exam', '#/study/mock', 'mock exam practice predicted grade past paper question bank'),
-  go('Lecture notes', '#/study/notes', 'notes lecture module linked'),
+  go('Lecture notes', '#/study/notes', 'notes lecture module linked knowledge garden'),
   go('Revision planner', '#/study/tests', 'revision plan exam schedule'),
   go('Topics', '#/study/topics', 'red amber green subjects modules'),
   go('Mistakes', '#/study/mistakes', 'notebook'),

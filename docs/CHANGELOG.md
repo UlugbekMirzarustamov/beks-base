@@ -4,6 +4,10 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Knowledge garden:** Study → Notes now has a **🌱 Garden** view. Every lecture note is a pixel plant in its
+  module's flower bed, growing taller the more it's connected; `[[links]]` grow as vines between plants.
+  **Seeds to plant** are notes you've linked to but not written yet (tap one to write it — it lands in the same
+  module), and **lonely notes** have no links yet. Tap any plant to open its note. Tests: 195 passing.
 - **Lesson attachments:** each lecture note (Study → Notes) can now hold **images** (photos of the board, made
   smaller), **PDFs** (slides, handouts — up to 8 MB each), **links** (recordings, readings) and **formulas**
   (one tap sends a formula to your formula cards). Images open full screen, PDFs open in a new tab, and the list

@@ -1,17 +1,18 @@
 /**
- * 📝 Study → Notes: lecture notes per module. Write [[Another note]] to link notes together;
+ * 📝 Study → Notes: lecture notes per module, as a list or as a knowledge garden (KnowledgeGarden). Write [[Another note]] to link notes together;
  * each note shows what links back to it. A link to one of your topics shows how confident you are.
  * Images, PDFs, links and formulas can be attached (NoteAttachments). The link logic lives in lib/notes.ts.
  */
 import { useState, type FormEvent } from 'react';
 import { formatDay } from '../lib/dates';
 import { uid } from '../lib/id';
-import { backlinks, findNote, splitLinks } from '../lib/notes';
+import { backlinks, findNote, linksIn, splitLinks } from '../lib/notes';
 import { fold } from '../lib/search';
 import type { LectureNote } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Empty, Field, Panel, Sheet, useConfirm } from '../ui/kit';
+import { Empty, Field, Panel, Segmented, Sheet, useConfirm } from '../ui/kit';
+import { KnowledgeGarden } from './KnowledgeGarden';
 import { useLessonFiles } from '../state/lessonFiles';
 import { NoteAttachments, removeNoteFiles } from './NoteAttachments';
 
@@ -25,6 +26,7 @@ export default function Notes() {
   const [module, setModule] = useState('all');
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Draft | null>(null);
+  const [view, setView] = useState<'list' | 'garden'>('list');
   const open = data.lectureNotes.find((n) => n.id === openId);
   const subjectName = (id: string | null) => data.subjects.find((s) => s.id === id)?.name ?? 'No module';
 
@@ -59,7 +61,22 @@ export default function Notes() {
             <option value="none">No module</option>
           </select>
         </div>
-        {data.lectureNotes.length === 0 ? (
+        <Segmented<'list' | 'garden'>
+          label="View"
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'list', label: 'List' },
+            { value: 'garden', label: '🌱 Garden' },
+          ]}
+        />
+        {view === 'garden' ? (
+          <KnowledgeGarden
+            onOpen={setOpenId}
+            // A seed grows in the same module as the note that links to it.
+            onCreate={(title) => setEditing(blank(title, data.lectureNotes.find((n) => linksIn(n.body).some((t) => fold(t) === fold(title)))?.subjectId ?? null))}
+          />
+        ) : data.lectureNotes.length === 0 ? (
           <Empty>No notes yet. Write one after each lecture — type [[Another note]] to link ideas together.</Empty>
         ) : list.length === 0 ? (
           <Empty>No notes match.</Empty>

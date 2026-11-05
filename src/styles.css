@@ -6309,3 +6309,45 @@ body.exam-mode {
   max-height: 80vh;
   object-fit: contain;
 }
+
+/* ---------- Knowledge garden ---------- */
+.kgarden {
+  display: grid;
+  gap: 8px;
+}
+.kgarden__svg {
+  width: 100%;
+  height: auto;
+  background: linear-gradient(to bottom, #cfe8f2, #e9f5d8);
+  border: var(--bevel) solid var(--edge);
+  shape-rendering: crispEdges;
+}
+:root[data-theme='night'] .kgarden__svg {
+  background: linear-gradient(to bottom, #1d2340, #24305a);
+}
+.kgarden__bed-name {
+  font-size: 9px;
+  font-weight: 700;
+  fill: #2f1d0c;
+}
+:root[data-theme='night'] .kgarden__bed-name,
+:root[data-theme='night'] .kgarden__label {
+  fill: #f3e3bd;
+}
+.kgarden__label {
+  font-size: 7px;
+  fill: #2f1d0c;
+}
+.kgarden__vine {
+  fill: none;
+  stroke: #3f7a26;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+  shape-rendering: auto;
+}
+.kgarden__plant {
+  cursor: pointer;
+}
+.kgarden__plant:focus-visible {
+  outline: 2px solid var(--gold);
+}

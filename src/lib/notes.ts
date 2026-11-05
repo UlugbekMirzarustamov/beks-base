@@ -40,3 +40,51 @@ export function splitLinks(body: string): ({ text: string } | { link: string })[
   if (last < body.length) out.push({ text: body.slice(last) });
   return out;
 }
+
+// ---------------------------------------------------------------- the knowledge garden
+export interface GardenGraph {
+  /** Each note with how many notes it's connected to (either direction). */
+  plants: { note: LectureNote; links: number }[];
+  /** Pairs of connected notes (each pair once). */
+  vines: [string, string][];
+  /** Notes you've linked to but not written yet, with how many notes point at them. */
+  seeds: { title: string; count: number }[];
+  /** Notes with no links in or out. */
+  lonely: LectureNote[];
+}
+
+/** How your notes connect: the knowledge garden. Links to topics aren't seeds (they're your topics). */
+export function gardenGraph(notes: LectureNote[], topicNames: string[] = []): GardenGraph {
+  const pairs = new Set<string>();
+  const vines: [string, string][] = [];
+  const seedCount = new Map<string, { title: string; count: number }>();
+  const topics = new Set(topicNames.map(fold));
+  for (const n of notes) {
+    for (const title of linksIn(n.body)) {
+      const target = findNote(notes, title);
+      if (target && target.id !== n.id) {
+        const key = [n.id, target.id].sort().join('|');
+        if (!pairs.has(key)) {
+          pairs.add(key);
+          vines.push([n.id, target.id]);
+        }
+      } else if (!target && !topics.has(fold(title))) {
+        const s = seedCount.get(fold(title)) ?? { title, count: 0 };
+        s.count++;
+        seedCount.set(fold(title), s);
+      }
+    }
+  }
+  const degree = new Map<string, number>();
+  for (const [a, b] of vines) {
+    degree.set(a, (degree.get(a) ?? 0) + 1);
+    degree.set(b, (degree.get(b) ?? 0) + 1);
+  }
+  const plants = notes.map((note) => ({ note, links: degree.get(note.id) ?? 0 }));
+  return {
+    plants,
+    vines,
+    seeds: [...seedCount.values()].sort((a, b) => b.count - a.count || a.title.localeCompare(b.title)),
+    lonely: plants.filter((p) => p.links === 0 && linksIn(p.note.body).length === 0).map((p) => p.note),
+  };
+}
