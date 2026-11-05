@@ -1,6 +1,6 @@
 /**
  * 🗓️ PLANNER — "the Crafting table".
- * Tabs: Today (top 3 + tasks) · Calendar (day/week/month, everything dated) · Week (time blocks) · Timetable · Admin
+ * Tabs: Today (top 3 + tasks) · Goals (year/month/week) · Calendar (day/week/month, everything dated) · Week (time blocks) · Timetable · Admin
  */
 import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { occursOn } from '../lib/calendar';
@@ -13,10 +13,11 @@ import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Empty, Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
-const TABS = ['today', 'calendar', 'week', 'timetable', 'admin'] as const;
+const TABS = ['today', 'goals', 'calendar', 'week', 'timetable', 'admin'] as const;
 // The calendar loads on first open (it's prefetched for offline use in App.tsx).
 const CalendarTab = lazy(() => import('./Calendar'));
 const AdminTab = lazy(() => import('./Admin'));
+const GoalsTab = lazy(() => import('./Goals'));
 type Tab = (typeof TABS)[number];
 
 export default function Planner({ sub }: { sub?: string }) {
@@ -32,6 +33,7 @@ export default function Planner({ sub }: { sub?: string }) {
         onChange={setTab}
         tabs={[
           { id: 'today', label: 'Today', icon: 'check' },
+          { id: 'goals', label: 'Goals', icon: 'star' },
           { id: 'calendar', label: 'Calendar', icon: 'calendar' },
           { id: 'week', label: 'Week plan', icon: 'clock' },
           { id: 'timetable', label: 'Timetable', icon: 'clock' },
@@ -54,6 +56,11 @@ export default function Planner({ sub }: { sub?: string }) {
       )}
       {tab === 'week' && <Week />}
       {tab === 'timetable' && <Timetable />}
+      {tab === 'goals' && (
+        <Suspense fallback={<p className="muted center">Opening…</p>}>
+          <GoalsTab />
+        </Suspense>
+      )}
       {tab === 'admin' && (
         <Suspense fallback={<p className="muted center">Opening…</p>}>
           <AdminTab />

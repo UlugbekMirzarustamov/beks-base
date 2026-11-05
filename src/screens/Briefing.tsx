@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { pick } from '../lib/cabin';
 import { potStatus } from '../lib/pot';
-import { todaysQuest } from '../lib/daily';
+import { quoteOfTheDay, todaysQuest } from '../lib/daily';
 import { daysBetween, formatDay, UK_TZ, zonedParts } from '../lib/dates';
 import { formatMoney, safeToSpend } from '../lib/money';
 import { minsToClock, PRAYER_INFO, prayerTimes } from '../lib/prayer';
@@ -87,6 +87,7 @@ export function MorningBriefing() {
   const photo = photoOfTheDay(photos, today);
   const focus = weekFocus(data, today);
   const vision = visionOfTheDay(data, today);
+  const quote = quoteOfTheDay(today);
   const fastTimes = prayerTimes(today, data.settings.prayer);
   const prayedToday = Object.keys(PRAYER_INFO).filter((p) => data.prayers[today]?.includes(p as never)).length;
 
@@ -103,6 +104,9 @@ export function MorningBriefing() {
             <figcaption>{photo.caption || 'They’re proud of you.'}</figcaption>
           </figure>
         )}
+        <blockquote className="briefing__quote">
+          “{quote.text}”<cite> — {quote.from}</cite>
+        </blockquote>
 
         <ul className="briefing__list">
           <li>

@@ -152,7 +152,7 @@ describe('missing nested properties', () => {
 
   it('data saved before the kitchen and admin existed opens with empty lists; old bills and events keep working', () => {
     const d = emptyData(TODAY) as any;
-    for (const k of ['groceries', 'pantry', 'recipes', 'meals', 'admin', 'lectureNotes', 'friday', 'hifz', 'simbaGifts']) delete d[k];
+    for (const k of ['groceries', 'pantry', 'recipes', 'meals', 'admin', 'lectureNotes', 'friday', 'hifz', 'simbaGifts', 'planGoals']) delete d[k];
     delete d.settings.prayer.method;
     delete d.settings.breakEvery;
     d.recurring = [{ id: 'b', name: 'Phone', amount: 10, categoryId: 'phone', day: 3, lastAdded: null }];
@@ -167,6 +167,7 @@ describe('missing nested properties', () => {
     expect(out.friday).toEqual({});
     expect(out.hifz).toEqual([]);
     expect(out.simbaGifts).toEqual([]);
+    expect(out.planGoals).toEqual([]);
     expect(out.settings.breakEvery).toBe(50);
     expect(out.settings.prayer.method).toBe('mwl');
     expect(out.recurring[0]).toEqual(d.recurring[0]);

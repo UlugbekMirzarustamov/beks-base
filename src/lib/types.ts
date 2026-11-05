@@ -272,6 +272,20 @@ export interface HifzItem {
   interval: number;
 }
 
+// ---------- Goals ----------
+export type GoalLevel = 'year' | 'month' | 'week';
+
+/** A yearly, monthly or weekly goal. Daily goals are the top 3 (`priorities`). */
+export interface PlanGoal extends Base {
+  level: GoalLevel;
+  /** "2026" for a year, "2026-11" for a month, the Monday "2026-11-02" for a week. */
+  period: string;
+  title: string;
+  done: boolean;
+  /** The goal one level up it helps with (a vision goal for year goals), or null. */
+  parentId: string | null;
+}
+
 /** Things captured quickly that wait in the inbox until you sort them (tasks and expenses go straight to their lists). */
 export type InboxKind = 'idea' | 'note' | 'link' | 'reminder';
 
@@ -588,6 +602,8 @@ export interface AppData {
   friday: Record<string, string[]>;
   /** Qur'an memorisation (hifz), one entry per surah. Private, never scored. */
   hifz: HifzItem[];
+  /** Yearly, monthly and weekly goals (daily goals are the top 3). */
+  planGoals: PlanGoal[];
   /** Little things Simba brought you, one a day when you visit the rooms. */
   simbaGifts: { date: string; gift: string }[];
   /** Lecture notes per module, linked with [[Title]]. */

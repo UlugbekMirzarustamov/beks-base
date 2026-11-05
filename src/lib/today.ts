@@ -7,6 +7,7 @@ import { upcoming, type CalItem } from './calendar';
 import { addDays, daysBetween } from './dates';
 import { roundPennies, safeToSpend, savedIn } from './money';
 import { potStatus } from './pot';
+import { levelProgress, periodOf } from './goals';
 import type { AppData } from './types';
 
 /** Exams and deadlines (tasks + assignments) in the next `days` days, soonest first. */
@@ -42,7 +43,7 @@ export interface GoalProgress {
   href: string;
 }
 
-/** Up to `limit` goals in progress: the nearest dated vision goal, then the fullest savings jars. */
+/** Up to `limit` goals in progress: this week's goals, the nearest dated vision goal, then the fullest savings jars. */
 export function goalProgress(d: AppData, today: string, limit = 3): GoalProgress[] {
   const dated = d.vision
     .filter((g) => !g.done && g.by && g.by >= today)
@@ -52,7 +53,10 @@ export function goalProgress(d: AppData, today: string, limit = 3): GoalProgress
     .filter((g) => !g.reached && g.target > 0)
     .map((g): GoalProgress => ({ key: `jar-${g.id}`, title: g.name, pct: Math.max(0, Math.min(1, savedIn(g) / g.target)), daysLeft: null, href: '#/money/savings' }))
     .sort((a, b) => (b.pct ?? 0) - (a.pct ?? 0));
-  return [...dated.slice(0, 1), ...jars, ...dated.slice(1)].slice(0, limit);
+  // This week's goals come first when you have some (Planner → Goals).
+  const week = levelProgress(d.planGoals, 'week', periodOf('week', today));
+  const weekly: GoalProgress[] = week.total ? [{ key: 'week-goals', title: `This week's goals (${week.done}/${week.total})`, pct: week.done / week.total, daysLeft: null, href: '#/planner/goals' }] : [];
+  return [...weekly, ...dated.slice(0, 1), ...jars, ...dated.slice(1)].slice(0, limit);
 }
 
 /** Roughly how long you slept: last night's "going to sleep" time to this morning's Fajr-rise time (to the half hour). */

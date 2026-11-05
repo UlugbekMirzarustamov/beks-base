@@ -6105,3 +6105,23 @@ button.list__main {
   background: var(--gold);
   color: #2f1d0c;
 }
+
+.briefing__quote {
+  margin: 8px 0;
+  padding: 6px 10px;
+  font-style: italic;
+  border-left: 4px solid var(--gold);
+  background: rgba(255, 255, 255, 0.08);
+}
+.briefing__quote cite {
+  display: block;
+  font-style: normal;
+  font-size: 13px;
+  opacity: 0.75;
+}
+.goal-row {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

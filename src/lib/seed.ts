@@ -142,6 +142,7 @@ export function emptyData(today: string): AppData {
     friday: {},
     hifz: [],
     simbaGifts: [],
+    planGoals: [],
     inbox: [],
     assignments: [],
     checkins: {},

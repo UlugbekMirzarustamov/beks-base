@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Rooms, Life Museum, Garden of Years, Simba gifts, break reminders: 180 tests passing, production build passing.
+Last verified: **2026-11-05** — Goals at every level, morning quote: 184 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -20,7 +20,8 @@ Paths are relative to `src/`.
 | Daily dashboard "Today" card: top 3, now/next class, next prayer, money left today, deadlines & exams this week, goal progress | Implemented | `TodayCard` in `screens/Daily.tsx`, `lib/today.ts` (tests in `lib/today.test.ts`) |
 | Sleep & energy check-in (not scored) | Implemented | `checkins` in `lib/types.ts`; suggestion from bedtime + Fajr rise (`sleptHours`) |
 | Customisable dashboard | Not started | Phase 5 |
-| Morning briefing (incl. photo, focus, vision goal) | Implemented | `screens/Briefing.tsx` |
+| Morning briefing (incl. photo, focus, vision goal, quote of the day) | Implemented | `screens/Briefing.tsx`; `QUOTES`, `quoteOfTheDay` in `lib/daily.ts` |
+| Goals: yearly, monthly, weekly (each can support one a level up, year goals a vision-board dream), daily = top 3; carry over unfinished; week progress on Home | Implemented | `screens/Goals.tsx` (Planner → Goals); `lib/goals.ts` (tests in `lib/goals.test.ts`); `goalProgress` in `lib/today.ts` |
 | Today cards (classes now/next, money, weather, next test, top 3, due, mood, level) | Implemented | `screens/Home.tsx` |
 | 1% quest, word of the day, morning recall | Implemented | `screens/Daily.tsx`, `lib/daily.ts` |
 | Night wind-down | Implemented | `screens/Daily.tsx` (`WindDown`) |

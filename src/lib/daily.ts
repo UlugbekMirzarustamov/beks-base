@@ -15,6 +15,28 @@ export function dayHash(date: string, salt = ''): number {
 }
 const pickFor = <T,>(list: T[], date: string, salt: string): T | null => (list.length ? list[dayHash(date, salt) % list.length] : null);
 
+// ---------------------------------------------------------------- quote of the day
+/** Morning quotes: short, checked sources only (Qur'an, sahih hadith, or the app's own words). */
+export const QUOTES: { text: string; from: string }[] = [
+  { text: 'Indeed, with hardship comes ease.', from: 'Qur’an 94:6' },
+  { text: 'Allah does not burden a soul beyond what it can bear.', from: 'Qur’an 2:286' },
+  { text: 'Do not lose heart, and do not grieve.', from: 'Qur’an 3:139' },
+  { text: 'Whoever relies on Allah, He is enough for them.', from: 'Qur’an 65:3' },
+  { text: 'The most beloved deeds to Allah are the most consistent ones, even if small.', from: 'the Prophet ﷺ (Bukhari & Muslim)' },
+  { text: 'Whoever takes a path to seek knowledge, Allah makes easy for him a path to Paradise.', from: 'the Prophet ﷺ (Muslim)' },
+  { text: 'The strong believer is better and more beloved to Allah than the weak believer, and there is good in both.', from: 'the Prophet ﷺ (Muslim)' },
+  { text: 'Tie your camel, then trust in Allah.', from: 'the Prophet ﷺ (Tirmidhi)' },
+  { text: '1% better today. That’s all. Tomorrow, 1% more.', from: 'Bek’s Base' },
+  { text: 'You didn’t come this far from home to only come this far.', from: 'Bek’s Base' },
+  { text: 'Hard problems are just easy problems you haven’t broken down yet.', from: 'Bek’s Base' },
+  { text: 'Start before you feel ready. Five minutes counts.', from: 'Bek’s Base' },
+  { text: 'Your family is proud of the effort, not only the grade.', from: 'Bek’s Base' },
+  { text: 'Discipline today, freedom tomorrow.', from: 'Bek’s Base' },
+];
+
+/** The quote for the day: the same all day, a new one tomorrow. */
+export const quoteOfTheDay = (date: string) => QUOTES[dayHash(date, 'quote') % QUOTES.length];
+
 // ---------------------------------------------------------------- daily quest
 export interface Quest {
   id: string;

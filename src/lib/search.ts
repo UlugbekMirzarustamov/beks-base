@@ -53,6 +53,7 @@ export function buildIndex(d: AppData): SearchEntry[] {
   for (const p of d.pantry) add({ key: `pantry-${p.id}`, kind: 'Pantry', title: p.name, sub: [p.qty > 0 ? `${p.qty}${p.unit ? ` ${p.unit}` : ''}` : 'run out', p.expires ? `use by ${p.expires}` : ''].filter(Boolean).join(' · '), href: '#/kitchen/pantry', date: p.expires });
   for (const r of d.recipes) add({ key: `recipe-${r.id}`, kind: 'Recipe', title: r.name, sub: r.minutes ? `${r.minutes} min` : `${r.ingredients.length} ingredients`, href: '#/kitchen/recipes', date: '', text: `${r.ingredients.join(' ')} ${r.steps}` });
   for (const a of d.admin) add({ key: `admin-${a.id}`, kind: 'Admin', title: a.title, sub: [a.date ? `${a.dateLabel.toLowerCase()} ${a.date}` : '', a.finished ? 'finished' : `${a.steps.filter((x) => x.done).length}/${a.steps.length} steps`].filter(Boolean).join(' · '), href: '#/planner/admin', date: a.date, text: `${a.steps.map((x) => x.text).join(' ')} ${a.notes}` });
+  for (const g of d.planGoals) add({ key: `plangoal-${g.id}`, kind: 'Goal', title: g.title, sub: `${g.level} ${g.period}${g.done ? ' · done' : ''}`, href: '#/planner/goals', date: g.period.length === 4 ? `${g.period}-01-01` : g.period.length === 7 ? `${g.period}-01` : g.period });
   for (const n of d.lectureNotes) add({ key: `lecture-${n.id}`, kind: 'Lecture note', title: n.title, sub: [moduleName(n.subjectId), n.date].filter(Boolean).join(' · '), href: '#/study/notes', date: n.date, text: n.body });
   for (const n of d.notes) add({ key: `note-${n.id}`, kind: 'Journal', title: n.title || 'Untitled note', sub: n.updated.slice(0, 10), href: '#/more/journal', date: n.updated.slice(0, 10), text: n.body });
   for (const i of d.inbox) if (!i.done) add({ key: `inbox-${i.id}`, kind: 'Inbox', title: i.text, sub: i.kind, href: '#/planner/today', date: i.created, text: i.url });
@@ -87,7 +88,7 @@ export function buildIndex(d: AppData): SearchEntry[] {
 export type ArchiveArea = 'study' | 'money' | 'planner' | 'reflect' | 'kitchen' | 'admin';
 
 export const ARCHIVE_AREAS: { id: ArchiveArea; label: string; kinds: string[] }[] = [
-  { id: 'planner', label: 'Planner', kinds: ['Task', 'Event', 'Inbox', 'Inbox (done)'] },
+  { id: 'planner', label: 'Planner', kinds: ['Task', 'Goal', 'Event', 'Inbox', 'Inbox (done)'] },
   { id: 'study', label: 'Study', kinds: ['Lecture note', 'Assignment', 'Exam', 'Mistake', 'Formula', 'Topic', 'Word'] },
   { id: 'money', label: 'Money', kinds: ['Purchase', 'Bill', 'Subscription', 'Wish', 'Savings jar'] },
   { id: 'reflect', label: 'Journal & reflect', kinds: ['Journal', 'Night log', 'Week review', 'Campfire', 'Vision', 'Letter'] },
@@ -154,6 +155,7 @@ export const COMMANDS: Command[] = [
   { key: 'toggle-theme', title: 'Switch day / night', keywords: 'dark light theme mode', action: 'toggle-theme' },
   { key: 'briefing', title: "Today's briefing", keywords: 'morning summary today', action: 'briefing' },
   go('Home', '#/home', 'cabin dashboard'),
+  go('Goals', '#/planner/goals', 'yearly monthly weekly daily goals plan year month week'),
   go('Calendar', '#/planner/calendar', 'schedule events day week month'),
   go('Tasks & inbox', '#/planner/today', 'todo top 3 inbox'),
   go('Timetable', '#/planner/timetable', 'classes school'),

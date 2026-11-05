@@ -4,6 +4,12 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Goals at every level + morning quote:** Planner → **Goals** with yearly, monthly and weekly goals; each can
+  say which bigger goal it helps (a year goal can help a dream on the vision board), shown as a chain like
+  "SUVAT sheet → Finish mechanics → Get a First in Physics". Daily goals are your top 3 (one list, not two).
+  Unfinished goals from last week/month/year can be carried over in one tap, and this week's progress shows
+  in Home's Today card. The morning briefing now has a **quote of the day** under the family photo (Qur'an,
+  sahih hadith with sources, or the app's own words). Tests: 184 passing.
 - **Rooms, Life Museum, Garden of Years, Simba, breaks:** a new **Rooms** button on Home opens seven more
   rooms in original pixel art, each drawn from your real life: the **Library** fills with a book for every
   lecture note, word, formula card and recipe; the **Kitchen** shelf holds a jar for each thing in your pantry
