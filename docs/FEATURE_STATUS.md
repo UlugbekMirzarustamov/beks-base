@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — commit `ac8d47a` plus the Task 1 privacy cleanup (84 tests passing, production build passing; cleanup not yet deployed).
+Last verified: **2026-11-05** — Task 2 (data foundation): 93 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -65,11 +65,12 @@ Paths are relative to `src/`.
 | Tasbih, Qur'an tracker | Implemented | `screens/Devotion.tsx`, `lib/quran.ts` |
 | Ramadan mode (countdown, preview, times, fasts, taraweeh, juz, dua, lanterns) | Implemented | `lib/ramadan.ts` (tests), `screens/Ramadan.tsx`, `scene/Cabin.tsx` |
 | Ramadan mode switching on during the real Ramadan | Needs verification | Checked only with the preview; the calendar maths is tested |
-| Fajr rise + harsh oversleep call | Implemented | `lib/push.ts` (tests), `screens/Push.tsx` (`FajrRise`, `OversleptCall`) |
+| Fajr rise + harsh oversleep call (words only, no XP loss) | Implemented | `lib/push.ts` (tests), `screens/Push.tsx` (`FajrRise`, `OversleptCall`) |
+| Worship never scored (no XP for prayer, fasting, taraweeh, tasbih, Qur'an) | Implemented | `screens/Prayer.tsx`, `screens/Ramadan.tsx`, `screens/Devotion.tsx` |
 | Fajr rise "I'm up" before sunrise | Needs verification | Only the after-sunrise path was checked in the browser |
 | Reflect: tonight & stars, my sky, week, year in pixels, vision board, letters | Implemented | `screens/Reflect.tsx`, `lib/pixels.ts`, `screens/Push.tsx` (`VisionBoard`) |
 | Gratitude jar, journal, habits | Implemented | `screens/Calm.tsx`, `screens/Extras.tsx` |
-| Morning promise, you vs last week, hard mode | Implemented | `lib/push.ts` (tests), `screens/Push.tsx` |
+| Morning promise (no penalty unless hard mode), you vs last week, hard mode | Implemented | `lib/push.ts` (tests), `screens/Push.tsx` |
 | XP, levels, coins, 25 badges | Implemented | `lib/xp.ts`, `lib/badges.ts`, `screens/Badges.tsx` |
 | Adhkar, sadaqah jar, if-then plans, family report card, weekly challenges | Not started | Spec: *Proposed* |
 
@@ -114,10 +115,15 @@ Paths are relative to `src/`.
 | Safe loading + recovery screen | Implemented | `lib/persist.ts`, `ui/Recovery.tsx`, `state/store.tsx`; tests in `lib/persist.test.ts` |
 | Visible save errors (data and photos) | Implemented | `state/store.tsx`, `screens/Photos.tsx` |
 | Verified snapshots (newest 3) + restore | Implemented | `lib/persist.ts`, `screens/More.tsx` (`SafetyCopies`) |
+| Automatic daily backups (newest 7, once per UK day) + restore | Implemented | `lib/persist.ts` (`dailyBackup`), `state/store.tsx`; tests in `lib/persist.test.ts` |
+| Numbered schema migrations; newer data refused | Implemented | `lib/migrate.ts`, `lib/seed.ts` (`upgrade`), `lib/backup.ts` (`normalize`); tests in `lib/persist.test.ts` |
+| Separate storage per new domain | Planned | Decided; built with the first new domain (calendar) |
 | Deep normalise + import validation | Implemented | `lib/backup.ts` (`normalize`, `validateData`) |
 | JSON export/import incl. photos; Sunday reminder | Implemented | `lib/backup.ts`, `screens/Daily.tsx` (`shareBackup`, `BackupCard`) |
 | Share-sheet backup (AirDrop) on iPhone | Needs verification | Uses `navigator.share` with files; only the download fallback was exercised |
 | Personal data removed from the public repo (current code) | Implemented | Task 1: no real timetable, money figures or institution names in `src/`, `README.md` or docs |
-| Personal data removed from git history; commit author email | Not started | Old commits still contain them; waiting for Bek's decision (history rewrite or private repo) |
+| Future commits use the GitHub noreply email | Implemented | Local git config of this repo |
+| Personal data removed from old git history | Not started | Decided not to rewrite history (a force push can't erase GitHub's cached copies and risks the deploy) |
 | Consolidate duplicated helpers (streaks, week stats, clocks) | Planned | See "Known follow-ups" in [CHANGELOG.md](CHANGELOG.md) |
-| Lazy-load rarely used screens; move vision photos out of AppData | Planned | Single ~510 KB JS bundle today |
+| Lazy-load screens (with offline prefetch) | Partially implemented | Reflect, More and Pond load on demand and are prefetched for offline (`App.tsx`, `main.tsx`); other screens are imported by Home so stay in the main bundle (~433 KB) |
+| Move vision-board photos out of AppData | Planned | |

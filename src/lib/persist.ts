@@ -10,6 +10,8 @@
  *  3. The newest 3 good snapshots are kept. Old ones are removed only AFTER a new
  *     one has been checked. Data that couldn't be read is kept under
  *     "unreadable:<time>" and never removed automatically.
+ *  4. Once a day, a "daily:<date>:<time>" backup is made automatically (newest 7 kept,
+ *     counted separately, so daily copies never push out the safety copies above).
  *
  * Everything works through the small `KV` interface, so tests can use a fake
  * storage that fails on purpose.
@@ -20,8 +22,10 @@ import { createInitialData, upgrade } from './seed';
 import type { AppData } from './types';
 
 export const SNAPSHOT_PREFIX = 'snapshot:';
+export const DAILY_PREFIX = 'daily:';
 export const UNREADABLE_PREFIX = 'unreadable:';
 export const MAX_SNAPSHOTS = 3;
+export const MAX_DAILY = 7;
 
 export interface Snapshot {
   reason: string;
@@ -42,9 +46,9 @@ const isSnapshot = (v: unknown): v is Snapshot => {
 };
 
 // ---------------------------------------------------------------- snapshots
-/** Good snapshots, newest first. */
-export async function listSnapshots(kv: KV): Promise<SnapshotInfo[]> {
-  const ids = (await kv.keys()).filter((k) => k.startsWith(SNAPSHOT_PREFIX));
+/** Good snapshots with the given prefix (default: safety copies), newest first. */
+export async function listSnapshots(kv: KV, prefix = SNAPSHOT_PREFIX): Promise<SnapshotInfo[]> {
+  const ids = (await kv.keys()).filter((k) => k.startsWith(prefix));
   const out: SnapshotInfo[] = [];
   for (const id of ids) {
     const snap = await kv.get(id).catch(() => undefined);
@@ -53,16 +57,34 @@ export async function listSnapshots(kv: KV): Promise<SnapshotInfo[]> {
   return out.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
 }
 
+/** Every good copy (safety copies and daily backups), newest first — for restore lists. */
+export async function listAllSnapshots(kv: KV): Promise<SnapshotInfo[]> {
+  const all = [...(await listSnapshots(kv, SNAPSHOT_PREFIX)), ...(await listSnapshots(kv, DAILY_PREFIX))];
+  return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+}
+
+interface SnapshotOptions {
+  /** The kind of copy: its key prefix, used to count and tidy up (default: a safety copy). */
+  prefix?: string;
+  /** Extra text put right after the prefix in the key (e.g. the day of a daily backup). */
+  tag?: string;
+  /** How many copies of this kind to keep. */
+  keep?: number;
+  /** Include the family photos (default: yes). */
+  photos?: boolean;
+}
+
 /**
  * Write a safety copy of `data` (plus the family photos), read it back and check
- * it's identical. Only then remove copies older than the newest 3.
+ * it's identical. Only then remove copies of the same kind beyond the newest few.
  * Throws if the copy can't be written or checked — callers must then NOT go ahead.
  */
-export async function createSnapshot(kv: KV, data: unknown, reason: string, now = new Date()): Promise<SnapshotInfo> {
-  const photos = await kv.get(PHOTOS_KEY).catch(() => undefined);
+export async function createSnapshot(kv: KV, data: unknown, reason: string, now = new Date(), opts: SnapshotOptions = {}): Promise<SnapshotInfo> {
+  const { prefix = SNAPSHOT_PREFIX, tag = '', keep = MAX_SNAPSHOTS, photos: withPhotos = true } = opts;
+  const photos = withPhotos ? await kv.get(PHOTOS_KEY).catch(() => undefined) : undefined;
   const snap = { reason, createdAt: now.toISOString(), data, ...(Array.isArray(photos) ? { photos } : {}) };
   if (!isSnapshot(snap)) throw new Error("Couldn't make a safety copy (there's no readable data to copy)");
-  const id = `${SNAPSHOT_PREFIX}${snap.createdAt}-${Math.random().toString(36).slice(2, 6)}`;
+  const id = `${prefix}${tag}${snap.createdAt}-${Math.random().toString(36).slice(2, 6)}`;
   try {
     await kv.put(id, snap);
     const back = await kv.get(id);
@@ -71,10 +93,10 @@ export async function createSnapshot(kv: KV, data: unknown, reason: string, now 
     await kv.del(id).catch(() => undefined); // drop the half-made copy; older copies are untouched
     throw new Error(`Couldn't make a safety copy (${message(e)})`);
   }
-  // The new copy is verified, so it's now safe to tidy up the oldest ones.
+  // The new copy is verified, so it's now safe to tidy up the oldest ones of the same kind.
   try {
-    const all = await listSnapshots(kv);
-    for (const old of all.slice(MAX_SNAPSHOTS)) await kv.del(old.id);
+    const all = await listSnapshots(kv, prefix);
+    for (const old of all.slice(keep)) await kv.del(old.id);
   } catch {
     /* tidying up can wait until next time: an extra copy never hurts */
   }
@@ -96,6 +118,29 @@ async function keepUnreadable(kv: KV, raw: unknown, now = new Date()): Promise<v
   const id = `${UNREADABLE_PREFIX}${now.toISOString()}`;
   await kv.put(id, raw);
   if (JSON.stringify(await kv.get(id)) !== JSON.stringify(raw)) throw new Error("Couldn't keep a copy of the stored data");
+}
+
+/** Daily backups already running, per storage + day, so two starts at once make ONE backup. */
+const dailyInFlight = new WeakMap<KV, Map<string, Promise<boolean>>>();
+
+/**
+ * The automatic daily backup: at most one per day ("daily:<UK date>:<time>…"),
+ * newest 7 kept. Photos are left out (they're kept in the photo store and in the
+ * safety copies). Resolves false if today's backup already exists.
+ */
+export function dailyBackup(kv: KV, data: AppData, today: string, now = new Date()): Promise<boolean> {
+  const running = dailyInFlight.get(kv) ?? new Map<string, Promise<boolean>>();
+  dailyInFlight.set(kv, running);
+  const existing = running.get(today);
+  if (existing) return existing;
+  const job = (async () => {
+    // The app's own date (UK) goes in the key, so "already done today?" matches the app's idea of today.
+    if ((await listSnapshots(kv, `${DAILY_PREFIX}${today}:`)).length) return false;
+    await createSnapshot(kv, data, 'Daily automatic backup', now, { prefix: DAILY_PREFIX, tag: `${today}:`, keep: MAX_DAILY, photos: false });
+    return true;
+  })().finally(() => running.delete(today));
+  running.set(today, job);
+  return job;
 }
 
 // ---------------------------------------------------------------- loading

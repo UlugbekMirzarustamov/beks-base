@@ -329,8 +329,10 @@ export interface Settings {
 import type { Pot } from './pot';
 
 export interface AppData {
-  /** Bumped if the shape ever changes, so old backups can be upgraded. */
+  /** The backup format (always 1). */
   version: 1;
+  /** Which shape the data is in; see lib/migrate.ts. Old data without it is version 1. */
+  schemaVersion: number;
   settings: Settings;
   monthlyBudget: number;
   categories: Category[];

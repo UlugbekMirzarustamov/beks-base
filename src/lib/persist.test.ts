@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { exportJson, normalize, parseBackup } from './backup';
 import { APP_KEY, PHOTOS_KEY, saveData, type KV } from './db';
-import { createSnapshot, listSnapshots, loadApp, openAnyway, restoreBackupText, restoreSnapshot, safeReplace, SNAPSHOT_PREFIX, UNREADABLE_PREFIX } from './persist';
+import { migrate, SCHEMA_VERSION, type Migration } from './migrate';
+import { createSnapshot, dailyBackup, DAILY_PREFIX, listAllSnapshots, listSnapshots, loadApp, openAnyway, restoreBackupText, restoreSnapshot, safeReplace, SNAPSHOT_PREFIX, UNREADABLE_PREFIX } from './persist';
 import { createInitialData, emptyData } from './seed';
 import type { AppData } from './types';
 
@@ -264,5 +265,105 @@ describe('recovery', () => {
     expect(repaired.expenses).toEqual([]);
     expect(repaired.xp).toBe(40);
     expect((await loadApp(kv, TODAY)).kind).toBe('ok');
+  });
+});
+
+describe('numbered schema migrations', () => {
+  it('treats data without a version as version 1 and migrates it to the latest', () => {
+    const old = ready() as Partial<AppData>;
+    delete old.schemaVersion;
+    expect(normalize(old, TODAY).schemaVersion).toBe(1);
+    expect(migrate(normalize(old, TODAY), TODAY).schemaVersion).toBe(SCHEMA_VERSION);
+    expect(ready().schemaVersion).toBe(SCHEMA_VERSION); // fresh data starts at the latest version
+  });
+
+  it('runs each step once, in order, and is safe to run again', () => {
+    const seen: string[] = [];
+    const list: Migration[] = [
+      { to: 3, name: 'b', run: (d) => (seen.push('b'), { ...d, xp: d.xp + 10 }) },
+      { to: 2, name: 'a', run: (d) => (seen.push('a'), { ...d, xp: d.xp * 2 }) },
+    ];
+    const d = { ...ready(), schemaVersion: 1, xp: 5 };
+    const once = migrate(d, TODAY, list, 3);
+    expect(seen).toEqual(['a', 'b']);
+    expect(once).toMatchObject({ xp: 20, schemaVersion: 3 });
+    expect(migrate(once, TODAY, list, 3)).toEqual(once);
+    expect(seen).toEqual(['a', 'b']);
+  });
+
+  it('refuses data saved by a newer app version (never overwrites it)', async () => {
+    expect(() => migrate({ ...ready(), schemaVersion: 99 }, TODAY)).toThrow(/newer version/);
+    const kv = withApp({ ...ready(), schemaVersion: 99 });
+    const before = [...kv.store.entries()];
+    const r = await loadApp(kv, TODAY);
+    expect(r).toMatchObject({ kind: 'error', problem: 'unreadable' });
+    expect([...kv.store.entries()]).toEqual(before);
+  });
+
+  it('old data gets a verified safety copy, then is migrated on load', async () => {
+    const old = ready() as Partial<AppData>;
+    delete old.schemaVersion;
+    const kv = withApp(old);
+    const r = await loadApp(kv, TODAY);
+    expect(r.kind === 'ok' && r.data.schemaVersion).toBe(SCHEMA_VERSION);
+    expect((await listSnapshots(kv)).map((s) => s.reason)).toEqual(['Before an app update']);
+    expect(await kv.get(APP_KEY)).toEqual(old); // loading itself never overwrites the stored data
+  });
+});
+
+describe('daily automatic backups', () => {
+  it('makes one verified backup per day, without photos', async () => {
+    const data = ready();
+    const kv = withApp(data);
+    kv.store.set(PHOTOS_KEY, JSON.stringify([photo]));
+    expect(await dailyBackup(kv, data, TODAY, at(1))).toBe(true);
+    expect(await dailyBackup(kv, data, TODAY, at(2))).toBe(false); // already done today
+    const [only] = await listSnapshots(kv, DAILY_PREFIX);
+    const saved = (await kv.get(only.id)) as { data: AppData; photos?: unknown };
+    expect(saved.data).toEqual(data);
+    expect(saved.photos).toBeUndefined();
+  });
+
+  it('keeps the newest 7 and never pushes out the safety copies', async () => {
+    const data = ready();
+    const kv = withApp(data);
+    for (let i = 1; i <= 3; i++) await createSnapshot(kv, data, `safety ${i}`, at(i));
+    for (let day = 1; day <= 9; day++) {
+      const date = `2026-11-${String(day).padStart(2, '0')}`;
+      await dailyBackup(kv, data, date, new Date(`${date}T08:00:00Z`));
+    }
+    expect((await listSnapshots(kv, DAILY_PREFIX)).map((s) => s.createdAt.slice(8, 10))).toEqual(['09', '08', '07', '06', '05', '04', '03']);
+    expect(await listSnapshots(kv)).toHaveLength(3);
+    expect(await listAllSnapshots(kv)).toHaveLength(10);
+  });
+
+  it('two backups started at the same moment make exactly one, without errors', async () => {
+    const data = ready();
+    const kv = withApp(data);
+    const results = await Promise.all([dailyBackup(kv, data, TODAY, at(1)), dailyBackup(kv, data, TODAY, at(1))]);
+    expect(results).toEqual([true, true]); // the second simply shares the first one's work
+    expect(await listSnapshots(kv, DAILY_PREFIX)).toHaveLength(1);
+    expect(await dailyBackup(kv, data, TODAY, at(2))).toBe(false);
+  });
+
+  it('a failed daily backup throws and leaves earlier backups alone', async () => {
+    const data = ready();
+    const kv = withApp(data);
+    await dailyBackup(kv, data, '2026-11-04', at(1));
+    const before = [...kv.store.entries()];
+    kv.failPut = (k) => k.startsWith(DAILY_PREFIX);
+    await expect(dailyBackup(kv, data, TODAY, at(2))).rejects.toThrow(/safety copy/);
+    expect([...kv.store.entries()]).toEqual(before);
+  });
+
+  it('a daily backup can be restored like any safety copy', async () => {
+    const original = ready();
+    original.xp = 7;
+    const kv = withApp(original);
+    await dailyBackup(kv, original, TODAY, at(1));
+    await saveData({ ...original, xp: 999 }, kv);
+    const [daily] = await listSnapshots(kv, DAILY_PREFIX);
+    await restoreSnapshot(kv, daily.id, TODAY);
+    expect(((await kv.get(APP_KEY)) as AppData).xp).toBe(7);
   });
 });

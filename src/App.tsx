@@ -5,29 +5,59 @@
  * Navigation uses the URL hash: #/home, #/money/charts, #/study/timer …
  * so the browser Back button works and there's no server setup.
  */
-import { useEffect, useRef, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { isNightUK } from './lib/dates';
 import { applyMixer, setSfxEnabled, sfx } from './lib/sound';
 import { levelInfo } from './lib/xp';
 import Home from './screens/Home';
 import Money, { ExpenseSheet } from './screens/Money';
-import More from './screens/More';
 import { MorningBriefing } from './screens/Briefing';
 import CalmCorner, { JarOverlay } from './screens/Calm';
 import { PotCloseout } from './screens/Plan';
-import Pond from './screens/Pond';
 import Campfire from './screens/Campfire';
 import { PhotoWall } from './screens/Photos';
 import { HardBadge, OversleptCall } from './screens/Push';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
-import Reflect from './screens/Reflect';
 import Study from './screens/Study';
 import { useStore, useTimer } from './state/store';
 import { PixelIcon, type IconName } from './ui/icons';
 import { Toaster } from './ui/kit';
 import { Splash } from './ui/AppFeel';
 import { SoundMixer } from './ui/SoundMixer';
+
+// Screens nothing else needs are loaded on first visit (smaller start-up). `prefetchScreens`
+// fetches them in the background once the app is idle, so they're cached for offline use.
+const loadReflect = () => import('./screens/Reflect');
+const loadMore = () => import('./screens/More');
+const loadPond = () => import('./screens/Pond');
+const Reflect = lazy(loadReflect);
+const More = lazy(loadMore);
+const Pond = lazy(loadPond);
+export function prefetchScreens() {
+  void Promise.all([loadReflect(), loadMore(), loadPond()]).catch(() => {
+    /* offline: they'll be fetched next time */
+  });
+}
+
+/** If a screen's code can't be downloaded (offline before it was ever cached), say so instead of crashing. */
+class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="panel">
+        <p>This part of the app isn't downloaded yet. Connect to the internet once and open it again.</p>
+        <a href="#/home" className="btn" onClick={() => this.setState({ failed: false })}>
+          Back home
+        </a>
+      </div>
+    );
+  }
+}
 
 const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire'] as const;
 type Screen = (typeof SCREENS)[number];
@@ -168,16 +198,20 @@ export default function App() {
       <PrayerBar />
 
       <main id="main" ref={mainRef} tabIndex={-1} className="main">
-        {route.screen === 'home' && <Home />}
-        {route.screen === 'money' && <Money sub={route.sub} />}
-        {route.screen === 'study' && <Study sub={route.sub} />}
-        {route.screen === 'planner' && <Planner sub={route.sub} />}
-        {route.screen === 'reflect' && <Reflect sub={route.sub} />}
-        {route.screen === 'more' && <More sub={route.sub} />}
-        {route.screen === 'prayer' && <PrayerPage sub={route.sub} />}
-        {route.screen === 'calm' && <CalmCorner />}
-        {route.screen === 'pond' && <Pond />}
-        {route.screen === 'campfire' && <Campfire />}
+        <ScreenBoundary key={route.screen}>
+          <Suspense fallback={<p className="muted center">Opening…</p>}>
+            {route.screen === 'home' && <Home />}
+            {route.screen === 'money' && <Money sub={route.sub} />}
+            {route.screen === 'study' && <Study sub={route.sub} />}
+            {route.screen === 'planner' && <Planner sub={route.sub} />}
+            {route.screen === 'reflect' && <Reflect sub={route.sub} />}
+            {route.screen === 'more' && <More sub={route.sub} />}
+            {route.screen === 'prayer' && <PrayerPage sub={route.sub} />}
+            {route.screen === 'calm' && <CalmCorner />}
+            {route.screen === 'pond' && <Pond />}
+            {route.screen === 'campfire' && <Campfire />}
+          </Suspense>
+        </ScreenBoundary>
       </main>
 
       <button type="button" className="fab" onClick={() => openExpense()} aria-label="Add a purchase">

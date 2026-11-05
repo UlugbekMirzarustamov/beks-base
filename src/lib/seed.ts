@@ -8,6 +8,7 @@
  */
 import { uid } from './id';
 import { TIMETABLES } from './timetable';
+import { migrate, SCHEMA_VERSION } from './migrate';
 import type { AppData, Category, Flashcard, Topic } from './types';
 
 /** The budget the app starts with, in US dollars (about £650). Editable in Money → Budget. */
@@ -72,6 +73,7 @@ export function emptyData(today: string): AppData {
 
   return {
     version: 1,
+    schemaVersion: SCHEMA_VERSION,
     settings: {
       theme: 'auto',
       sound: 'off',
@@ -151,7 +153,8 @@ export function createInitialData(today: string): AppData {
  *  2. adds each school timetable (lib/timetable.ts) once;
  *  3. turns the old single "sound" setting into mixer levels;
  *  4. switches money to US dollars (the Money screen then asks once whether
- *     old amounts were in pounds — nothing is converted without asking).
+ *     old amounts were in pounds — nothing is converted without asking);
+ *  5. runs the numbered schema migrations (lib/migrate.ts).
  */
 export function upgrade(data: AppData, today: string): AppData {
   const d = hasExampleData(data) ? clearExampleData(data, today) : data;
@@ -185,7 +188,8 @@ export function upgrade(data: AppData, today: string): AppData {
       },
     };
   }
-  return result;
+  // Numbered schema migrations (lib/migrate.ts) always run last.
+  return migrate(result, today);
 }
 
 /** True if any example items are still in the data. */

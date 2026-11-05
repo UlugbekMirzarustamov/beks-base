@@ -16,6 +16,9 @@ an international student. It runs as an installable, offline web app (PWA) on hi
    (no accounts, no tracking, no bank connection — purchases are typed in by hand on purpose).
 4. **Original art only.** Minecraft-*inspired*, but never Mojang/Minecraft assets or a recreation.
 5. **Explain simply.** Bek is a beginner developer: plain words, short reasons, no jargon dumps.
+6. **Never punish, never score worship.** No XP for prayers, fasting, tasbih or Qur'an (lanterns are a
+   private record). Nothing takes XP or coins away unless Bek switched on hard mode himself.
+   XP, coins and fish belong to the cabin world; new life tools don't add more gamification.
 
 ## How to work
 - **Inspect before changing, plan before implementing.** Read the relevant files first; for
@@ -29,19 +32,24 @@ an international student. It runs as an installable, offline web app (PWA) on hi
 - **Update docs after implementing:** `docs/FEATURE_STATUS.md` (with file evidence) and
   `docs/CHANGELOG.md`.
 - **Git:** commit/push only when Bek asks. Deploys happen automatically on every push to
-  `main` (GitHub Actions runs the tests, builds, then publishes to GitHub Pages).
+  `main` (GitHub Actions runs the tests, builds, then publishes to GitHub Pages). This repo commits
+  with Bek's GitHub noreply email (local git config) — never his university email.
 
 ## Data safety rules (non-negotiable)
 Storage design lives in `src/lib/db.ts` and `src/lib/persist.ts`; read them before touching data.
 - IndexedDB (`ulus-base` → store `kv`) is the **only** place data is written. Keys: `appdata`,
-  `photos`, `snapshot:*` (newest 3 kept), `unreadable:*` (never auto-deleted).
+  `photos`, `snapshot:*` (safety copies, newest 3), `daily:<date>:*` (automatic daily backups,
+  newest 7), `unreadable:*` (never auto-deleted).
 - Saving is disabled until a load succeeds; load failures show the recovery screen
   (`src/ui/Recovery.tsx`) and must never fall back to fresh data.
 - Anything that replaces data in bulk goes through `replaceAll(next, reason)` in
   `src/state/store.tsx`, which takes a verified snapshot first.
 - **Schema changes:** add fields with defaults in `emptyData()` (`src/lib/seed.ts`) — `normalize()`
-  fills them in for old data. One-time data changes go in `upgrade()` as a named step in
-  `data.applied`. Never rename or remove stored fields without a tested migration.
+  fills them in for old data. Anything that reshapes existing data is a **numbered migration** in
+  `src/lib/migrate.ts` (bump `SCHEMA_VERSION`, add a step, add a test); never edit a shipped one.
+  Data from a newer app version is refused, not overwritten.
+- **New domains** (calendar, notes, recipes…) get their own storage key when their first real feature
+  is built, and must be included in snapshots, backups and import validation.
 - Imports must pass `validateData()` (`src/lib/backup.ts`) before anything changes.
 - Never put personal data (finances, timetable, photos, contacts) into tests, docs or commits
   beyond what already exists; the GitHub repo is **public**.

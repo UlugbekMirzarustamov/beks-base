@@ -8,7 +8,7 @@ import { lastBackup, shareBackup } from './Daily';
 import { setPhotos, usePhotos } from './Photos';
 import { HardModeToggle } from './Push';
 import { idb } from '../lib/db';
-import { listSnapshots, type SnapshotInfo } from '../lib/persist';
+import { listAllSnapshots, type SnapshotInfo } from '../lib/persist';
 import { createInitialData, upgrade } from '../lib/seed';
 import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
@@ -251,13 +251,13 @@ function AvatarEditor() {
   );
 }
 
-/** The automatic safety copies (made before imports, resets, conversions and app updates). */
+/** Automatic copies: safety copies (before imports, resets, conversions, app updates) and daily backups. */
 function SafetyCopies() {
   const { restoreSnapshot } = useStore();
   const ask = useConfirm();
   const [list, setList] = useState<SnapshotInfo[] | null>(null);
   useEffect(() => {
-    listSnapshots(idb).then(setList, () => setList([]));
+    listAllSnapshots(idb).then(setList, () => setList([]));
   }, []);
   if (!list?.length) return null;
   const restore = async (s: SnapshotInfo) => {
@@ -266,7 +266,7 @@ function SafetyCopies() {
   };
   return (
     <details className="details">
-      <summary>Automatic safety copies ({list.length})</summary>
+      <summary>Automatic backups ({list.length})</summary>
       <ul className="recovery__list">
         {list.map((s) => (
           <li key={s.id}>

@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { todayUK } from '../lib/dates';
 import { idb } from '../lib/db';
-import { listSnapshots, openAnyway, restoreBackupText, restoreSnapshot, type SnapshotInfo } from '../lib/persist';
+import { listAllSnapshots, openAnyway, restoreBackupText, restoreSnapshot, type SnapshotInfo } from '../lib/persist';
 
 const when = (iso: string) => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
@@ -17,7 +17,7 @@ export function Recovery({ problem, message, raw, onRetry }: { problem: 'storage
   const [confirming, setConfirming] = useState<string | null>(null);
 
   useEffect(() => {
-    listSnapshots(idb).then(setSnapshots, () => setSnapshots([]));
+    listAllSnapshots(idb).then(setSnapshots, () => setSnapshots([]));
   }, []);
 
   /** Run a restore; reload on success, show the reason on failure (nothing changed). */
@@ -70,7 +70,7 @@ export function Recovery({ problem, message, raw, onRetry }: { problem: 'storage
 
       {snapshots.length > 0 && (
         <section className="recovery__box">
-          <h2 className="recovery__h">Safety copies</h2>
+          <h2 className="recovery__h">Safety copies and daily backups</h2>
           <ul className="recovery__list">
             {snapshots.map((s) => (
               <li key={s.id}>

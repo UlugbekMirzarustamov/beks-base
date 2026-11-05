@@ -4,6 +4,16 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Product decisions:** worship is never scored (no XP for prayer, fasting, taraweeh, tasbih or Qur'an;
+  XP already earned is kept); nothing takes XP or coins away unless hard mode is on (a broken promise now
+  costs nothing by default, and oversleeping Fajr never costs XP); new life tools add no gamification.
+  Future commits use Bek's GitHub noreply email; old history is not rewritten.
+- **Data foundation (Task 2):** numbered schema migrations (`lib/migrate.ts`, schema version 2; data from
+  a newer app version is refused instead of overwritten); automatic verified **daily backups** (newest 7,
+  separate from the 3 safety copies, restorable in Settings and on the recovery screen); Reflect, More
+  and Pond load on demand with an offline prefetch (main bundle 519 KB → 433 KB, size warning gone).
+  Found and fixed during browser testing: two daily backups starting at once could make each other fail,
+  and the "already done today" check used UTC instead of the UK date. Tests: 93 passing.
 - **Privacy cleanup (Task 1):** removed personal data from the public source code — the real class
   timetable (module names, rooms, staff names) from `lib/timetable.ts`, the personal money-plan
   step and figures from `lib/seed.ts`, the plan form's pre-filled amount, and institution names in
@@ -75,7 +85,7 @@ GitHub Pages deploy workflow; full-width layout.
   shows the author's university email. Fixing that needs a history rewrite or a private repo (Bek to decide).
 - Consolidate duplicated helpers: three streak functions, three week-stats functions, two
   `fullPrayerDay`, several UK-clock helpers, repeated localStorage wrappers, per-overlay Escape handling.
-- Performance: one ~510 KB bundle (lazy-load rarely used screens); vision-board photos inside `AppData`;
-  year-in-pixels recomputation.
+- Performance: vision-board photos inside `AppData`; year-in-pixels recomputation; most screens are still
+  in the main bundle because Home imports from them.
 - Time-based cards (Fajr rise, Ramadan) only refresh on re-render.
 - Two open tabs: the last save wins.

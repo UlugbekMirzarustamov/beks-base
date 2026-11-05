@@ -126,6 +126,8 @@ const NIGHT_LOG = { line: '', good: ['', '', ''], tomorrow: '' };
 /** Fill in anything missing with defaults, so the app never crashes on an older/partial file. */
 export function normalize(data: Partial<AppData>, today: string): AppData {
   const out = fill(emptyData(today), data) as AppData;
+  // Data from before schema versions existed is version 1, so its migrations still run.
+  if (typeof data.schemaVersion !== 'number') out.schemaVersion = 1;
   for (const [day, log] of Object.entries(out.nightLogs)) out.nightLogs[day] = fill(NIGHT_LOG, log) as AppData['nightLogs'][string];
   out.goals = out.goals.map((g) => (Array.isArray(g.deposits) ? g : { ...g, deposits: [] }));
   return out;

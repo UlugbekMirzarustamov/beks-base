@@ -15,11 +15,12 @@
  *  - A failed save shows a red banner with "Try again" — never a silent failure.
  *  - `replaceAll` (import, reset, £→$) first makes a checked safety copy, and
  *    changes nothing if that fails.
+ *  - Once a day, a verified automatic backup is made (lib/persist.ts `dailyBackup`).
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { todayUK } from '../lib/dates';
 import { idb, readLegacyCopy, requestPersistentStorage, saveData } from '../lib/db';
-import { loadApp, restoreSnapshot as restoreSnapshotIn, safeReplace } from '../lib/persist';
+import { dailyBackup, loadApp, restoreSnapshot as restoreSnapshotIn, safeReplace } from '../lib/persist';
 import { Recovery } from '../ui/Recovery';
 import { uid } from '../lib/id';
 import { applyRecurring, formatMoney } from '../lib/money';
@@ -94,6 +95,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     canSave.current = true;
     setData(r.kind === 'fresh' ? createInitialData(today) : r.data);
     if (r.kind === 'ok' && r.warning) setWarning(r.warning);
+    // Once a day: an automatic, verified backup of the data that just loaded (newest 7 kept).
+    if (r.kind === 'ok') {
+      dailyBackup(idb, r.data, today).catch((e: unknown) =>
+        setWarning(`Today's automatic backup couldn't be made (${e instanceof Error ? e.message : 'storage error'}). Your data is still saved; consider exporting a backup.`),
+      );
+    }
   }, []);
   useEffect(() => {
     void load();
