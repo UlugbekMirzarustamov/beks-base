@@ -1,7 +1,7 @@
 /**
  * Money maths. These are plain functions (no React) so they are easy to test.
  */
-import { daysInMonth, monthOf } from './dates';
+import { addDays, daysBetween, daysInMonth, monthOf } from './dates';
 import type { AppData, Expense, RecurringBill } from './types';
 
 /**
@@ -80,9 +80,40 @@ export function spendingByDay(expenses: Expense[], month: string): number[] {
 }
 
 /**
+ * The day a bill is paid in a month (year, month 1–12), or null if it isn't paid that month
+ * (a yearly bill in another month). The 31st falls on the last day of shorter months.
+ */
+export function billPayDay(bill: RecurringBill, year: number, month: number): number | null {
+  if (bill.every === 'year' && bill.month !== month) return null;
+  return Math.min(bill.day, daysInMonth(year, month));
+}
+
+/** Is a payment for this bill due on `date`? (Not before it was added, and not during a free trial.) */
+export function billDueOn(bill: RecurringBill, date: string): boolean {
+  if (bill.since && date < bill.since) return false;
+  if (bill.trialEnds && date <= bill.trialEnds) return false;
+  const [y, m, d] = date.split('-').map(Number);
+  return billPayDay(bill, y, m) === d;
+}
+
+/** Every bill payment from `from` to `to` (inclusive), soonest first. */
+export function billsBetween(bills: RecurringBill[], from: string, to: string): { date: string; bill: RecurringBill }[] {
+  const out: { date: string; bill: RecurringBill }[] = [];
+  for (let day = from; day <= to && daysBetween(from, day) <= 366; day = addDays(day, 1)) {
+    for (const bill of bills) if (billDueOn(bill, day)) out.push({ date: day, bill });
+  }
+  return out;
+}
+
+/** What a bill costs per month on average (a yearly one is spread over 12 months) and per year. */
+export const billCost = (bill: RecurringBill) =>
+  bill.every === 'year' ? { month: roundPennies(bill.amount / 12), year: bill.amount } : { month: bill.amount, year: roundPennies(bill.amount * 12) };
+
+/**
  * Add recurring bills (rent, phone…) whose day has come this month and that
  * haven't been added yet. Only the CURRENT month is added: if the app wasn't
  * opened for a few months we don't flood the list with old bills.
+ * Yearly bills are only added in their month; nothing is added during a free trial.
  *
  * Returns new arrays (it doesn't change the ones passed in).
  */
@@ -97,14 +128,16 @@ export function applyRecurring(
   const added: Expense[] = [];
 
   const newBills = bills.map((bill) => {
-    const payDay = Math.min(bill.day, daysInMonth(y, m)); // 31st → 30th in November
-    if (bill.lastAdded === month || d < payDay) return bill;
+    const payDay = billPayDay(bill, y, m); // 31st → 30th in November
+    if (payDay === null || bill.lastAdded === month || d < payDay) return bill;
+    const date = `${month}-${String(payDay).padStart(2, '0')}`;
+    if (!billDueOn(bill, date)) return bill; // still free, or added after this month's day
     added.push({
       id: makeId(),
       amount: bill.amount,
       categoryId: bill.categoryId,
       note: bill.name,
-      date: `${month}-${String(payDay).padStart(2, '0')}`,
+      date,
       recurringId: bill.id,
       ...(bill.example ? { example: true } : {}),
     });

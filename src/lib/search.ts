@@ -48,6 +48,7 @@ export function buildIndex(d: AppData): SearchEntry[] {
     const cat = d.categories.find((c) => c.id === x.categoryId)?.name ?? '';
     add({ key: `expense-${x.id}`, kind: 'Purchase', title: x.note || cat || 'Purchase', sub: [money(x.amount), cat, x.date].filter(Boolean).join(' · '), href: '#/money/spending', date: x.date, text: `${x.amount.toFixed(2)} ${x.paidGbp != null ? `£${x.paidGbp.toFixed(2)}` : ''}` });
   }
+  for (const b of d.recurring) add({ key: `bill-${b.id}`, kind: b.kind === 'subscription' ? 'Subscription' : 'Bill', title: b.name, sub: [money(b.amount), b.every === 'year' ? 'every year' : 'every month'].join(' · '), href: '#/money/bills', date: '', text: b.amount.toFixed(2) });
   for (const n of d.notes) add({ key: `note-${n.id}`, kind: 'Journal', title: n.title || 'Untitled note', sub: n.updated.slice(0, 10), href: '#/more/journal', date: n.updated.slice(0, 10), text: n.body });
   for (const i of d.inbox) if (!i.done) add({ key: `inbox-${i.id}`, kind: 'Inbox', title: i.text, sub: i.kind, href: '#/planner/today', date: i.created, text: i.url });
   for (const v of d.vocab) add({ key: `word-${v.id}`, kind: 'Word', title: v.word, sub: v.meaning, href: '#/more/words', date: '', text: v.sentence });

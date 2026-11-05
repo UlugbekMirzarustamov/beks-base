@@ -48,6 +48,16 @@ export interface RecurringBill extends Base {
   day: number;
   /** The last month ("YYYY-MM") this bill was added for, so it is never added twice. */
   lastAdded: string | null;
+  /** 'subscription' for things like streaming or apps; missing = an ordinary bill (rent, phone…). */
+  kind?: 'bill' | 'subscription';
+  /** Missing or 'month' = every month; 'year' = once a year, in `month`. */
+  every?: 'month' | 'year';
+  /** For yearly bills: the month it is paid (1–12). */
+  month?: number;
+  /** Free trial: the last free day ("YYYY-MM-DD"). Nothing is paid on or before it. */
+  trialEnds?: string;
+  /** The day it was added ("YYYY-MM-DD"); older bills don't have one. Earlier dates show no payment. */
+  since?: string;
 }
 
 // ---------- Study ----------

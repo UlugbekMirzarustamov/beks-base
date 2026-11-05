@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyRecurring, barLevel, convertPoundsToDollars, formatMoney, parseAmount, poundsToDollars, safeToSpend, spendingByDay, spentInMonth } from './money';
+import { applyRecurring, barLevel, billCost, billDueOn, billsBetween, convertPoundsToDollars, formatMoney, parseAmount, poundsToDollars, safeToSpend, spendingByDay, spentInMonth } from './money';
 import { emptyData } from './seed';
 import { daysUntil, potStatus } from './pot';
 import type { Expense, RecurringBill } from './types';
@@ -100,6 +100,47 @@ describe('applyRecurring', () => {
     const late = { ...rent, day: 31 };
     const r = applyRecurring([late], [], '2026-11-30', makeId);
     expect(r.added[0].date).toBe('2026-11-30');
+  });
+});
+
+describe('subscriptions and yearly bills', () => {
+  const sub: RecurringBill = { id: 'music', name: 'Music app', amount: 10, categoryId: 'fun', day: 12, lastAdded: null, kind: 'subscription' };
+  const yearly: RecurringBill = { ...sub, id: 'box', name: 'Storage', amount: 120, day: 31, every: 'year', month: 2 };
+  let n = 0;
+  const makeId = () => `s${n++}`;
+
+  it('knows the dates a bill is paid', () => {
+    expect(billDueOn(sub, '2026-11-12')).toBe(true);
+    expect(billDueOn(sub, '2026-11-13')).toBe(false);
+    // Yearly: only in its month, and the 31st falls on the last day of February.
+    expect(billDueOn(yearly, '2027-02-28')).toBe(true);
+    expect(billDueOn(yearly, '2026-11-30')).toBe(false);
+  });
+
+  it('shows no payment before it was added or during a free trial', () => {
+    expect(billDueOn({ ...sub, since: '2026-11-20' }, '2026-11-12')).toBe(false);
+    expect(billDueOn({ ...sub, since: '2026-11-20' }, '2026-12-12')).toBe(true);
+    const trial = { ...sub, trialEnds: '2026-12-12' };
+    expect(billDueOn(trial, '2026-12-12')).toBe(false);
+    expect(billDueOn(trial, '2027-01-12')).toBe(true);
+  });
+
+  it('lists payments in a date range, soonest first', () => {
+    const list = billsBetween([yearly, sub], '2026-11-01', '2026-12-31');
+    expect(list.map((x) => x.date)).toEqual(['2026-11-12', '2026-12-12']);
+  });
+
+  it('spreads yearly costs over the months', () => {
+    expect(billCost(yearly)).toEqual({ month: 10, year: 120 });
+    expect(billCost(sub)).toEqual({ month: 10, year: 120 });
+  });
+
+  it('adds a yearly bill only in its month, and nothing during a trial', () => {
+    expect(applyRecurring([yearly], [], '2026-11-30', makeId).added).toHaveLength(0);
+    const feb = applyRecurring([yearly], [], '2027-02-28', makeId);
+    expect(feb.added[0].date).toBe('2027-02-28');
+    expect(applyRecurring([{ ...sub, trialEnds: '2026-11-20' }], [], '2026-11-25', makeId).added).toHaveLength(0);
+    expect(applyRecurring([{ ...sub, trialEnds: '2026-11-20' }], [], '2026-12-12', makeId).added).toHaveLength(1);
   });
 });
 

@@ -4,6 +4,14 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Subscriptions & financial calendar (Phase 2, feature 1):** Money → Bills now tells bills and
+  **subscriptions** apart, handles **yearly** payments (e.g. insurance in November) and **free trials**
+  (nothing is charged until the trial is over, with a "cancel before then" heads-up a week before).
+  Subscriptions show what they cost per month and per year; tap any bill to change it. A **Next 30 days**
+  list shows every payment coming with the total. Bill payments and trial ends also appear in the
+  universal calendar and the Home "Coming up" card, read straight from the bills list (never copied),
+  and bills are searchable. New fields are optional, so existing bills keep working with no update step.
+  Tests: 135 passing.
 - **Daily dashboard — Phase 1 complete:** a compact **Today** card at the top of Home: top-3 progress, the
   class happening now or next, the next prayer, money left today (from the money plan or the monthly
   budget), exams and deadlines this week, and progress on your nearest goals (dated vision goals and

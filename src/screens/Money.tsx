@@ -4,18 +4,18 @@
  * Also exports <ExpenseSheet> (the quick "add purchase" pop-up used by the big + button)
  * and <SafeToSpendCard> (also shown on Home).
  */
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { guessColumns, parseCsv, rowsToPurchases, type ColumnGuess } from '../lib/csv';
-import { addDays, addMonths, daysBetween, daysInMonth, formatDay, formatMonth, monthOf } from '../lib/dates';
+import { addDays, addMonths, daysBetween, daysInMonth, formatDay, formatMonth, monthOf, relativeDays } from '../lib/dates';
 import { uid } from '../lib/id';
-import { barLevel, convertPoundsToDollars, formatMoney, formatPounds, parseAmount, poundsToDollars, roundPennies, safeToSpend, spendingByDay, spentInMonth, savedIn } from '../lib/money';
+import { barLevel, billCost, billsBetween, convertPoundsToDollars, formatMoney, formatPounds, parseAmount, poundsToDollars, roundPennies, safeToSpend, spendingByDay, spentInMonth, savedIn } from '../lib/money';
 import { moneyInsights } from '../lib/daily';
 import { PlanTab, PotToday, Wishes } from './Plan';
 import { sfx } from '../lib/sound';
-import type { Category, CategoryIcon, Expense, SavingsGoal } from '../lib/types';
+import type { Category, CategoryIcon, Expense, RecurringBill, SavingsGoal } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Bar, Empty, Field, Panel, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
 /** Each category icon also gets a colour for bars and charts. */
 export const CATEGORY_COLOR: Record<CategoryIcon, string> = {
@@ -511,108 +511,259 @@ function Charts() {
 
 const ordinal = (n: number) => (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
 
-// ---------------------------------------------------------------- Recurring bills
+// ---------------------------------------------------------------- Recurring bills & subscriptions
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** "Day 5 every month" / "5 March every year". */
+const billWhen = (b: RecurringBill) => (b.every === 'year' ? `${b.day} ${MONTHS[(b.month ?? 1) - 1]} every year` : `Day ${b.day} every month`);
+
 function Bills() {
   const ask = useConfirm();
-  const { data, update, toast, today } = useStore();
+  const { data, update, today } = useStore();
   const cat = useCategory();
-  const [name, setName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [categoryId, setCategoryId] = useState(data.categories[0]?.id ?? 'other');
-  const [day, setDay] = useState(1);
-  const [addNow, setAddNow] = useState(false);
-  const todayDay = Number(today.slice(8));
+  const [editing, setEditing] = useState<RecurringBill | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  // On a phone the form is far below the list: bring it into view when you tap a bill.
+  useEffect(() => {
+    if (editing) formRef.current?.scrollIntoView({ block: 'start' });
+  }, [editing]);
+  const subs = data.recurring.filter((b) => b.kind === 'subscription');
+  const bills = data.recurring.filter((b) => b.kind !== 'subscription');
+  const total = (list: RecurringBill[], per: 'month' | 'year') => roundPennies(list.reduce((sum, b) => sum + billCost(b)[per], 0));
+  const next30 = billsBetween(data.recurring, today, addDays(today, 30));
+  const nextOf = (b: RecurringBill) => billsBetween([b], today, addDays(today, 366))[0]?.date;
+  const trials = data.recurring.filter((b) => b.trialEnds && b.trialEnds >= today && daysBetween(today, b.trialEnds) <= 7);
 
-  const add = (e: FormEvent) => {
-    e.preventDefault();
-    const value = parseAmount(amount);
-    if (!name.trim() || !(value > 0)) {
-      toast('Give the bill a name and an amount', 'error');
-      return;
-    }
-    // If its day already passed this month, only add this month's payment if you ask to
-    // (you may have logged it already). Otherwise it adds itself when the day comes.
-    const passed = todayDay >= day;
-    const month = monthOf(today);
-    const [y, m] = month.split('-').map(Number);
-    const payDay = String(Math.min(day, daysInMonth(y, m))).padStart(2, '0');
-    const id = uid();
+  const remove = async (b: RecurringBill) => {
+    const what = b.kind === 'subscription' ? 'subscription' : 'bill';
+    if (!(await ask(`Stop this ${what}? (Past payments stay in your list.)`, { ok: `Stop ${what}` }))) return;
     update((d) => {
-      d.recurring.push({ id, name: name.trim(), amount: value, categoryId, day, lastAdded: passed ? month : null });
-      if (passed && addNow) d.expenses.push({ id: uid(), amount: value, categoryId, note: name.trim(), date: `${month}-${payDay}`, recurringId: id });
+      d.recurring = d.recurring.filter((x) => x.id !== b.id);
     });
-    toast(`Bill saved: ${name.trim()} on day ${day}`, 'pop');
-    setName('');
-    setAmount('');
-    setAddNow(false);
+    if (editing?.id === b.id) setEditing(null);
   };
 
-  const remove = async (id: string) => {
-    if (!(await ask('Stop this recurring bill? (Past payments stay in your list.)', { ok: 'Stop bill' }))) return;
-    update((d) => {
-      d.recurring = d.recurring.filter((b) => b.id !== id);
-    });
+  const row = (b: RecurringBill) => {
+    const next = nextOf(b);
+    return (
+      <li key={b.id} className="list__item">
+        <button type="button" className="list__main" onClick={() => setEditing(b)} aria-label={`Edit ${b.name}, ${formatMoney(b.amount)}`}>
+          <PixelIcon name={cat(b.categoryId).icon} size={22} />
+          <span className="list__text">
+            <span>{b.name}</span>
+            <small className="muted">
+              {billWhen(b)} · {cat(b.categoryId).name}
+              {b.trialEnds && b.trialEnds >= today ? ` · free until ${formatDay(b.trialEnds)}` : ''}
+              {next ? ` · next ${relativeDays(daysBetween(today, next))}` : ''}
+            </small>
+          </span>
+          <span className="list__amount">{formatMoney(b.amount)}</span>
+        </button>
+        <button type="button" className="icon-btn" onClick={() => remove(b)} aria-label={`Delete ${b.name}`}>
+          <PixelIcon name="trash" size={18} />
+        </button>
+      </li>
+    );
   };
 
   return (
     <div className="grid grid--2">
-      <Panel title="Recurring bills" icon="house">
-        <p className="muted small">These add themselves to your spending every month on their day.</p>
-        {data.recurring.length === 0 && <Empty>No bills yet.</Empty>}
-        <ul className="list">
-          {data.recurring.map((b) => (
-            <li key={b.id} className="list__item">
-              <div className="list__main">
-                <PixelIcon name={cat(b.categoryId).icon} size={22} />
-                <span className="list__text">
-                  <span>{b.name}</span>
-                  <small className="muted">
-                    Day {b.day} every month · {cat(b.categoryId).name}
-                  </small>
-                </span>
-                <span className="list__amount">{formatMoney(b.amount)}</span>
-              </div>
-              <button type="button" className="icon-btn" onClick={() => remove(b.id)} aria-label={`Delete bill ${b.name}`}>
-                <PixelIcon name="trash" size={18} />
-              </button>
-            </li>
-          ))}
-        </ul>
+      <Panel title="Subscriptions" icon="phone">
+        {trials.map((b) => (
+          <p key={b.id} className="alert alert--warn" role="status">
+            Free trial of {b.name} ends {relativeDays(daysBetween(today, b.trialEnds!))} — cancel before then if you don't want to pay {formatMoney(b.amount)}.
+          </p>
+        ))}
+        {subs.length === 0 ? (
+          <Empty>No subscriptions yet. Add streaming, apps or memberships below.</Empty>
+        ) : (
+          <>
+            <p className="muted small">
+              Subscriptions cost <strong>{formatMoney(total(subs, 'month'))}</strong> a month — <strong>{formatMoney(total(subs, 'year'))}</strong> a year.
+            </p>
+            <ul className="list">{subs.map(row)}</ul>
+          </>
+        )}
       </Panel>
-      <Panel title="Add a bill" icon="plus">
-        <form className="form" onSubmit={add}>
-          <Field label="Name">
-            <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Rent" />
-          </Field>
-          <div className="form__row">
-            <Field label="Amount ($)" className="grow">
-              <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
-            </Field>
-            <Field label="Day of month">
-              <input className="input" type="number" min={1} max={31} value={day} onChange={(e) => setDay(Math.min(31, Math.max(1, Number(e.target.value) || 1)))} />
-            </Field>
-          </div>
-          <Field label="Category">
-            <select className="input" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-              {data.categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+      <Panel title="Recurring bills" icon="house">
+        <p className="muted small">Bills and subscriptions add themselves to your spending on their day. Tap one to change it.</p>
+        {bills.length === 0 ? <Empty>No bills yet.</Empty> : <ul className="list">{bills.map(row)}</ul>}
+        {data.recurring.length > 0 && (
+          <p className="muted small">
+            Everything together: about {formatMoney(total(data.recurring, 'month'))} a month.
+          </p>
+        )}
+      </Panel>
+      <Panel title="Next 30 days" icon="clock">
+        {next30.length === 0 ? (
+          <Empty>Nothing to pay in the next 30 days.</Empty>
+        ) : (
+          <>
+            <ul className="list">
+              {next30.map(({ date, bill }) => (
+                <li key={`${bill.id}-${date}`} className="list__item">
+                  <div className="list__main">
+                    <span className="list__text">
+                      <span>{bill.name}</span>
+                      <small className="muted">
+                        {formatDay(date)} · {relativeDays(daysBetween(today, date))}
+                      </small>
+                    </span>
+                    <span className="list__amount">{formatMoney(bill.amount)}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <p className="small">
+              Total: <strong>{formatMoney(roundPennies(next30.reduce((sum, x) => sum + x.bill.amount, 0)))}</strong> ·{' '}
+              <a href="#/planner/calendar">See them in the calendar</a>
+            </p>
+          </>
+        )}
+      </Panel>
+      <div ref={formRef} style={{ scrollMarginTop: 120 }}>
+        <Panel title={editing ? `Change ${editing.name}` : 'Add a bill or subscription'} icon="plus">
+          <BillForm key={editing?.id ?? 'new'} editing={editing} onDone={() => setEditing(null)} />
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function BillForm({ editing, onDone }: { editing: RecurringBill | null; onDone: () => void }) {
+  const { data, update, toast, today } = useStore();
+  const [kind, setKind] = useState<'bill' | 'subscription'>(editing?.kind ?? 'bill');
+  const [name, setName] = useState(editing?.name ?? '');
+  const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
+  const [categoryId, setCategoryId] = useState(editing?.categoryId ?? data.categories[0]?.id ?? 'other');
+  const [every, setEvery] = useState<'month' | 'year'>(editing?.every ?? 'month');
+  const [month, setMonth] = useState(editing?.month ?? Number(today.slice(5, 7)));
+  const [day, setDay] = useState(editing?.day ?? 1);
+  const [trialEnds, setTrialEnds] = useState(editing?.trialEnds ?? '');
+  const [addNow, setAddNow] = useState(false);
+  const todayDay = Number(today.slice(8));
+  const thisMonth = Number(today.slice(5, 7));
+  // Has this month's payment day already passed (and it's paid this month at all)?
+  const passed = !editing && !trialEnds && todayDay >= day && (every === 'month' || month === thisMonth);
+
+  const save = (e: FormEvent) => {
+    e.preventDefault();
+    const value = parseAmount(amount);
+    if (!name.trim() || !(value > 0)) {
+      toast('Give it a name and an amount', 'error');
+      return;
+    }
+    const fields = {
+      name: name.trim(),
+      amount: value,
+      categoryId,
+      day,
+      kind,
+      every,
+      ...(every === 'year' ? { month } : {}),
+      ...(kind === 'subscription' && trialEnds ? { trialEnds } : {}),
+    };
+    if (editing) {
+      update((d) => {
+        const b = d.recurring.find((x) => x.id === editing.id);
+        if (!b) return;
+        delete b.month;
+        delete b.trialEnds;
+        Object.assign(b, fields);
+      });
+      toast(`Saved: ${fields.name}`, 'pop');
+      onDone();
+      return;
+    }
+    // If its day already passed this month, only add this month's payment if you ask to
+    // (you may have logged it already). Otherwise it adds itself when the day comes.
+    const ym = monthOf(today);
+    const [y, m] = ym.split('-').map(Number);
+    const payDay = String(Math.min(day, daysInMonth(y, m))).padStart(2, '0');
+    const id = uid();
+    update((d) => {
+      d.recurring.push({ id, ...fields, lastAdded: passed ? ym : null, since: today });
+      if (passed && addNow) d.expenses.push({ id: uid(), amount: value, categoryId, note: fields.name, date: `${ym}-${payDay}`, recurringId: id });
+    });
+    toast(`${kind === 'subscription' ? 'Subscription' : 'Bill'} saved: ${fields.name}`, 'pop');
+    setName('');
+    setAmount('');
+    setTrialEnds('');
+    setAddNow(false);
+  };
+
+  return (
+    <form className="form" onSubmit={save}>
+      <Segmented
+        label="Type"
+        value={kind}
+        onChange={setKind}
+        options={[
+          { value: 'bill', label: 'Bill' },
+          { value: 'subscription', label: 'Subscription' },
+        ]}
+      />
+      <Field label="Name">
+        <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder={kind === 'subscription' ? 'e.g. Music app' : 'e.g. Rent'} />
+      </Field>
+      <div className="form__row">
+        <Field label="Amount ($)" className="grow">
+          <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+        </Field>
+        <Field label="Day">
+          <input className="input" type="number" min={1} max={31} value={day} onChange={(e) => setDay(Math.min(31, Math.max(1, Number(e.target.value) || 1)))} />
+        </Field>
+      </div>
+      <div className="form__row">
+        <Field label="Repeats" className="grow">
+          <select className="input" value={every} onChange={(e) => setEvery(e.target.value as 'month' | 'year')}>
+            <option value="month">Every month</option>
+            <option value="year">Every year</option>
+          </select>
+        </Field>
+        {every === 'year' && (
+          <Field label="Month" className="grow">
+            <select className="input" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+              {MONTHS.map((label, i) => (
+                <option key={label} value={i + 1}>
+                  {label}
                 </option>
               ))}
             </select>
           </Field>
-          {todayDay >= day && (
-            <label className="check">
-              <input type="checkbox" checked={addNow} onChange={(e) => setAddNow(e.target.checked)} />
-              <span>Day {day} has passed — also add this month's payment now</span>
-            </label>
-          )}
-          <button type="submit" className="btn btn--primary">
-            <PixelIcon name="plus" size={18} /> Save bill
+        )}
+      </div>
+      <Field label="Category">
+        <select className="input" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+          {data.categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+      {kind === 'subscription' && (
+        <Field label="Free trial ends (optional)" hint="Nothing is added to spending until after this day. You'll get a heads-up a week before.">
+          <input className="input" type="date" value={trialEnds} onChange={(e) => setTrialEnds(e.target.value)} />
+        </Field>
+      )}
+      {passed && (
+        <label className="check">
+          <input type="checkbox" checked={addNow} onChange={(e) => setAddNow(e.target.checked)} />
+          <span>Day {day} has passed — also add this month's payment now</span>
+        </label>
+      )}
+      <div className="form__row">
+        <button type="submit" className="btn btn--primary grow">
+          <PixelIcon name={editing ? 'check' : 'plus'} size={18} /> {editing ? 'Save changes' : 'Save'}
+        </button>
+        {editing && (
+          <button type="button" className="btn" onClick={onDone}>
+            Cancel
           </button>
-        </form>
-      </Panel>
-    </div>
+        )}
+      </div>
+    </form>
   );
 }
 

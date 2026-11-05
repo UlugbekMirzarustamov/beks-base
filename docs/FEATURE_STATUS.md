@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Daily dashboard (Phase 1 complete): 129 tests passing, production build passing.
+Last verified: **2026-11-05** — Phase 2: subscription tracker + financial calendar: 135 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -64,6 +64,9 @@ Paths are relative to `src/`.
 | Wish fund, wishes, ETA, slider, buy from fund | Implemented | `screens/Plan.tsx` (`Wishes`), `lib/pot.ts` |
 | Runway, money calendar, nightly "you saved" | Implemented | `screens/Plan.tsx` |
 | Budget & category limits, savings jars, bills, charts, CSV import, insights | Implemented | `screens/Money.tsx`, `lib/csv.ts`, `lib/daily.ts` (`moneyInsights`) |
+| Subscription tracker: bill vs subscription, monthly or yearly, free-trial end with a 7-day heads-up, cost per month and per year, edit | Implemented | `Bills`/`BillForm` in `screens/Money.tsx` (Money → Bills); `billDueOn`, `billsBetween`, `billCost` in `lib/money.ts` (tests in `lib/money.test.ts`) |
+| Financial calendar: bill payments and trial ends in the universal calendar and Coming up; "Next 30 days" list with total | Implemented | `itemsOn()` in `lib/calendar.ts` reads `recurring` (never copied; test in `lib/calendar.test.ts`) |
+| Yearly bills and free trials respected when payments add themselves | Implemented | `applyRecurring()` in `lib/money.ts` |
 | Hard-mode wish buffer (+10%) | Implemented | `lib/push.ts` (`wishReady`), `screens/Plan.tsx` |
 | Cook-at-home counter | Not started | Spec: *Proposed* |
 

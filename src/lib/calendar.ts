@@ -5,14 +5,16 @@
  *   - calendar events (`data.events`: classes, appointments, travel, birthdays, events),
  *     with daily / weekly / monthly / yearly repeats and multi-day trips;
  *   - dated school classes (`sessions`) and weekly classes (`timetable`);
- *   - exams (`tests`), task and assignment deadlines, and study blocks.
+ *   - exams (`tests`), task and assignment deadlines, and study blocks;
+ *   - bill and subscription payments and free-trial ends (`recurring`) — the financial calendar.
  * Plain functions, so they're easy to test.
  */
 import { addDays, daysBetween, daysInMonth, toMinutes, weekdayOf } from './dates';
+import { billDueOn, formatMoney } from './money';
 import type { AppData, CalEvent, CalKind } from './types';
 
 /** Every kind of item the calendar shows. */
-export type ItemKind = CalKind | 'exam' | 'deadline' | 'study';
+export type ItemKind = CalKind | 'exam' | 'deadline' | 'study' | 'bill';
 
 export const KIND_INFO: Record<ItemKind, { label: string; colour: string }> = {
   class: { label: 'Class', colour: '#2a6fa8' },
@@ -23,6 +25,7 @@ export const KIND_INFO: Record<ItemKind, { label: string; colour: string }> = {
   travel: { label: 'Travel', colour: '#16a085' },
   birthday: { label: 'Birthday', colour: '#f27ab8' },
   event: { label: 'Event', colour: '#8a5a2e' },
+  bill: { label: 'Bill', colour: '#b8860b' },
 };
 
 /** One thing on one day, whatever it came from. */
@@ -31,7 +34,7 @@ export interface CalItem {
   key: string;
   /** The id in its own list (event, session, slot, test, task or study block). */
   id: string;
-  source: 'event' | 'session' | 'timetable' | 'test' | 'task' | 'assignment' | 'study';
+  source: 'event' | 'session' | 'timetable' | 'test' | 'task' | 'assignment' | 'study' | 'bill';
   kind: ItemKind;
   title: string;
   date: string;
@@ -105,6 +108,10 @@ export function itemsOn(d: AppData, date: string): CalItem[] {
   }
   for (const b of d.studyBlocks) {
     if (b.date === date) items.push({ key: `study-${b.id}`, id: b.id, source: 'study', kind: 'study', title: b.title, date, start: b.start, end: b.end, location: '' });
+  }
+  for (const b of d.recurring) {
+    if (billDueOn(b, date)) items.push({ key: `bill-${b.id}`, id: b.id, source: 'bill', kind: 'bill', title: `${b.name} · ${formatMoney(b.amount)}`, date, start: '', end: '', location: '' });
+    if (b.trialEnds === date) items.push({ key: `trial-${b.id}`, id: b.id, source: 'bill', kind: 'bill', title: `Free trial ends: ${b.name}`, date, start: '', end: '', location: '' });
   }
   return items.sort(byTime);
 }

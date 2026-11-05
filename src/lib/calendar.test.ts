@@ -84,3 +84,16 @@ describe('conflicts', () => {
     expect(conflicts([item('A', '09:00'), item('B', '10:00', '10:15')])).toHaveLength(0);
   });
 });
+
+describe('financial calendar', () => {
+  it('shows bill payments and trial ends from the bills list (not copies)', () => {
+    const d = emptyData('2026-11-05');
+    d.recurring = [{ id: 'b1', name: 'Phone', amount: 15, categoryId: 'phone', day: 10, lastAdded: null, kind: 'subscription', trialEnds: '2026-11-08' }];
+    expect(itemsOn(d, '2026-11-08').map((i) => i.title)).toEqual(['Free trial ends: Phone']);
+    const pay = itemsOn(d, '2026-11-10');
+    expect(pay).toHaveLength(1);
+    expect(pay[0]).toMatchObject({ kind: 'bill', source: 'bill', id: 'b1', title: 'Phone · $15.00' });
+    expect(upcoming(d, '2026-11-05', 14).filter((i) => i.kind === 'bill')).toHaveLength(2);
+    expect(d.events).toHaveLength(0);
+  });
+});
