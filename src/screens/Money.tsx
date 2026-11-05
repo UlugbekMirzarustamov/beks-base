@@ -133,9 +133,8 @@ function CurrencyCheck() {
         <button
           type="button"
           className="btn btn--primary grow"
-          onClick={() => {
-            replaceAll(convertPoundsToDollars(data, rate));
-            toast('Converted your £ amounts to $', 'pop');
+          onClick={async () => {
+            if (await replaceAll(convertPoundsToDollars(data, rate), 'Before converting £ to $')) toast('Converted your £ amounts to $', 'pop');
           }}
         >
           Yes — convert £ to $

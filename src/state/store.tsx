@@ -8,14 +8,22 @@
  *
  * `update` gives you a COPY of the data to change freely; React then re-draws
  * and the copy is saved to IndexedDB a moment later.
+ *
+ * Data safety (see lib/persist.ts):
+ *  - Nothing is saved until your data has loaded AND passed its checks. If it
+ *    can't be loaded, the recovery screen shows instead and nothing is overwritten.
+ *  - A failed save shows a red banner with "Try again" — never a silent failure.
+ *  - `replaceAll` (import, reset, £→$) first makes a checked safety copy, and
+ *    changes nothing if that fails.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { normalize } from '../lib/backup';
 import { todayUK } from '../lib/dates';
-import { loadData, requestPersistentStorage, saveData } from '../lib/db';
+import { idb, readLegacyCopy, requestPersistentStorage, saveData } from '../lib/db';
+import { loadApp, restoreSnapshot as restoreSnapshotIn, safeReplace } from '../lib/persist';
+import { Recovery } from '../ui/Recovery';
 import { uid } from '../lib/id';
 import { applyRecurring, formatMoney } from '../lib/money';
-import { createInitialData, upgrade } from '../lib/seed';
+import { createInitialData } from '../lib/seed';
 import { newlyEarned } from '../lib/badges';
 import { unlocksAtLevel } from '../lib/cabin';
 import { buzz, playChime, sfx } from '../lib/sound';
@@ -34,7 +42,13 @@ interface StoreValue {
   /** Today in the UK, refreshed every 30 seconds (so midnight is noticed). */
   today: string;
   update: (change: (draft: AppData) => void) => void;
-  replaceAll: (data: AppData) => void;
+  /**
+   * Replace ALL data (import, reset, £→$). Makes a checked safety copy first and
+   * saves before showing anything. Resolves false (nothing changed) if either fails.
+   */
+  replaceAll: (data: AppData, reason: string) => Promise<boolean>;
+  /** Put a safety copy back, then reload the app. */
+  restoreSnapshot: (id: string) => Promise<void>;
   gainXp: (amount: number, reason?: string) => void;
   toast: (text: string, kind?: ToastKind) => void;
   toasts: Toast[];
@@ -59,26 +73,61 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [expenseSheet, setExpenseSheet] = useState<StoreValue['expenseSheet']>({ open: false, editing: null });
   const dataRef = useRef<AppData | null>(null);
   dataRef.current = data;
+  const [failure, setFailure] = useState<{ problem: 'storage' | 'unreadable'; message: string; raw?: unknown } | null>(null);
+  const [saveError, setSaveError] = useState<{ text: string; photos?: boolean } | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
+  /** Saving is allowed only after a successful load, and is paused while all data is being replaced. */
+  const canSave = useRef(false);
+  const paused = useRef(false);
+  /** Bumped by replaceAll, so a save that was scheduled before it can't write the old data afterwards. */
+  const generation = useRef(0);
 
-  // ----- Load once on start (first launch: starter kit + timetable). `upgrade` tidies older saved data. -----
+  // ----- Load once on start (first launch: starter kit + timetable). -----
+  const load = useCallback(async () => {
+    setFailure(null);
+    const today = todayUK();
+    const r = await loadApp(idb, today, { legacy: readLegacyCopy });
+    if (r.kind === 'error') {
+      setFailure(r); // stored data is left exactly as it is
+      return;
+    }
+    canSave.current = true;
+    setData(r.kind === 'fresh' ? createInitialData(today) : r.data);
+    if (r.kind === 'ok' && r.warning) setWarning(r.warning);
+  }, []);
   useEffect(() => {
-    loadData()
-      .then((saved) => setData(saved ? upgrade(normalize(saved as Partial<AppData>, todayUK()), todayUK()) : createInitialData(todayUK())))
-      .catch(() => setData(createInitialData(todayUK())));
+    void load();
     requestPersistentStorage();
+  }, [load]);
+
+  /** Save, and show the red banner if it fails (cleared by the next good save). */
+  const save = useCallback((d: AppData, gen: number) => {
+    if (!canSave.current || paused.current || gen !== generation.current) return;
+    saveData(d).then(
+      () => setSaveError((err) => (err?.photos ? err : null)), // a good save clears its own error, not a photo one
+      (e: unknown) => setSaveError({ text: e instanceof Error ? e.message : 'Unknown storage error' }),
+    );
   }, []);
 
   // ----- Save automatically, shortly after every change -----
   useEffect(() => {
     if (!data) return;
-    const timer = setTimeout(() => saveData(data), 250);
+    const gen = generation.current;
+    const timer = setTimeout(() => save(data, gen), 250);
     return () => clearTimeout(timer);
-  }, [data]);
+  }, [data, save]);
+
+  // Photos are saved separately (screens/Photos.tsx); their failures show the same banner.
+  useEffect(() => {
+    const onPhotoError = (e: Event) => setSaveError({ text: (e as CustomEvent<string>).detail, photos: true });
+    window.addEventListener('beks:save-error', onPhotoError);
+    return () => window.removeEventListener('beks:save-error', onPhotoError);
+  }, []);
 
   // Save immediately if the app is being closed / hidden (phones kill background tabs).
   useEffect(() => {
     const flush = () => {
-      if (document.visibilityState === 'hidden' && dataRef.current) saveData(dataRef.current);
+      if (document.visibilityState === 'hidden' && dataRef.current) save(dataRef.current, generation.current);
     };
     document.addEventListener('visibilitychange', flush);
     window.addEventListener('pagehide', flush);
@@ -86,7 +135,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('visibilitychange', flush);
       window.removeEventListener('pagehide', flush);
     };
-  }, []);
+  }, [save]);
 
   // ----- Keep "today" fresh -----
   useEffect(() => {
@@ -107,6 +156,42 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setToasts((list) => [...list.slice(-3), { id, text, kind }]);
     setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), kind === 'error' ? 5000 : 2600);
   }, []);
+
+  const replaceAll = useCallback(
+    async (next: AppData, reason: string) => {
+      const current = dataRef.current;
+      if (!current) return false;
+      paused.current = true;
+      generation.current++;
+      try {
+        await safeReplace(idb, current, next, reason);
+        dataRef.current = next;
+        setData(next);
+        setSaveError((err) => (err?.photos ? err : null));
+        return true;
+      } catch (e) {
+        toast(`Nothing was changed: ${e instanceof Error ? e.message : 'storage error'}`, 'error');
+        return false;
+      } finally {
+        paused.current = false;
+      }
+    },
+    [toast],
+  );
+
+  const restoreSnapshot = useCallback(
+    async (id: string) => {
+      paused.current = true; // stays paused: the page reloads with the restored data
+      try {
+        await restoreSnapshotIn(idb, id, todayUK());
+        location.reload();
+      } catch (e) {
+        paused.current = false;
+        toast(`Couldn't restore: ${e instanceof Error ? e.message : 'storage error'}`, 'error');
+      }
+    },
+    [toast],
+  );
 
   // ----- New day: add recurring bills, start fresh top-3 -----
   const loaded = data !== null;
@@ -172,7 +257,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         data,
         today,
         update,
-        replaceAll: (d: AppData) => setData(d),
+        replaceAll,
+        restoreSnapshot,
         gainXp,
         toast,
         toasts,
@@ -180,9 +266,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         openExpense: (editing = null) => setExpenseSheet({ open: true, editing }),
         closeExpense: () => setExpenseSheet({ open: false, editing: null }),
       },
-    [data, today, update, gainXp, toast, toasts, expenseSheet],
+    [data, today, update, replaceAll, restoreSnapshot, gainXp, toast, toasts, expenseSheet],
   );
 
+  if (failure) return <Recovery problem={failure.problem} message={failure.message} raw={failure.raw} onRetry={() => void load()} />;
   if (!value) {
     return (
       <div className="splash" role="status">
@@ -192,6 +279,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }
   return (
     <StoreContext.Provider value={value}>
+      {saveError && (
+        <div className="save-banner save-banner--error" role="alert">
+          <span>
+            <strong>Not saved!</strong> {saveError.text}.{saveError.photos ? '' : " Your latest changes are only in this open app. Don't close it."}
+          </span>
+          {saveError.photos ? (
+            <button type="button" className="btn btn--small" onClick={() => setSaveError(null)}>
+              OK
+            </button>
+          ) : (
+            <button type="button" className="btn btn--small" onClick={() => dataRef.current && save(dataRef.current, generation.current)}>
+              Try again
+            </button>
+          )}
+        </div>
+      )}
+      {warning && (
+        <div className="save-banner" role="status">
+          <span>{warning}</span>
+          <button type="button" className="btn btn--small" onClick={() => setWarning(null)}>
+            OK
+          </button>
+        </div>
+      )}
       <TimerProvider>{children}</TimerProvider>
     </StoreContext.Provider>
   );

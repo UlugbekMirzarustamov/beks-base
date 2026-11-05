@@ -23,16 +23,27 @@ let loaded = false;
 const listeners = new Set<(p: Photo[]) => void>();
 const publish = () => listeners.forEach((l) => l(photos));
 
-void loadPhotoList().then((list) => {
-  photos = Array.isArray(list) ? (list as Photo[]) : [];
-  loaded = true;
-  publish();
-});
+/** Tell the store's red "not saved" banner (state/store.tsx). */
+const reportError = (text: string) => window.dispatchEvent(new CustomEvent('beks:save-error', { detail: text }));
+
+loadPhotoList().then(
+  (list) => {
+    photos = Array.isArray(list) ? (list as Photo[]) : [];
+    loaded = true;
+    publish();
+  },
+  // Couldn't read them: stay "not loaded", so nothing can save over the real photos.
+  () => reportError("Your family photos couldn't be loaded, so photo changes are switched off for now"),
+);
 
 export function setPhotos(next: Photo[]) {
+  if (!loaded) {
+    reportError("Your family photos haven't loaded, so this photo change wasn't saved");
+    return;
+  }
   photos = next;
   publish();
-  void savePhotoList(next);
+  savePhotoList(next).catch(() => reportError("Your photo changes couldn't be saved"));
 }
 
 /** All family photos (newest last). */

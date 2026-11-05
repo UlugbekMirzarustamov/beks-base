@@ -1,29 +1,50 @@
 /**
- * A tiny IndexedDB wrapper: one database, one "key → value" store.
- * We save the whole AppData object under one key. It's small (kilobytes),
- * so this is simple and fast.
+ * Storage: ONE IndexedDB database ("ulus-base") with ONE key → value store ("kv").
  *
- * If IndexedDB isn't available (some private-browsing modes) we fall back to
- * localStorage so the app still works.
+ * Keys used:
+ *   "appdata"             all of AppData (one object)
+ *   "photos"              the family photos (kept apart so AppData stays small)
+ *   "snapshot:<time>…"    automatic safety copies (see lib/persist.ts)
+ *   "unreadable:<time>"   stored data that couldn't be read, kept untouched for recovery
+ *
+ * The one rule: IndexedDB is the only place data is WRITTEN. Every write waits
+ * until the database confirms it (transaction "complete") and rejects otherwise,
+ * so a failed save is never reported as a success. IndexedDB writes are atomic:
+ * a write either fully happens or leaves the old value in place.
+ *
+ * (Older versions sometimes fell back to localStorage. That copy is only ever
+ * READ — when IndexedDB is empty — and is never written or deleted here.)
  */
 const DB_NAME = 'ulus-base';
 const STORE = 'kv';
-const KEY = 'appdata';
+
+/** A tiny key → value storage interface (IndexedDB in the app, an in-memory fake in tests). */
+export interface KV {
+  get(key: string): Promise<unknown>;
+  put(key: string, value: unknown): Promise<void>;
+  del(key: string): Promise<void>;
+  keys(): Promise<string[]>;
+}
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDb(): Promise<IDBDatabase> {
   if (!dbPromise) {
-    dbPromise = new Promise((resolve, reject) => {
+    dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, 1);
       req.onupgradeneeded = () => req.result.createObjectStore(STORE);
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onerror = () => reject(req.error ?? new Error('Could not open storage'));
+      req.onblocked = () => reject(new Error('Storage is blocked by another open copy of the app'));
+    }).catch((e: unknown) => {
+      dbPromise = null; // so "Try again" really tries again
+      throw e;
     });
   }
   return dbPromise;
 }
 
+/** Run one request in its own transaction; resolves only once the transaction has COMPLETED. */
 function run<T>(mode: IDBTransactionMode, action: (store: IDBObjectStore) => IDBRequest): Promise<T> {
   return openDb().then(
     (db) =>
@@ -31,47 +52,40 @@ function run<T>(mode: IDBTransactionMode, action: (store: IDBObjectStore) => IDB
         const tx = db.transaction(STORE, mode);
         const req = action(tx.objectStore(STORE));
         tx.oncomplete = () => resolve(req.result as T);
-        tx.onerror = () => reject(tx.error);
+        tx.onerror = () => reject(tx.error ?? req.error ?? new Error('Storage error'));
+        tx.onabort = () => reject(tx.error ?? new Error('The save was interrupted'));
       }),
   );
 }
 
-/** Load the saved data, or `undefined` on first launch. */
-export async function loadData(): Promise<unknown> {
-  try {
-    return await run('readonly', (s) => s.get(KEY));
-  } catch {
-    const raw = localStorage.getItem(DB_NAME);
-    return raw ? JSON.parse(raw) : undefined;
-  }
-}
+/** The real storage used by the app. */
+export const idb: KV = {
+  get: (key) => run('readonly', (s) => s.get(key)),
+  put: (key, value) => run('readwrite', (s) => s.put(value, key)).then(() => undefined),
+  del: (key) => run('readwrite', (s) => s.delete(key)).then(() => undefined),
+  keys: () => run<IDBValidKey[]>('readonly', (s) => s.getAllKeys()).then((ks) => ks.map(String)),
+};
 
-export async function saveData(data: unknown): Promise<void> {
-  try {
-    await run('readwrite', (s) => s.put(data, KEY));
-  } catch {
-    localStorage.setItem(DB_NAME, JSON.stringify(data));
-  }
-}
+export const APP_KEY = 'appdata';
+export const PHOTOS_KEY = 'photos';
 
-/**
- * Family photos are kept under their own key (not inside AppData), so the
- * main data stays small and quick to save. They never leave this device
- * unless you export a backup.
- */
-const PHOTOS_KEY = 'photos';
-
-export async function loadPhotoList(): Promise<unknown> {
+/** Old builds wrote here when IndexedDB failed. Read-only now; a broken copy throws (→ recovery, never overwritten). */
+export function readLegacyCopy(): unknown {
+  let raw: string | null = null;
   try {
-    return await run('readonly', (s) => s.get(PHOTOS_KEY));
+    raw = localStorage.getItem(DB_NAME);
   } catch {
     return undefined;
   }
+  return raw ? JSON.parse(raw) : undefined;
 }
 
-export async function savePhotoList(list: unknown): Promise<void> {
-  await run('readwrite', (s) => s.put(list, PHOTOS_KEY));
-}
+/** Save all app data. Rejects if the write didn't complete. */
+export const saveData = (data: unknown, kv: KV = idb) => kv.put(APP_KEY, data);
+
+/** The family photo list. Rejects if it can't be read (so nothing saves over photos we couldn't load). */
+export const loadPhotoList = (kv: KV = idb) => kv.get(PHOTOS_KEY);
+export const savePhotoList = (list: unknown, kv: KV = idb) => kv.put(PHOTOS_KEY, list);
 
 /** Ask the browser not to delete our data when the device is low on space. */
 export async function requestPersistentStorage(): Promise<void> {

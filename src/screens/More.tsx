@@ -7,6 +7,8 @@ import { backupPhotos, parseBackup } from '../lib/backup';
 import { lastBackup, shareBackup } from './Daily';
 import { setPhotos, usePhotos } from './Photos';
 import { HardModeToggle } from './Push';
+import { idb } from '../lib/db';
+import { listSnapshots, type SnapshotInfo } from '../lib/persist';
 import { createInitialData, upgrade } from '../lib/seed';
 import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
@@ -82,8 +84,8 @@ export function SettingsPanel() {
     try {
       const text = await file.text();
       const restored = upgrade(parseBackup(text, today), today);
-      if (!(await ask('Replace ALL current data with this backup? (Tip: export first if unsure.)', { ok: 'Replace', danger: false }))) return;
-      replaceAll(restored);
+      if (!(await ask('Replace ALL current data with this backup? (A safety copy of your current data is kept first.)', { ok: 'Replace', danger: false }))) return;
+      if (!(await replaceAll(restored, 'Before importing a backup'))) return;
       const restoredPhotos = backupPhotos(text);
       if (restoredPhotos.length) setPhotos(restoredPhotos);
       toast('Backup restored!', 'pop');
@@ -95,8 +97,8 @@ export function SettingsPanel() {
   const resetAll = async () => {
     if (!(await ask('Delete EVERYTHING and start fresh? This cannot be undone.'))) return;
     if (!(await ask('Really sure? Maybe export a backup first.', { ok: 'Yes, delete all' }))) return;
-    replaceAll(createInitialData(today)); // keeps the starter topics, formulas and school timetable
-    toast('Fresh start!', 'info');
+    // Keeps the starter topics, formulas and school timetable (and a safety copy of everything before).
+    if (await replaceAll(createInitialData(today), 'Before a full reset')) toast('Fresh start!', 'info');
   };
 
   return (
@@ -145,6 +147,7 @@ export function SettingsPanel() {
             {importError}
           </p>
         )}
+        <SafetyCopies />
       </Panel>
 
       <Panel title="Start over" icon="trash">
@@ -245,5 +248,38 @@ function AvatarEditor() {
       <Segmented label="Preview pose" value={pose} onChange={setPose} options={POSES} />
       <p className="muted small">Bek lives in the cabin next to Simba and changes what he's doing with your day. Tap him on Home!</p>
     </Panel>
+  );
+}
+
+/** The automatic safety copies (made before imports, resets, conversions and app updates). */
+function SafetyCopies() {
+  const { restoreSnapshot } = useStore();
+  const ask = useConfirm();
+  const [list, setList] = useState<SnapshotInfo[] | null>(null);
+  useEffect(() => {
+    listSnapshots(idb).then(setList, () => setList([]));
+  }, []);
+  if (!list?.length) return null;
+  const restore = async (s: SnapshotInfo) => {
+    if (!(await ask(`Go back to the safety copy from ${new Date(s.createdAt).toLocaleString('en-GB')}? Your current data is kept as a safety copy first.`, { ok: 'Restore', danger: false }))) return;
+    await restoreSnapshot(s.id);
+  };
+  return (
+    <details className="details">
+      <summary>Automatic safety copies ({list.length})</summary>
+      <ul className="recovery__list">
+        {list.map((s) => (
+          <li key={s.id}>
+            <span>
+              <strong>{new Date(s.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</strong>
+              <small className="muted"> · {s.reason}</small>
+            </span>
+            <button type="button" className="btn btn--small" onClick={() => restore(s)}>
+              Restore
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
