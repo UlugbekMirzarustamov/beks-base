@@ -19,6 +19,7 @@ import { openPhotos, photoOfTheDay, usePhotos } from './Photos';
 import { BossMini } from './Study';
 import { careStatus } from '../lib/care';
 import { conflicts, dateReminders, itemsOn, KIND_INFO, upcoming } from '../lib/calendar';
+import { freshness, toUseSoon } from '../lib/kitchen';
 import { openJar } from './Calm';
 import { BadgeSummary } from './Badges';
 import { coins } from '../lib/shop';
@@ -71,6 +72,9 @@ export default function Home() {
             <button type="button" className="btn btn--small" onClick={() => window.dispatchEvent(new Event('beks:briefing'))}>
               <PixelIcon name="sun" size={16} /> Today's briefing
             </button>
+            <a href="#/kitchen" className="btn btn--small">
+              <PixelIcon name="apple" size={16} /> Kitchen
+            </a>
             <a href="#/calm" className="btn btn--small">
               <PixelIcon name="lantern" size={16} /> I need a minute
             </a>
@@ -91,6 +95,7 @@ export default function Home() {
         <OnePercent />
         <TodayClasses />
         <ComingUp />
+        <KitchenCard />
         <InboxPanel compact />
         <SafeToSpendCard />
         <GhostRace />
@@ -212,6 +217,45 @@ function ImportantDates() {
       </ul>
       <a href="#/planner/calendar" className="more-link">
         Calendar →
+      </a>
+    </Panel>
+  );
+}
+
+const MEAL_SLOTS = [
+  { id: 'breakfast', label: 'Breakfast' },
+  { id: 'lunch', label: 'Lunch' },
+  { id: 'dinner', label: 'Dinner' },
+] as const;
+
+/** Today's planned meals and food to use up soon. Hidden when there's nothing to say. */
+function KitchenCard() {
+  const { data, today } = useStore();
+  const meals = MEAL_SLOTS.flatMap((s) => {
+    const m = data.meals[today]?.[s.id];
+    return m ? [{ label: s.label, text: m.text }] : [];
+  });
+  const soon = toUseSoon(data.pantry, today, 2);
+  const toBuy = data.groceries.filter((g) => !g.done).length;
+  if (!meals.length && !soon.length) return null;
+  return (
+    <Panel title="Kitchen" icon="apple">
+      {meals.length > 0 && (
+        <ul className="mini-list">
+          {meals.map((m) => (
+            <li key={m.label}>
+              <small className="muted">{m.label}:</small> <strong>{m.text}</strong>
+            </li>
+          ))}
+        </ul>
+      )}
+      {soon.length > 0 && (
+        <p className="small">
+          Use soon: {soon.map((p) => `${p.name} (${freshness(p, today) === 'expired' ? 'past its date' : relativeDays(daysBetween(today, p.expires))})`).join(', ')}
+        </p>
+      )}
+      <a href={toBuy ? '#/kitchen/groceries' : '#/kitchen/meals'} className="more-link">
+        {toBuy ? `Shopping list (${toBuy}) →` : 'Kitchen →'}
       </a>
     </Panel>
   );

@@ -4,6 +4,16 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Kitchen (Phase 2, feature 3):** a new Kitchen screen (button on Home, or search "pantry", "recipes"…).
+  **Shopping**: type lines like "500g pasta" or "6 eggs", tick them off, then *Put in the pantry* (amounts
+  add to what's already there). **Pantry**: amounts, units and use-by dates; food to use soon or past its
+  date goes to the top; − / + buttons; things that ran out are one tap from the list. **Meals**: plan the
+  week (breakfast, lunch, dinner) with free text or one of your recipes, and add the missing ingredients
+  to shopping in one tap. **Recipes**: your own cookbook, plus **What can I cook?**, which ranks recipes by
+  what you have (fewest missing first) and prefers ones that use up food expiring soon. A small Kitchen
+  card on Home shows today's meals and what to use soon. No XP or coins (a life tool). New lists start
+  empty for existing data (no update step); the screen loads on demand and is prefetched for offline use.
+  Tests: 145 passing.
 - **Important dates & birthdays (Phase 2, feature 2):** a new **Important date** kind in the calendar
   (anniversaries and other yearly dates) next to Birthday. Every event except classes can **remind you on
   Home** on the day, 1 / 3 / 7 / 14 days or a month before; birthdays and important dates remind a week

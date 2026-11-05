@@ -5708,3 +5708,70 @@ button.list__main {
   background: var(--gold);
   color: #2f1d0c;
 }
+
+/* ---------- Kitchen ---------- */
+.kitchen-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pantry-warn {
+  color: #a3410a;
+  font-weight: 600;
+}
+:root[data-theme='night'] .pantry-warn {
+  color: var(--amber);
+}
+.meal-week__range {
+  text-align: center;
+}
+.meal-week {
+  display: grid;
+  gap: 8px;
+}
+.meal-day {
+  padding: 6px 8px;
+  background: var(--panel-hi);
+  border: 2px solid var(--panel-lo);
+}
+.meal-day.is-today {
+  border-color: var(--gold);
+  box-shadow: inset 4px 0 0 var(--gold);
+}
+.meal-day__slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 4px;
+}
+.meal-slot {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.meal-slot .input {
+  min-width: 0;
+  padding: 6px;
+  font-size: 15px;
+}
+.recipe-ingredients {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.recipe-ingredients .is-have {
+  color: var(--grass-lo);
+  font-weight: 600;
+}
+:root[data-theme='night'] .recipe-ingredients .is-have {
+  color: var(--xp);
+}
+.recipe-steps {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.meal-slot .input::-webkit-calendar-picker-indicator {
+  display: none !important;
+}

@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Phase 2: important dates & birthday reminders: 137 tests passing, production build passing.
+Last verified: **2026-11-05** — Phase 2: kitchen (shopping, pantry, meals, recipes): 145 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -101,6 +101,11 @@ Paths are relative to `src/`.
 |---|---|---|
 | Real weather (7-day) in window and on Home | Implemented | `lib/weather.ts`, `ui/Weather.tsx` |
 | Planner: top 3, tasks, week | Implemented | `screens/Planner.tsx` |
+| Kitchen: shopping list ("500g pasta" lines), tick off → put in the pantry (quantities merge) | Implemented | `Groceries` in `screens/Kitchen.tsx` (Home → Kitchen, `#/kitchen`); `parseQty`, `stockUp`, `newGroceryLines` in `lib/kitchen.ts` (tests in `lib/kitchen.test.ts`) |
+| Pantry with quantities, units and use-by dates; "use soon" / "past its date" first; ran-out items one tap to the list | Implemented | `Pantry` in `screens/Kitchen.tsx`; `freshness`, `toUseSoon` in `lib/kitchen.ts` |
+| Meal plan (week, breakfast/lunch/dinner, free text or a recipe) + missing ingredients to shopping | Implemented | `Meals` in `screens/Kitchen.tsx`; `meals` in `lib/types.ts` |
+| Personal cookbook + "What can I cook?" from the pantry (fewest missing first, uses up food expiring soon) | Implemented | `Recipes` in `screens/Kitchen.tsx`; `checkRecipe`, `suggestRecipes` in `lib/kitchen.ts` |
+| Kitchen card on Home (today's meals, food to use soon) | Implemented | `KitchenCard` in `screens/Home.tsx` |
 | Family photo wall, photo of the day | Implemented | `screens/Photos.tsx`, `scene/Cabin.tsx` (mantel frame) |
 | Explore-the-city map | Not started | Spec: *Proposed* |
 

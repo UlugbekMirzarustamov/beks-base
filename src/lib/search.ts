@@ -49,6 +49,9 @@ export function buildIndex(d: AppData): SearchEntry[] {
     add({ key: `expense-${x.id}`, kind: 'Purchase', title: x.note || cat || 'Purchase', sub: [money(x.amount), cat, x.date].filter(Boolean).join(' · '), href: '#/money/spending', date: x.date, text: `${x.amount.toFixed(2)} ${x.paidGbp != null ? `£${x.paidGbp.toFixed(2)}` : ''}` });
   }
   for (const b of d.recurring) add({ key: `bill-${b.id}`, kind: b.kind === 'subscription' ? 'Subscription' : 'Bill', title: b.name, sub: [money(b.amount), b.every === 'year' ? 'every year' : 'every month'].join(' · '), href: '#/money/bills', date: '', text: b.amount.toFixed(2) });
+  for (const g of d.groceries) if (!g.done) add({ key: `grocery-${g.id}`, kind: 'Shopping', title: g.text, sub: 'shopping list', href: '#/kitchen/groceries', date: '' });
+  for (const p of d.pantry) add({ key: `pantry-${p.id}`, kind: 'Pantry', title: p.name, sub: [p.qty > 0 ? `${p.qty}${p.unit ? ` ${p.unit}` : ''}` : 'run out', p.expires ? `use by ${p.expires}` : ''].filter(Boolean).join(' · '), href: '#/kitchen/pantry', date: p.expires });
+  for (const r of d.recipes) add({ key: `recipe-${r.id}`, kind: 'Recipe', title: r.name, sub: r.minutes ? `${r.minutes} min` : `${r.ingredients.length} ingredients`, href: '#/kitchen/recipes', date: '', text: `${r.ingredients.join(' ')} ${r.steps}` });
   for (const n of d.notes) add({ key: `note-${n.id}`, kind: 'Journal', title: n.title || 'Untitled note', sub: n.updated.slice(0, 10), href: '#/more/journal', date: n.updated.slice(0, 10), text: n.body });
   for (const i of d.inbox) if (!i.done) add({ key: `inbox-${i.id}`, kind: 'Inbox', title: i.text, sub: i.kind, href: '#/planner/today', date: i.created, text: i.url });
   for (const v of d.vocab) add({ key: `word-${v.id}`, kind: 'Word', title: v.word, sub: v.meaning, href: '#/more/words', date: '', text: v.sentence });
@@ -106,6 +109,10 @@ export const COMMANDS: Command[] = [
   go('Vision board', '#/reflect/vision', 'goals dreams'),
   go('Letters to future you', '#/reflect/letters', ''),
   go('Year in pixels', '#/reflect/year', ''),
+  go('Shopping list', '#/kitchen/groceries', 'groceries kitchen buy food'),
+  go('Pantry', '#/kitchen/pantry', 'kitchen food fridge expiry'),
+  go('Meal plan', '#/kitchen/meals', 'kitchen food cook week'),
+  go('Recipes', '#/kitchen/recipes', 'cookbook cook kitchen what can i cook'),
   go('Calm corner', '#/calm', 'breathe anxious stress dua'),
   go('Pond', '#/pond', 'fishing fish'),
   go('Journal', '#/more/journal', 'notes'),

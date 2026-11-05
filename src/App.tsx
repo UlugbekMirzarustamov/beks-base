@@ -33,11 +33,13 @@ import { SoundMixer } from './ui/SoundMixer';
 const loadReflect = () => import('./screens/Reflect');
 const loadMore = () => import('./screens/More');
 const loadPond = () => import('./screens/Pond');
+const loadKitchen = () => import('./screens/Kitchen');
 const Reflect = lazy(loadReflect);
 const More = lazy(loadMore);
 const Pond = lazy(loadPond);
+const Kitchen = lazy(loadKitchen);
 export function prefetchScreens() {
-  void Promise.all([loadReflect(), loadMore(), loadPond(), import('./screens/Calendar'), import('./screens/Assignments')]).catch(() => {
+  void Promise.all([loadReflect(), loadMore(), loadPond(), loadKitchen(), import('./screens/Calendar'), import('./screens/Assignments')]).catch(() => {
     /* offline: they'll be fetched next time */
   });
 }
@@ -61,7 +63,7 @@ class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolea
   }
 }
 
-const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire'] as const;
+const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire', 'kitchen'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: { id: Screen; label: string; icon: IconName }[] = [
@@ -214,6 +216,7 @@ export default function App() {
             {route.screen === 'prayer' && <PrayerPage sub={route.sub} />}
             {route.screen === 'calm' && <CalmCorner />}
             {route.screen === 'pond' && <Pond />}
+            {route.screen === 'kitchen' && <Kitchen sub={route.sub} />}
             {route.screen === 'campfire' && <Campfire />}
           </Suspense>
         </ScreenBoundary>

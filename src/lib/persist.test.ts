@@ -149,6 +149,20 @@ describe('missing nested properties', () => {
     expect(out.futureThing).toEqual({ keep: true });
     expect(out.settings.newSetting).toBe('kept');
   });
+
+  it('data saved before the kitchen existed opens with empty kitchen lists; old bills and events keep working', () => {
+    const d = emptyData(TODAY) as any;
+    for (const k of ['groceries', 'pantry', 'recipes', 'meals']) delete d[k];
+    d.recurring = [{ id: 'b', name: 'Phone', amount: 10, categoryId: 'phone', day: 3, lastAdded: null }];
+    d.events = [{ id: 'e', title: 'Birthday', kind: 'birthday', date: '2000-01-02', start: '', end: '', endDate: '', repeat: 'yearly', until: '', location: '', notes: '' }];
+    const out = normalize(d, TODAY);
+    expect(out.groceries).toEqual([]);
+    expect(out.pantry).toEqual([]);
+    expect(out.recipes).toEqual([]);
+    expect(out.meals).toEqual({});
+    expect(out.recurring[0]).toEqual(d.recurring[0]);
+    expect(out.events[0]).toEqual(d.events[0]);
+  });
 });
 
 describe('imports', () => {

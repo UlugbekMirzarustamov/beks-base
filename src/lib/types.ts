@@ -191,6 +191,40 @@ export interface CalEvent extends Base {
   remind?: number | null;
 }
 
+// ---------- Kitchen ----------
+/** One line on the shopping list, e.g. "500g pasta". */
+export interface GroceryItem extends Base {
+  text: string;
+  done: boolean;
+}
+
+/** Something you have at home. */
+export interface PantryItem extends Base {
+  name: string;
+  qty: number;
+  /** "g", "ml", "pack"… or empty for a plain count. */
+  unit: string;
+  /** Best-before / use-by date (YYYY-MM-DD), or empty. */
+  expires: string;
+}
+
+/** A recipe in your own cookbook. */
+export interface Recipe extends Base {
+  name: string;
+  /** One ingredient per line, e.g. "2 eggs", "200g rice". */
+  ingredients: string[];
+  steps: string;
+  /** Roughly how long it takes, or null. */
+  minutes: number | null;
+}
+
+export type MealSlot = 'breakfast' | 'lunch' | 'dinner';
+/** What you plan to eat: free text, linked to a recipe when the name matches one. */
+export interface Meal {
+  text: string;
+  recipeId?: string;
+}
+
 /** Things captured quickly that wait in the inbox until you sort them (tasks and expenses go straight to their lists). */
 export type InboxKind = 'idea' | 'note' | 'link' | 'reminder';
 
@@ -479,6 +513,11 @@ export interface AppData {
   assignments: Assignment[];
   /** Quick Capture inbox (ideas, notes, links, reminders). */
   inbox: InboxItem[];
+  /** Kitchen: shopping list, what's at home, recipes, and meals planned per day ("YYYY-MM-DD"). */
+  groceries: GroceryItem[];
+  pantry: PantryItem[];
+  recipes: Recipe[];
+  meals: Record<string, Partial<Record<MealSlot, Meal>>>;
   /** The universal calendar's own events (classes, appointments, travel, birthdays, events). */
   events: CalEvent[];
   /** "YYYY-MM-DD" → when you got up (Fajr rise) */
