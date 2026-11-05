@@ -2,7 +2,7 @@
  * Prayer times for Sheffield, worked out on the device (works offline, no API).
  *
  * Uses the well-known sun-position method (as in PrayTimes.org) with:
- *  - Fajr when the sun is 18° below the horizon, Isha at 17° (Muslim World League),
+ *  - Fajr and Isha from the chosen method (default Muslim World League: 18° and 17°),
  *  - Asr: Hanafi (shadow = 2× object, common in Uzbekistan) or standard (1×),
  *  - Maghrib at sunset,
  *  - the "angle-based" rule for high latitudes, so summer Fajr/Isha still exist
@@ -10,7 +10,16 @@
  * Mosques round or adjust differently, so each prayer has a +/- minutes offset in settings.
  */
 import { addDays, UK_TZ, zonedParts } from './dates';
-import type { PrayerName, PrayerSettings } from './types';
+import type { CalcMethod, PrayerName, PrayerSettings } from './types';
+
+/** Fajr angle, and Isha as an angle or a fixed number of minutes after Maghrib. */
+export const METHODS: Record<CalcMethod, { name: string; fajr: number; isha: number; ishaMinutes?: number }> = {
+  mwl: { name: 'Muslim World League (18° / 17°)', fajr: 18, isha: 17 },
+  isna: { name: 'ISNA — North America (15° / 15°)', fajr: 15, isha: 15 },
+  egypt: { name: 'Egyptian Authority (19.5° / 17.5°)', fajr: 19.5, isha: 17.5 },
+  karachi: { name: 'Karachi — Islamic Sciences (18° / 18°)', fajr: 18, isha: 18 },
+  makkah: { name: 'Umm al-Qura, Makkah (18.5° / Isha 90 min after Maghrib)', fajr: 18.5, isha: 0, ishaMinutes: 90 },
+};
 
 export const SHEFFIELD = { lat: 53.3811, lng: -1.4701 };
 export const PRAYERS: PrayerName[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
@@ -91,6 +100,7 @@ export function prayerTimes(date: string, settings: PrayerSettings, place = SHEF
     return sunAngleTime(-arccot(factor + tan(Math.abs(lat - decl))), t);
   };
   const factor = settings.asr === 'hanafi' ? 2 : 1;
+  const method = METHODS[settings.method ?? 'mwl'] ?? METHODS.mwl;
 
   // First guesses (hours), refined twice using the sun's position at those times.
   const guess = { fajr: 5, sunrise: 6, dhuhr: 12, asr: 13, sunset: 18, isha: 18 };
@@ -98,12 +108,12 @@ export function prayerTimes(date: string, settings: PrayerSettings, place = SHEF
   for (let i = 0; i < 2; i++) {
     const at = (k: keyof typeof guess) => (Number.isFinite(t[k]) ? t[k] : guess[k]) / 24;
     t = {
-      fajr: sunAngleTime(18, at('fajr'), true),
+      fajr: sunAngleTime(method.fajr, at('fajr'), true),
       sunrise: sunAngleTime(0.833, at('sunrise'), true),
       dhuhr: midDay(at('dhuhr')),
       asr: asrTime(factor, at('asr')),
       sunset: sunAngleTime(0.833, at('sunset')),
-      isha: sunAngleTime(17, at('isha')),
+      isha: method.ishaMinutes ? at('sunset') * 24 + method.ishaMinutes / 60 : sunAngleTime(method.isha, at('isha')),
     };
   }
   // From "sun time" to UK clock time.
@@ -112,10 +122,13 @@ export function prayerTimes(date: string, settings: PrayerSettings, place = SHEF
 
   // High-latitude rule: Fajr/Isha are never further from sunrise/sunset than (angle/60) of the night.
   const night = fixHour(t.sunrise - t.sunset);
-  const fajrMax = (18 / 60) * night;
+  const fajrMax = (method.fajr / 60) * night;
   if (!Number.isFinite(t.fajr) || t.sunrise - t.fajr > fajrMax) t.fajr = t.sunrise - fajrMax;
-  const ishaMax = (17 / 60) * night;
-  if (!Number.isFinite(t.isha) || t.isha - t.sunset > ishaMax) t.isha = t.sunset + ishaMax;
+  if (method.ishaMinutes) t.isha = t.sunset + method.ishaMinutes / 60;
+  else {
+    const ishaMax = (method.isha / 60) * night;
+    if (!Number.isFinite(t.isha) || t.isha - t.sunset > ishaMax) t.isha = t.sunset + ishaMax;
+  }
 
   const mins = (h: number, offset = 0) => Math.round(h * 60) + offset;
   const o = settings.offsets;

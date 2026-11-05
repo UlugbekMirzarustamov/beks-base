@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Lecture notes, revision planner, exam times: 169 tests passing, production build passing.
+Last verified: **2026-11-05** — Deen additions (Jumu'ah, hifz, methods, Hijri): 175 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -90,6 +90,11 @@ Paths are relative to `src/`.
 | Feature | Status | Evidence |
 |---|---|---|
 | Prayer times, lanterns, strip, full-screen call, qibla, offsets | Implemented | `lib/prayer.ts` (tests in `lib/prayer.test.ts`), `screens/Prayer.tsx` |
+| Prayer calculation methods (MWL default, ISNA, Egyptian, Karachi, Umm al-Qura) | Implemented | `METHODS` in `lib/prayer.ts` (tests in `lib/islamic.test.ts`); Prayer settings |
+| Hijri date (Home greeting, Prayer page) + Islamic calendar of the next occasions | Implemented | `hijriLabel`, `nextOccasions` in `lib/islamic.ts`; `IslamicCalendar` in `screens/Deen.tsx` |
+| Jumu'ah routine: Friday checklist (private), mosque khutbah time, last hour before Maghrib | Implemented | `JumuahTab` in `screens/Deen.tsx` (Prayer → Jumu'ah); `FRIDAY_STEPS` in `lib/islamic.ts` |
+| Friday card on Home on a real Friday | Needs verification | `FridayCard` in `screens/Home.tsx` — built on Thursday; the Friday check (`isFriday`) is tested |
+| Qur'an memorisation (hifz) per surah + spaced revision (solid → 3/7/14/30/60 days, shaky → tomorrow), never scored | Implemented | `HifzTab` in `screens/Deen.tsx` (Prayer → Hifz); `dueForRevision`, `afterRevision` in `lib/islamic.ts`; `lib/surahs.ts` |
 | Tasbih, Qur'an tracker | Implemented | `screens/Devotion.tsx`, `lib/quran.ts` |
 | Ramadan mode (countdown, preview, times, fasts, taraweeh, juz, dua, lanterns) | Implemented | `lib/ramadan.ts` (tests), `screens/Ramadan.tsx`, `scene/Cabin.tsx` |
 | Ramadan mode switching on during the real Ramadan | Needs verification | Checked only with the preview; the calendar maths is tested |

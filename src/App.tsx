@@ -41,7 +41,7 @@ const Pond = lazy(loadPond);
 const Kitchen = lazy(loadKitchen);
 const Archive = lazy(loadArchive);
 export function prefetchScreens() {
-  void Promise.all([loadReflect(), loadMore(), loadPond(), loadKitchen(), loadArchive(), import('./screens/Calendar'), import('./screens/Assignments'), import('./screens/Admin'), import('./screens/Toolbox'), import('./screens/Notes'), import('./screens/Revision')]).catch(() => {
+  void Promise.all([loadReflect(), loadMore(), loadPond(), loadKitchen(), loadArchive(), import('./screens/Calendar'), import('./screens/Assignments'), import('./screens/Admin'), import('./screens/Toolbox'), import('./screens/Notes'), import('./screens/Revision'), import('./screens/Deen')]).catch(() => {
     /* offline: they'll be fetched next time */
   });
 }

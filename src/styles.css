@@ -5935,3 +5935,27 @@ button.list__main {
   display: flex;
   flex-direction: column;
 }
+
+/* ---------- Jumu'ah & hifz ---------- */
+.hijri-line {
+  margin: -6px 0 8px;
+}
+.hifz-due {
+  padding-right: 6px;
+}
+.hifz-due .list__text {
+  padding: 8px;
+}
+.hifz-item {
+  flex-wrap: wrap;
+  padding: 6px 8px;
+}
+.hifz-item__main {
+  flex: 1 1 160px;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.hifz-item__count .input {
+  width: 64px;
+}

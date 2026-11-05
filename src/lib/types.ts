@@ -258,6 +258,20 @@ export interface AdminItem extends Base {
   finished: boolean;
 }
 
+// ---------- Qur'an memorisation ----------
+/** One surah you're memorising or have memorised. Private: never scored. */
+export interface HifzItem {
+  /** The surah number as a string ("1"–"114"). */
+  id: string;
+  surah: number;
+  /** How many ayahs you know by heart. */
+  learned: number;
+  /** Last revised (YYYY-MM-DD), or empty. */
+  revised: string;
+  /** Days until the next revision (grows when it's solid). */
+  interval: number;
+}
+
 /** Things captured quickly that wait in the inbox until you sort them (tasks and expenses go straight to their lists). */
 export type InboxKind = 'idea' | 'note' | 'link' | 'reminder';
 
@@ -344,9 +358,16 @@ export interface Reflection {
 // ---------- Prayer ----------
 export type PrayerName = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 
+/** How Fajr and Isha are calculated (see METHODS in lib/prayer.ts). */
+export type CalcMethod = 'mwl' | 'isna' | 'egypt' | 'karachi' | 'makkah';
+
 export interface PrayerSettings {
   /** Asr starts when a shadow is 2× (Hanafi, common in Uzbekistan) or 1× (standard) an object's length. */
   asr: 'hanafi' | 'standard';
+  /** Fajr/Isha calculation method; missing = Muslim World League. */
+  method?: CalcMethod;
+  /** Your mosque's Jumu'ah (khutbah) time "HH:MM", if you've typed it. */
+  jumuah?: string;
   /** Minutes to add/subtract per prayer, to match your local mosque's timetable. */
   offsets: Record<PrayerName, number>;
   /** Show the full-screen "time to pray" call when opening the app. */
@@ -561,6 +582,10 @@ export interface AppData {
   pantry: PantryItem[];
   recipes: Recipe[];
   meals: Record<string, Partial<Record<MealSlot, Meal>>>;
+  /** "YYYY-MM-DD" (a Friday) → the Jumu'ah steps done that day. Private, never scored. */
+  friday: Record<string, string[]>;
+  /** Qur'an memorisation (hifz), one entry per surah. Private, never scored. */
+  hifz: HifzItem[];
   /** Lecture notes per module, linked with [[Title]]. */
   lectureNotes: LectureNote[];
   /** Student admin: documents, visa, accommodation… as dated checklists. */

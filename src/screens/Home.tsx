@@ -21,6 +21,7 @@ import { careStatus } from '../lib/care';
 import { conflicts, dateReminders, itemsOn, KIND_INFO, upcoming } from '../lib/calendar';
 import { freshness, toUseSoon } from '../lib/kitchen';
 import { adminReminders, progress } from '../lib/admin';
+import { FRIDAY_STEPS, hijriLabel, isFriday } from '../lib/islamic';
 import { openJar } from './Calm';
 import { BadgeSummary } from './Badges';
 import { coins } from '../lib/shop';
@@ -67,7 +68,7 @@ export default function Home() {
         </div>
         <div className="greeting-row">
           <p className="greeting">
-            {greeting()}, Bek! <span className="muted">· {formatDay(today)}</span>
+            {greeting()}, Bek! <span className="muted">· {formatDay(today)} · {hijriLabel(today)}</span>
           </p>
           <div className="greeting-row__buttons">
             <button type="button" className="btn btn--small" onClick={() => window.dispatchEvent(new Event('beks:briefing'))}>
@@ -89,6 +90,7 @@ export default function Home() {
       <div className="grid grid--home">
         <TodayCard />
         <ImportantDates />
+        <FridayCard />
         <FajrRise />
         <RamadanCard />
         <MorningPromise />
@@ -236,6 +238,31 @@ function ImportantDates() {
       </ul>
       <a href="#/planner/calendar" className="more-link">
         Calendar →
+      </a>
+    </Panel>
+  );
+}
+
+/** On Fridays: the Jumu'ah checklist (private, never scored); hidden on other days and once all is ticked. */
+function FridayCard() {
+  const { data, update, today } = useStore();
+  if (!isFriday(today)) return null;
+  const done = data.friday[today] ?? [];
+  const left = FRIDAY_STEPS.filter((s) => !done.includes(s.id));
+  if (!left.length) return null;
+  const tick = (id: string) => update((d) => void (d.friday[today] = [...(d.friday[today] ?? []), id]));
+  return (
+    <Panel title="Jumu'ah Mubarak" icon="mat">
+      <ul className="tasks">
+        {left.slice(0, 3).map((s) => (
+          <li key={s.id} className="task">
+            <input type="checkbox" className="pixel-check" checked={false} onChange={() => tick(s.id)} aria-label={s.text} />
+            <span className="task__title grow">{s.text}</span>
+          </li>
+        ))}
+      </ul>
+      <a href="#/prayer/friday" className="more-link">
+        {data.settings.prayer.jumuah ? `Khutbah ${data.settings.prayer.jumuah} · ` : ''}Friday checklist →
       </a>
     </Panel>
   );

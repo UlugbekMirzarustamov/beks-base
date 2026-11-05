@@ -10,11 +10,12 @@
  *  - Prayer page      today's times, your week, streak, qibla compass, settings.
  * Times are worked out for Sheffield on the device (see lib/prayer.ts).
  */
-import { useEffect, useMemo, useState } from 'react';
-import { addDays, formatDay, UK_TZ, WEEKDAYS, weekdayOf, zonedParts } from '../lib/dates';
-import { daySlots, minsToClock, minsToWait, PRAYER_INFO, PRAYERS, prayerNow, prayerTimes, qiblaBearing } from '../lib/prayer';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { addDays, formatDay, todayUK, UK_TZ, WEEKDAYS, weekdayOf, zonedParts } from '../lib/dates';
+import { daySlots, METHODS, minsToClock, minsToWait, PRAYER_INFO, PRAYERS, prayerNow, prayerTimes, qiblaBearing } from '../lib/prayer';
+import { hijriLabel } from '../lib/islamic';
 import { buzz, sfx } from '../lib/sound';
-import type { PrayerName } from '../lib/types';
+import type { CalcMethod, PrayerName } from '../lib/types';
 import { useStore } from '../state/store';
 import { RamadanTab } from './Ramadan';
 import { PixelIcon } from '../ui/icons';
@@ -261,7 +262,12 @@ export function PrayerLanterns() {
 }
 
 // ---------------------------------------------------------------- the Prayer page
-const PAGE_TABS = ['today', 'tasbih', 'quran', 'ramadan'] as const;
+const PAGE_TABS = ['today', 'friday', 'tasbih', 'quran', 'hifz', 'ramadan'] as const;
+// Jumu'ah, hifz and the Islamic calendar load on first open (prefetched for offline in App.tsx).
+const JumuahTab = lazy(() => import('./Deen').then((m) => ({ default: m.JumuahTab })));
+const HifzTab = lazy(() => import('./Deen').then((m) => ({ default: m.HifzTab })));
+const IslamicCalendar = lazy(() => import('./Deen').then((m) => ({ default: m.IslamicCalendar })));
+const opening = <p className="muted center">Opening…</p>;
 type PageTab = (typeof PAGE_TABS)[number];
 
 export default function PrayerPage({ sub }: { sub?: string }) {
@@ -271,20 +277,33 @@ export default function PrayerPage({ sub }: { sub?: string }) {
       <h1 className="screen__title">
         <PixelIcon name="mat" size={28} /> The Prayer Mat
       </h1>
+      <p className="muted small hijri-line">{hijriLabel(todayUK())}</p>
       <Tabs<PageTab>
         label="Prayer sections"
         active={tab}
         onChange={setTab}
         tabs={[
           { id: 'today', label: 'Prayers', icon: 'lantern' },
+          { id: 'friday', label: "Jumu'ah", icon: 'mat' },
           { id: 'tasbih', label: 'Tasbih', icon: 'bead' },
           { id: 'quran', label: "Qur'an", icon: 'quran' },
+          { id: 'hifz', label: 'Hifz', icon: 'book' },
           { id: 'ramadan', label: 'Ramadan', icon: 'moon' },
         ]}
       />
       {tab === 'today' && <PrayersToday />}
       {tab === 'tasbih' && <Tasbih />}
       {tab === 'quran' && <Quran />}
+      {tab === 'friday' && (
+        <Suspense fallback={opening}>
+          <JumuahTab />
+        </Suspense>
+      )}
+      {tab === 'hifz' && (
+        <Suspense fallback={opening}>
+          <HifzTab />
+        </Suspense>
+      )}
       {tab === 'ramadan' && <RamadanTab />}
     </div>
   );
@@ -367,7 +386,20 @@ function PrayersToday() {
           </div>
         </Panel>
 
+        <Suspense fallback={null}>
+          <IslamicCalendar />
+        </Suspense>
+
         <Panel title="Prayer settings" icon="gear">
+          <Field label="Fajr & Isha calculation" hint="Pick the one your mosque uses; the default is Muslim World League.">
+            <select className="input" value={p.settings.method ?? 'mwl'} onChange={(e) => update((d) => void (d.settings.prayer.method = e.target.value as CalcMethod))}>
+              {(Object.keys(METHODS) as CalcMethod[]).map((m) => (
+                <option key={m} value={m}>
+                  {METHODS[m].name}
+                </option>
+              ))}
+            </select>
+          </Field>
           <p className="field__label">Asr time</p>
           <Segmented
             label="Asr method"

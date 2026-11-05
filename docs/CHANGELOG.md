@@ -4,6 +4,14 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Deen: Jumu'ah, hifz, calculation methods, Hijri date** (all private — nothing scored): Prayer settings
+  can switch the **Fajr/Isha method** (Muslim World League stays the default, so times don't change unless you
+  pick another: ISNA, Egyptian, Karachi or Umm al-Qura). The **Hijri date** shows on Home and the Prayer page,
+  with an **Islamic calendar** of the next occasions (Ramadan, Eid al-Fitr, Arafah, Eid al-Adha, New Year,
+  Ashura). New **Jumu'ah** tab: the Friday sunnahs as a gentle checklist, your mosque's khutbah time and the
+  last hour before Maghrib; on Fridays a small card on Home. New **Hifz** tab: all 114 surahs, ayahs memorised
+  per surah, and a revision list that spaces solid surahs further apart (3, 7, 14, 30, 60 days) and brings
+  shaky ones back tomorrow. Existing data gets the default method with no update step. Tests: 175 passing.
 - **Lecture notes, revision planner, exam times:** Study → **Notes**: notes per module and lecture date,
   with search and a module filter. Type `[[Another note]]` to link notes; links to a missing note offer to
   create it, links to one of your topics show its red/amber/green colour, each note lists the notes linking
