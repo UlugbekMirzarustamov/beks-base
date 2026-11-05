@@ -4,6 +4,16 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Daily dashboard — Phase 1 complete:** a compact **Today** card at the top of Home: top-3 progress, the
+  class happening now or next, the next prayer, money left today (from the money plan or the monthly
+  budget), exams and deadlines this week, and progress on your nearest goals (dated vision goals and
+  savings jars). Every row links to its full screen. New one-tap **sleep & energy check-in** (not scored),
+  with a suggestion from last night's bedtime and this morning's Fajr-rise time. `savedIn` now lives in
+  `lib/money.ts` (shared, not duplicated). Tests: 129 passing.
+- **Phase 1 handover:** done — data foundation, universal calendar, Quick Capture + inbox, assignments &
+  grade calculator, global search + command palette, daily dashboard. Next (Phase 2, everyday
+  usefulness): groceries & meals, recipes & pantry, subscription tracker, financial calendar, student
+  admin, important dates, searchable archive. Still waiting on Bek: none.
 - **Global search & command palette:** press Ctrl/⌘ K anywhere, or tap the new magnifier in the top bar.
   Search everything you've written — tasks, assignments, exams, events, purchases (also by amount),
   journal notes, inbox, words, formula cards, mistakes, topics, wishes, savings jars, vision goals and

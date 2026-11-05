@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { guessColumns, parseCsv, rowsToPurchases, type ColumnGuess } from '../lib/csv';
 import { addDays, addMonths, daysBetween, daysInMonth, formatDay, formatMonth, monthOf } from '../lib/dates';
 import { uid } from '../lib/id';
-import { barLevel, convertPoundsToDollars, formatMoney, formatPounds, parseAmount, poundsToDollars, roundPennies, safeToSpend, spendingByDay, spentInMonth } from '../lib/money';
+import { barLevel, convertPoundsToDollars, formatMoney, formatPounds, parseAmount, poundsToDollars, roundPennies, safeToSpend, spendingByDay, spentInMonth, savedIn } from '../lib/money';
 import { moneyInsights } from '../lib/daily';
 import { PlanTab, PotToday, Wishes } from './Plan';
 import { sfx } from '../lib/sound';
@@ -920,7 +920,7 @@ function CsvImport() {
 // ---------------------------------------------------------------- Savings jars
 const GOAL_ICONS: SavingsGoal['icon'][] = ['plane', 'house', 'book', 'gift', 'heart', 'star', 'coin'];
 
-export const savedIn = (g: SavingsGoal) => roundPennies(g.deposits.reduce((sum, d) => sum + d.amount, 0));
+export { savedIn };
 
 /** A pixel jar that fills up with coins. */
 export function Jar({ pct, small = false }: { pct: number; small?: boolean }) {

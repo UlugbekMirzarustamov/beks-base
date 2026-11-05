@@ -5638,3 +5638,73 @@ button.list__main {
   padding: 6px 12px;
   border-top: 2px dashed var(--panel-lo);
 }
+
+/* =====================================================================
+ * Today (the daily dashboard on Home)
+ * ===================================================================== */
+.today-rows {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.today-rows li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.today-rows li .picon {
+  margin-top: 2px;
+}
+.today-rows a {
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.today-rows a:hover strong,
+.today-rows a:focus-visible strong {
+  text-decoration: underline;
+}
+.today-over {
+  color: var(--red);
+}
+.today-goal {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.today-goal__bar {
+  display: block;
+  height: 8px;
+  background: var(--bar-bg);
+  border: 2px solid var(--edge);
+}
+.today-goal__bar span {
+  display: block;
+  height: 100%;
+  background: var(--xp);
+}
+.today-check {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 2px dashed var(--panel-lo);
+}
+.today-check .field__label {
+  margin: 4px 0;
+}
+.today-check__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.today-check__row .chip {
+  min-height: 0;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.today-check__row .chip.is-on {
+  background: var(--gold);
+  color: #2f1d0c;
+}

@@ -6,16 +6,19 @@
 import { useState } from 'react';
 import { backupFileName, exportJson, type Photo } from '../lib/backup';
 import { careStatus, MEAL_GOAL, WATER_GOAL } from '../lib/care';
-import type { AppData } from '../lib/types';
+import type { AppData, DayCheckin } from '../lib/types';
 import { usePhotos } from './Photos';
 import { recallPick, todaysQuest, wordOfTheDay } from '../lib/daily';
 import { addDays, formatDay, fromMinutes, toMinutes, UK_TZ, zonedParts } from '../lib/dates';
-import { minsToClock, prayerTimes } from '../lib/prayer';
+import { minsToClock, PRAYER_INFO, prayerTimes } from '../lib/prayer';
 import { buzz, sfx } from '../lib/sound';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Panel } from '../ui/kit';
 import { classesOn } from './Planner';
+import { usePrayer } from './Prayer';
+import { deadlinesSoon, goalProgress, moneyToday, sleptHours } from '../lib/today';
+import { formatMoney } from '../lib/money';
 
 const QUEST_XP = 20;
 
@@ -298,6 +301,140 @@ export function BackupCard() {
       <button type="button" className="btn btn--primary" onClick={go}>
         <PixelIcon name="arrowR" size={16} /> Back up now
       </button>
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------- Today (the daily dashboard)
+const ENERGY: { value: NonNullable<DayCheckin['energy']>; label: string }[] = [
+  { value: 1, label: 'Drained' },
+  { value: 2, label: 'Low' },
+  { value: 3, label: 'Okay' },
+  { value: 4, label: 'Good' },
+  { value: 5, label: 'Great' },
+];
+const SLEEP = [5, 6, 7, 8, 9];
+
+/** One calm card with what matters today; every row links to its full screen. */
+export function TodayCard() {
+  const { data, update, today } = useStore();
+  const prayer = usePrayer();
+  const p = zonedParts(new Date(), UK_TZ);
+  const now = p.hour * 60 + p.minute;
+  const classes = classesOn(data, today);
+  const live = classes.find((c) => toMinutes(c.start) <= now && now < toMinutes(c.end));
+  const next = classes.find((c) => toMinutes(c.start) > now);
+  const money = moneyToday(data, today);
+  const deadlines = deadlinesSoon(data, today, 7).slice(0, 3);
+  const goals = goalProgress(data, today, 2);
+  const topDone = data.priorities.items.filter((t, i) => t.trim() && data.priorities.done[i]).length;
+  const topSet = data.priorities.items.filter((t) => t.trim()).length;
+  const check = data.checkins[today] ?? {};
+  const guess = sleptHours(data, today);
+  const setCheck = (patch: DayCheckin) => update((d) => void (d.checkins[today] = { ...(d.checkins[today] ?? {}), ...patch }));
+  const when = (date: string) => (date === today ? 'today' : date === addDays(today, 1) ? 'tomorrow' : formatDay(date));
+
+  return (
+    <Panel title="Today" icon="sun" className="today-card">
+      <ul className="today-rows">
+        <li>
+          <PixelIcon name="star" size={18} />
+          <a href="#/planner/today">
+            Top 3: <strong>{topSet ? `${topDone}/${topSet} done` : 'not picked yet'}</strong>
+          </a>
+        </li>
+        <li>
+          <PixelIcon name="clock" size={18} />
+          <a href="#/planner/calendar">
+            {live ? (
+              <>
+                Now: <strong>{live.name}</strong> until {live.end}
+              </>
+            ) : next ? (
+              <>
+                Next class: <strong>{next.name}</strong> at {next.start}
+                {next.room ? ` · ${next.room}` : ''}
+              </>
+            ) : (
+              <>{classes.length ? 'Classes done for today' : 'No classes today'}</>
+            )}
+          </a>
+        </li>
+        <li>
+          <PixelIcon name="lantern" size={18} />
+          <a href="#/prayer/today">
+            {prayer.dueNow ? (
+              <>
+                <strong>{PRAYER_INFO[prayer.dueNow.name].name}</strong> is now
+              </>
+            ) : (
+              <>
+                Next prayer: <strong>{PRAYER_INFO[prayer.next.name].name}</strong> at {minsToClock(prayer.next.start)}
+              </>
+            )}
+          </a>
+        </li>
+        <li>
+          <PixelIcon name="coin" size={18} />
+          <a href={money.source === 'plan' ? '#/money/plan' : '#/money/overview'}>
+            <strong className={money.left < 0 ? 'today-over' : ''}>{formatMoney(Math.abs(money.left))}</strong> {money.left < 0 ? 'over today' : 'left to spend today'}
+            {money.spent > 0 ? ` · spent ${formatMoney(money.spent)}` : ''}
+          </a>
+        </li>
+        <li>
+          <PixelIcon name="calendar" size={18} />
+          <a href="#/planner/calendar">
+            {deadlines.length ? (
+              <>
+                Due:{' '}
+                {deadlines.map((d, i) => (
+                  <span key={d.key}>
+                    {i > 0 && ' · '}
+                    <strong>{d.title}</strong> {when(d.date)}
+                  </span>
+                ))}
+              </>
+            ) : (
+              'No deadlines or exams this week'
+            )}
+          </a>
+        </li>
+        {goals.map((g) => (
+          <li key={g.key}>
+            <PixelIcon name="photo" size={18} />
+            <a href={g.href} className="today-goal">
+              <span>
+                <strong>{g.title}</strong> {g.daysLeft !== null ? `· ${g.daysLeft} days left` : `· ${Math.round((g.pct ?? 0) * 100)}%`}
+              </span>
+              {g.pct !== null && (
+                <span className="today-goal__bar" aria-hidden="true">
+                  <span style={{ width: `${Math.round(g.pct * 100)}%` }} />
+                </span>
+              )}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <div className="today-check">
+        <p className="field__label">
+          Slept about{guess && check.sleepHours === undefined ? ` (your log says ~${guess}h)` : ''}
+        </p>
+        <div className="today-check__row" role="group" aria-label="Hours of sleep">
+          {SLEEP.map((h) => (
+            <button key={h} type="button" className={`chip ${check.sleepHours === h ? 'is-on' : ''}`} aria-pressed={check.sleepHours === h} onClick={() => setCheck({ sleepHours: h })}>
+              {h === 9 ? '9h+' : `${h}h`}
+            </button>
+          ))}
+        </div>
+        <p className="field__label">Energy</p>
+        <div className="today-check__row" role="group" aria-label="Energy today">
+          {ENERGY.map((e) => (
+            <button key={e.value} type="button" className={`chip ${check.energy === e.value ? 'is-on' : ''}`} aria-pressed={check.energy === e.value} onClick={() => setCheck({ energy: e.value })}>
+              {e.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </Panel>
   );
 }

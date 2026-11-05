@@ -196,6 +196,12 @@ export interface InboxItem extends Base {
   notified?: boolean;
 }
 
+/** The morning check-in: roughly how long you slept, and your energy (1 = drained … 5 = great). */
+export interface DayCheckin {
+  sleepHours?: number;
+  energy?: 1 | 2 | 3 | 4 | 5;
+}
+
 // ---------- Phase 2 ----------
 export interface VocabWord extends Base {
   word: string;
@@ -455,6 +461,8 @@ export interface AppData {
   catches: Catch[];
   /** "YYYY-MM-DD" → meals and water (Simba's needs) */
   care: Record<string, Care>;
+  /** "YYYY-MM-DD" → sleep and energy check-in */
+  checkins: Record<string, DayCheckin>;
   /** Coursework with deadlines, weightings and marks. */
   assignments: Assignment[];
   /** Quick Capture inbox (ideas, notes, links, reminders). */

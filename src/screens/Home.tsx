@@ -10,7 +10,7 @@ import { PixelIcon } from '../ui/icons';
 import { Bar, Empty, Panel } from '../ui/kit';
 import { Clocks, MoodCheckIn } from './Extras';
 import { InstallCard } from '../ui/AppFeel';
-import { BackupCard, OnePercent, SimbaNeeds, WindDown } from './Daily';
+import { BackupCard, OnePercent, SimbaNeeds, TodayCard, WindDown } from './Daily';
 import { CampfireCard } from './Campfire';
 import { FajrRise, GhostRace, MorningPromise } from './Push';
 import { InboxPanel, QuickCapture } from './Capture';
@@ -82,6 +82,7 @@ export default function Home() {
       <QuickCapture />
       <WindDown />
       <div className="grid grid--home">
+        <TodayCard />
         <FajrRise />
         <RamadanCard />
         <MorningPromise />

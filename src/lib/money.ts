@@ -24,6 +24,9 @@ export const poundsToDollars = (gbp: number, gbpPerUsd: number) => roundPennies(
 /** Round to pennies, to avoid 0.1 + 0.2 = 0.30000000000000004 problems. */
 export const roundPennies = (n: number) => Math.round(n * 100) / 100;
 
+/** Money in a savings jar so far (deposits minus withdrawals). */
+export const savedIn = (g: { deposits: { amount: number }[] }) => roundPennies(g.deposits.reduce((sum, d) => sum + d.amount, 0));
+
 /** Total spent in a month ("YYYY-MM"), optionally only for one category. */
 export function spentInMonth(expenses: Expense[], month: string, categoryId?: string): number {
   let total = 0;
