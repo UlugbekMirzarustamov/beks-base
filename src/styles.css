@@ -5553,3 +5553,88 @@ button.list__main {
 .grade-table .input {
   padding: 4px;
 }
+
+/* =====================================================================
+ * Command palette (Ctrl/⌘ K)
+ * ===================================================================== */
+.palette {
+  position: fixed;
+  inset: 0;
+  z-index: 92;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: calc(56px + env(safe-area-inset-top)) 12px 12px;
+  background: rgba(14, 10, 26, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.palette__box {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 560px);
+  max-height: calc(100vh - 80px);
+  color: var(--ink);
+  background: var(--panel);
+  border: var(--bevel) solid var(--edge);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
+}
+.palette__field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 3px solid var(--edge);
+}
+.palette__input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 2px;
+  font: inherit;
+  font-size: 18px;
+  color: inherit;
+  background: none;
+  border: 0;
+  outline: none;
+}
+.palette__list {
+  flex: 1;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.palette__group {
+  margin: 8px 12px 2px;
+  font-family: var(--font-title);
+  font-size: 9px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+.palette__row {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 6px 12px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+.palette__row.is-active {
+  background: var(--gold);
+  color: #2f1d0c;
+}
+.palette__row.is-active .muted {
+  color: #5a4220;
+}
+.palette__empty {
+  padding: 12px;
+}
+.palette__hint {
+  margin: 0;
+  padding: 6px 12px;
+  border-top: 2px dashed var(--panel-lo);
+}

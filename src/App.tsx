@@ -18,6 +18,7 @@ import Campfire from './screens/Campfire';
 import { PhotoWall } from './screens/Photos';
 import { HardBadge, OversleptCall } from './screens/Push';
 import { ReminderWatcher } from './screens/Capture';
+import { CommandPalette, openSearch } from './screens/Search';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Study from './screens/Study';
@@ -173,6 +174,9 @@ export default function App() {
               <span style={{ width: `${(lvl.into / lvl.needed) * 100}%` }} />
             </span>
           </a>
+          <button type="button" className="icon-btn icon-btn--bar" onClick={openSearch} aria-label="Search and commands (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K">
+            <PixelIcon name="search" size={22} />
+          </button>
           <div className="mixer-pop" ref={mixerRef}>
             <button
               type="button"
@@ -238,6 +242,7 @@ export default function App() {
       <PrayerCall />
       <OversleptCall />
       <ReminderWatcher />
+      <CommandPalette />
       <Toaster />
     </div>
   );

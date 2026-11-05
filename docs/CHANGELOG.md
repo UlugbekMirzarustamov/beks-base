@@ -4,6 +4,13 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Global search & command palette:** press Ctrl/⌘ K anywhere, or tap the new magnifier in the top bar.
+  Search everything you've written — tasks, assignments, exams, events, purchases (also by amount),
+  journal notes, inbox, words, formula cards, mistakes, topics, wishes, savings jars, vision goals and
+  nightly logs (sealed letters by title only, so they stay sealed). Matching ignores case and accents and
+  needs every word. Jump to any screen, run quick actions (add a purchase, switch day/night, today's
+  briefing), or send what you typed to Quick Capture. Full keyboard use (↑ ↓ Enter Esc) with screen-reader
+  roles; the search index is rebuilt only when your data changes. Tests: 124 passing.
 - **Assignments & grades:** Study → Assignments. Coursework with module, deadline (and time), priority,
   status (to do → doing → submitted → graded), weighting and mark; overdue and due-soon items stand out,
   and entering a mark marks it graded. Each module (your subjects) gets a **grade calculator**: weighted

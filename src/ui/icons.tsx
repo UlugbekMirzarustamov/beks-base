@@ -70,6 +70,7 @@ const ICONS = {
   bead: ['........', '..kkkk..', '.kGggGk.', '.kggwGk.', '.kgggGk.', '.kGGGGk.', '..kkkk..', '........'],
   quran: ['kkkkkkkk', 'kGGGGGGk', 'kGyyyyGk', 'kGyGGyGk', 'kGyGGyGk', 'kGyyyyGk', 'kGGGGGGk', 'kkkkkkkk'],
   cat: ['.k....k.', '.kk..kk.', '.kssssk.', '.kyssyk.', '.kssssk.', '..kssk..', '.kssssk.', 'kkkkkkkk'],
+  search: ['..kkk...', '.kwwwk..', 'kwllwwk.', 'kwlwwwk.', 'kwwwwwk.', '.kwwwkk.', '..kkkkkk', '......kk'],
   radio: ['......k.', '.....k..', 'kkkkkkkk', 'knnnnnnk', 'kNkknyyk', 'kNkknnnk', 'knnnnnnk', 'kkkkkkkk'],
   fish: ['........', '.....kk.', 'k..kbbbk', 'kkkblbwk', 'kkkbbbbk', 'k..kbbk.', '.....k..', '........'],
   sword: ['......sk', '.....sk.', '....sk..', '.k.sk...', '..kk....', '..ok....', '.o..k...', 'o.......'],
