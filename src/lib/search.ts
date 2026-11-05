@@ -163,6 +163,7 @@ export const COMMANDS: Command[] = [
   go('Mistakes', '#/study/mistakes', 'notebook'),
   go('Formula cards', '#/study/cards', 'flashcards'),
   go('Pomodoro timer', '#/study/timer', 'focus study'),
+  go('Engineering tools', '#/study/tools', 'calculator scientific unit converter constants suvat quadratic simultaneous equation solver'),
   go('Money plan', '#/money/plan', 'pot allowance budget'),
   go('Wishes', '#/money/wishes', 'wish fund'),
   go('Spending', '#/money/spending', 'purchases expenses'),

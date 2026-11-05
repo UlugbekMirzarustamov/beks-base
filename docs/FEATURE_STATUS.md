@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Phase 2 complete (archive): 152 tests passing, production build passing.
+Last verified: **2026-11-05** — Engineering toolbox: 162 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -56,7 +56,8 @@ Paths are relative to `src/`.
 | Assignment manager (module, deadline + time, priority, status, weighting, mark, notes) | Implemented | `screens/Assignments.tsx` (Study → Assignments), `Assignment` in `lib/types.ts` |
 | Grade calculator (weighted average, secured points, mark needed for a target, UK band guide) | Implemented | `lib/grades.ts` (tests in `lib/grades.test.ts`); exams count via optional weight/mark on tests |
 | Assignment deadlines in the calendar and Coming up | Implemented | `itemsOn()` in `lib/calendar.ts` |
-| Engineering tools beyond formula cards | Not started | Phase 3 |
+| Engineering toolbox: scientific calculator (safe parser, DEG/RAD, ans, history), unit converter (12 kinds), constants, solvers (SUVAT with both answers, quadratic, 2×2/3×3 simultaneous, f(x) = 0) | Implemented | `screens/Toolbox.tsx` (Study → Tools, loads on demand); `lib/engineering.ts` (tests in `lib/engineering.test.ts`) |
+| MATLAB snippets, graph plotting, lab checklist | Not started | Not requested for now |
 | Auto revision plan, focus guard, past-paper tracker, speaking practice | Not started | Spec: *Proposed* |
 
 ## Finance

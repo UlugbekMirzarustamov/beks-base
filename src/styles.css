@@ -5830,3 +5830,74 @@ button.list__main {
   display: block;
   margin: -4px 0 8px;
 }
+
+/* ---------- Engineering toolbox ---------- */
+.calc {
+  display: grid;
+  gap: 8px;
+}
+.calc__input {
+  font-family: var(--font-num);
+  font-size: 24px;
+}
+.calc__result {
+  min-height: 1.5em;
+  margin: 0;
+  font-family: var(--font-num);
+  font-size: 24px;
+  overflow-wrap: anywhere;
+}
+.calc__keys {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.calc__key {
+  min-height: 44px;
+  padding: 4px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: inherit;
+  background: var(--panel-hi);
+  border: var(--bevel) solid var(--edge);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.calc__key:active {
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.2);
+}
+.calc__key.is-digit {
+  background: var(--field);
+  font-family: var(--font-num);
+  font-size: 22px;
+}
+.calc__key.is-equals {
+  background: var(--grass);
+  color: #fff;
+}
+.units__row {
+  align-items: flex-end;
+}
+.lin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.lin-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.lin-cell .input,
+.lin-cell__rhs {
+  width: 48px;
+  min-width: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.lin-cell {
+  gap: 2px;
+  white-space: nowrap;
+}

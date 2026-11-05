@@ -12,9 +12,10 @@ import { PixelArt, PixelIcon } from '../ui/icons';
 import { bossFor, POMODORO_HIT, type Boss, type BossKind } from '../lib/boss';
 import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
-const TABS = ['tests', 'assignments', 'topics', 'mistakes', 'cards', 'timer'] as const;
+const TABS = ['tests', 'assignments', 'topics', 'mistakes', 'cards', 'timer', 'tools'] as const;
 // Loads on first open (prefetched for offline use in App.tsx).
 const AssignmentsTab = lazy(() => import('./Assignments'));
+const ToolsTab = lazy(() => import('./Toolbox'));
 type Tab = (typeof TABS)[number];
 
 export default function Study({ sub }: { sub?: string }) {
@@ -35,6 +36,7 @@ export default function Study({ sub }: { sub?: string }) {
           { id: 'mistakes', label: 'Mistakes', icon: 'cross' },
           { id: 'cards', label: 'Formulas', icon: 'card' },
           { id: 'timer', label: 'Timer', icon: 'clock' },
+          { id: 'tools', label: 'Tools', icon: 'table' },
         ]}
       />
       {tab === 'tests' && <Tests />}
@@ -47,6 +49,11 @@ export default function Study({ sub }: { sub?: string }) {
       {tab === 'mistakes' && <Mistakes />}
       {tab === 'cards' && <Cards />}
       {tab === 'timer' && <Timer />}
+      {tab === 'tools' && (
+        <Suspense fallback={<p className="muted center">Opening…</p>}>
+          <ToolsTab />
+        </Suspense>
+      )}
     </div>
   );
 }

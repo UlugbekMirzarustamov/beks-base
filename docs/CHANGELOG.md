@@ -4,6 +4,13 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Engineering toolbox:** Study → Tools. A **scientific calculator** (keypad or typing: brackets, powers,
+  sin/cos/tan in degrees or radians, ln/log, √, n!, %, π, e, "2pi"-style multiplying, `ans` and a tap-to-reuse
+  history; it uses its own small parser, never `eval`), a **unit converter** (length, mass, time, speed, force,
+  energy, power, pressure, area, volume, angle, temperature), a searchable list of **constants** (tap to use
+  in the calculator), and **solvers**: SUVAT (any three of s, u, v, a, t, giving both answers when there are
+  two), quadratics (incl. complex roots), 2×2 / 3×3 simultaneous equations, and "solve f(x) = 0" for any
+  expression in x. Tests: 162 passing.
 - **Phase 2 handover:** done — subscriptions & financial calendar, important dates & birthday reminders,
   kitchen (shopping, pantry, meals, cookbook, what-can-I-cook), student admin checklists, searchable
   archive. Each feature was checked at 375 px with real typing, saving and a reload. Still waiting on
