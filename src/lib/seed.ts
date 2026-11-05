@@ -137,6 +137,7 @@ export function emptyData(today: string): AppData {
     pantry: [],
     recipes: [],
     meals: {},
+    admin: [],
     inbox: [],
     assignments: [],
     checkins: {},

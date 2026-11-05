@@ -6,7 +6,8 @@
  *     with daily / weekly / monthly / yearly repeats and multi-day trips;
  *   - dated school classes (`sessions`) and weekly classes (`timetable`);
  *   - exams (`tests`), task and assignment deadlines, and study blocks;
- *   - bill and subscription payments and free-trial ends (`recurring`) — the financial calendar.
+ *   - bill and subscription payments and free-trial ends (`recurring`) — the financial calendar;
+ *   - student admin key dates and checklist step dates (`admin`).
  * Plain functions, so they're easy to test.
  */
 import { addDays, daysBetween, daysInMonth, toMinutes, weekdayOf } from './dates';
@@ -14,7 +15,7 @@ import { billDueOn, formatMoney } from './money';
 import type { AppData, CalEvent, CalKind } from './types';
 
 /** Every kind of item the calendar shows. */
-export type ItemKind = CalKind | 'exam' | 'deadline' | 'study' | 'bill';
+export type ItemKind = CalKind | 'exam' | 'deadline' | 'study' | 'bill' | 'admin';
 
 export const KIND_INFO: Record<ItemKind, { label: string; colour: string }> = {
   class: { label: 'Class', colour: '#2a6fa8' },
@@ -27,6 +28,7 @@ export const KIND_INFO: Record<ItemKind, { label: string; colour: string }> = {
   important: { label: 'Important date', colour: '#c0392b' },
   event: { label: 'Event', colour: '#8a5a2e' },
   bill: { label: 'Bill', colour: '#b8860b' },
+  admin: { label: 'Admin', colour: '#4a5d7a' },
 };
 
 /** One thing on one day, whatever it came from. */
@@ -35,7 +37,7 @@ export interface CalItem {
   key: string;
   /** The id in its own list (event, session, slot, test, task or study block). */
   id: string;
-  source: 'event' | 'session' | 'timetable' | 'test' | 'task' | 'assignment' | 'study' | 'bill';
+  source: 'event' | 'session' | 'timetable' | 'test' | 'task' | 'assignment' | 'study' | 'bill' | 'admin';
   kind: ItemKind;
   title: string;
   date: string;
@@ -113,6 +115,12 @@ export function itemsOn(d: AppData, date: string): CalItem[] {
   for (const b of d.recurring) {
     if (billDueOn(b, date)) items.push({ key: `bill-${b.id}`, id: b.id, source: 'bill', kind: 'bill', title: `${b.name} · ${formatMoney(b.amount)}`, date, start: '', end: '', location: '' });
     if (b.trialEnds === date) items.push({ key: `trial-${b.id}`, id: b.id, source: 'bill', kind: 'bill', title: `Free trial ends: ${b.name}`, date, start: '', end: '', location: '' });
+  }
+  for (const a of d.admin) {
+    if (a.date === date && !a.finished) items.push({ key: `admin-${a.id}`, id: a.id, source: 'admin', kind: 'admin', title: `${a.dateLabel}: ${a.title}`, date, start: '', end: '', location: '' });
+    for (const st of a.steps) {
+      if (st.due === date && !a.finished) items.push({ key: `admin-${a.id}-${st.id}`, id: a.id, source: 'admin', kind: 'admin', title: `${st.text} (${a.title})`, date, start: '', end: '', location: '', done: st.done });
+    }
   }
   return items.sort(byTime);
 }

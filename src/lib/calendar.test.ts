@@ -124,3 +124,15 @@ describe('important dates and birthday reminders', () => {
     expect(remindDays(ev({ kind: 'event', repeat: 'none' }))).toBeNull();
   });
 });
+
+describe('admin in the calendar', () => {
+  it('shows key dates and step dates from the admin list, and nothing once finished', () => {
+    const d = emptyData('2026-11-05');
+    d.admin = [{ id: 'v', title: 'Visa', area: 'visa', date: '2027-01-20', dateLabel: 'Expires', remind: 90, notes: '', finished: false, steps: [{ id: 's', text: 'Book biometrics', done: false, due: '2026-11-20' }] }];
+    expect(itemsOn(d, '2027-01-20').map((i) => i.title)).toEqual(['Expires: Visa']);
+    expect(itemsOn(d, '2026-11-20')[0]).toMatchObject({ kind: 'admin', source: 'admin', title: 'Book biometrics (Visa)', done: false });
+    d.admin[0].finished = true;
+    expect(itemsOn(d, '2027-01-20')).toHaveLength(0);
+    expect(itemsOn(d, '2026-11-20')).toHaveLength(0);
+  });
+});

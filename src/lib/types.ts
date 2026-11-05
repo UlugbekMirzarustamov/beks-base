@@ -225,6 +225,33 @@ export interface Meal {
   recipeId?: string;
 }
 
+// ---------- Student admin ----------
+export type AdminArea = 'visa' | 'documents' | 'housing' | 'university' | 'money' | 'health' | 'other';
+
+/** One step of an admin checklist, with an optional date of its own. */
+export interface AdminStep {
+  id: string;
+  text: string;
+  done: boolean;
+  /** YYYY-MM-DD or empty. */
+  due: string;
+}
+
+/** A piece of admin (visa, passport, tenancy, GP…): a key date plus a checklist. */
+export interface AdminItem extends Base {
+  title: string;
+  area: AdminArea;
+  /** The key date (YYYY-MM-DD) or empty, and what it means ("Expires", "Deadline"…). */
+  date: string;
+  dateLabel: string;
+  /** Show it on Home this many days before the key date. */
+  remind: number;
+  steps: AdminStep[];
+  notes: string;
+  /** Finished: kept for the record, no more reminders. */
+  finished: boolean;
+}
+
 /** Things captured quickly that wait in the inbox until you sort them (tasks and expenses go straight to their lists). */
 export type InboxKind = 'idea' | 'note' | 'link' | 'reminder';
 
@@ -518,6 +545,8 @@ export interface AppData {
   pantry: PantryItem[];
   recipes: Recipe[];
   meals: Record<string, Partial<Record<MealSlot, Meal>>>;
+  /** Student admin: documents, visa, accommodation… as dated checklists. */
+  admin: AdminItem[];
   /** The universal calendar's own events (classes, appointments, travel, birthdays, events). */
   events: CalEvent[];
   /** "YYYY-MM-DD" → when you got up (Fajr rise) */

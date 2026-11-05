@@ -4,6 +4,13 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Student admin (Phase 2, feature 4):** Planner → Admin. Visa, passport, accommodation, council tax,
+  GP and enrolment as **checklists with dates**: each item has a key date ("Expires", "Deadline",
+  "Ends"…), steps you tick off (each can have its own date), notes, and a *Finished* switch (finished
+  items are kept for the record). Six ready-made, generic checklists to start from. Key dates and step
+  dates appear in the calendar, and items show in Home's **Important dates** card from their reminder
+  window (e.g. 3 months before a visa expires) with "2/8 steps". Search finds them ("visa",
+  "passport"…). Notes stay on the device. Tests: 150 passing.
 - **Kitchen (Phase 2, feature 3):** a new Kitchen screen (button on Home, or search "pantry", "recipes"…).
   **Shopping**: type lines like "500g pasta" or "6 eggs", tick them off, then *Put in the pantry* (amounts
   add to what's already there). **Pantry**: amounts, units and use-by dates; food to use soon or past its

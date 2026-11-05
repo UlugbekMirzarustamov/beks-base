@@ -20,6 +20,7 @@ import { BossMini } from './Study';
 import { careStatus } from '../lib/care';
 import { conflicts, dateReminders, itemsOn, KIND_INFO, upcoming } from '../lib/calendar';
 import { freshness, toUseSoon } from '../lib/kitchen';
+import { adminReminders, progress } from '../lib/admin';
 import { openJar } from './Calm';
 import { BadgeSummary } from './Badges';
 import { coins } from '../lib/shop';
@@ -191,18 +192,36 @@ export default function Home() {
   );
 }
 
-/** Birthdays and important dates coming soon, from each event's "remind me" setting (with its notes, e.g. gift ideas). */
+/** Birthdays and important dates coming soon (each event's "remind me" setting, with its notes, e.g. gift ideas) and admin due soon. */
 function ImportantDates() {
   const { data, today } = useStore();
   const soon = useMemo(() => dateReminders(data, today), [data, today]);
-  if (!soon.length) return null;
+  const admin = useMemo(() => adminReminders(data.admin, today), [data.admin, today]);
+  if (!soon.length && !admin.length) return null;
   return (
     <Panel title="Important dates" icon="gift">
       <ul className="mini-list coming-up">
+        {admin.map(({ item, daysLeft }) => {
+          const p = progress(item);
+          return (
+            <li key={item.id}>
+              <span className="cal-dot" style={{ background: KIND_INFO.admin.colour }} aria-hidden="true" />
+              <span className="coming-up__text">
+                <a href="#/planner/admin">
+                  <strong>{item.title}</strong>
+                </a>{' '}
+                <small className={daysLeft < 0 ? 'pantry-warn' : 'muted'}>
+                  · {item.dateLabel.toLowerCase()} {daysLeft < 0 ? `${-daysLeft} days ago` : daysLeft === 0 ? 'today!' : relativeDays(daysLeft)}
+                  {p.total ? ` · ${p.done}/${p.total} steps` : ''}
+                </small>
+              </span>
+            </li>
+          );
+        })}
         {soon.map(({ event, date, daysLeft }) => (
           <li key={event.id}>
             <span className="cal-dot" style={{ background: KIND_INFO[event.kind].colour }} aria-hidden="true" />
-            <span>
+            <span className="coming-up__text">
               <strong>{event.title}</strong>{' '}
               <small className="muted">· {daysLeft === 0 ? 'today!' : `${relativeDays(daysLeft)} (${formatDay(date)})`}</small>
               {event.notes && (
@@ -265,7 +284,7 @@ function KitchenCard() {
 function ComingUp() {
   const { data, today } = useStore();
   // Dates already shown by the Important dates card aren't repeated here.
-  const reminded = new Set(dateReminders(data, today).map((r) => `event-${r.event.id}`));
+  const reminded = new Set([...dateReminders(data, today).map((r) => `event-${r.event.id}`), ...adminReminders(data.admin, today).map((r) => `admin-${r.item.id}`)]);
   const next = upcoming(data, today, 14).filter((i) => !reminded.has(i.key)).slice(0, 5);
   const clashes = conflicts(itemsOn(data, today));
   if (!next.length && !clashes.length) return null;

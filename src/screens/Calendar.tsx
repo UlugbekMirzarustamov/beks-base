@@ -40,6 +40,7 @@ const SOURCE_LINK: Record<Exclude<CalItem['source'], 'event'>, { href: string; l
   assignment: { href: '#/study/assignments', label: 'Study → Assignments' },
   study: { href: '#/planner/week', label: 'Week plan' },
   bill: { href: '#/money/bills', label: 'Money → Bills' },
+  admin: { href: '#/planner/admin', label: 'Planner → Admin' },
 };
 
 const Dot = ({ kind }: { kind: CalItem['kind'] }) => <span className="cal-dot" style={{ background: KIND_INFO[kind].colour }} aria-hidden="true" />;

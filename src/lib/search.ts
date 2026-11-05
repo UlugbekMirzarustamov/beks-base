@@ -52,6 +52,7 @@ export function buildIndex(d: AppData): SearchEntry[] {
   for (const g of d.groceries) if (!g.done) add({ key: `grocery-${g.id}`, kind: 'Shopping', title: g.text, sub: 'shopping list', href: '#/kitchen/groceries', date: '' });
   for (const p of d.pantry) add({ key: `pantry-${p.id}`, kind: 'Pantry', title: p.name, sub: [p.qty > 0 ? `${p.qty}${p.unit ? ` ${p.unit}` : ''}` : 'run out', p.expires ? `use by ${p.expires}` : ''].filter(Boolean).join(' · '), href: '#/kitchen/pantry', date: p.expires });
   for (const r of d.recipes) add({ key: `recipe-${r.id}`, kind: 'Recipe', title: r.name, sub: r.minutes ? `${r.minutes} min` : `${r.ingredients.length} ingredients`, href: '#/kitchen/recipes', date: '', text: `${r.ingredients.join(' ')} ${r.steps}` });
+  for (const a of d.admin) add({ key: `admin-${a.id}`, kind: 'Admin', title: a.title, sub: [a.date ? `${a.dateLabel.toLowerCase()} ${a.date}` : '', a.finished ? 'finished' : `${a.steps.filter((x) => x.done).length}/${a.steps.length} steps`].filter(Boolean).join(' · '), href: '#/planner/admin', date: a.date, text: `${a.steps.map((x) => x.text).join(' ')} ${a.notes}` });
   for (const n of d.notes) add({ key: `note-${n.id}`, kind: 'Journal', title: n.title || 'Untitled note', sub: n.updated.slice(0, 10), href: '#/more/journal', date: n.updated.slice(0, 10), text: n.body });
   for (const i of d.inbox) if (!i.done) add({ key: `inbox-${i.id}`, kind: 'Inbox', title: i.text, sub: i.kind, href: '#/planner/today', date: i.created, text: i.url });
   for (const v of d.vocab) add({ key: `word-${v.id}`, kind: 'Word', title: v.word, sub: v.meaning, href: '#/more/words', date: '', text: v.sentence });
@@ -90,6 +91,7 @@ export const COMMANDS: Command[] = [
   go('Calendar', '#/planner/calendar', 'schedule events day week month'),
   go('Tasks & inbox', '#/planner/today', 'todo top 3 inbox'),
   go('Timetable', '#/planner/timetable', 'classes school'),
+  go('Student admin', '#/planner/admin', 'visa passport documents accommodation tenancy paperwork checklist'),
   go('Assignments & grades', '#/study/assignments', 'coursework grade calculator marks module'),
   go('Tests & bosses', '#/study/tests', 'exams'),
   go('Topics', '#/study/topics', 'red amber green subjects modules'),
