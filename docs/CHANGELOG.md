@@ -4,6 +4,16 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Islamic library** (Prayer → Library, all private, nothing scored): a **dua collection** of 20 well-known duas
+  by situation (study, daily life, hard times, travel, family, forgiveness, mosque, Ramadan) with Arabic,
+  transliteration, meaning and source; search, star favourites, and save your own duas. A **private good deeds
+  journal** (hidden until you tap "Show", never counted, searched or shown anywhere else). An **Islamic learning
+  library** for books, courses and lectures (want to / studying / finished, notes, links) with six classics to
+  start. The Friday routine stays in Prayer → Jumu'ah.
+  **Fixed during testing:** saved data with a starred dua was refused on the next load (the recovery screen
+  showed and nothing was lost) because the start-up check expected every list to hold records; it now knows
+  `duaFavs` is a list of words. A new storage test fills every list added since Phase 2 and checks it loads.
+  Tests: 187 passing.
 - **Goals at every level + morning quote:** Planner → **Goals** with yearly, monthly and weekly goals; each can
   say which bigger goal it helps (a year goal can help a dream on the vision board), shown as a chain like
   "SUVAT sheet → Finish mechanics → Get a First in Physics". Daily goals are your top 3 (one list, not two).

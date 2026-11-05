@@ -286,6 +286,28 @@ export interface PlanGoal extends Base {
   parentId: string | null;
 }
 
+// ---------- Islamic library ----------
+/** A dua you added yourself. */
+export interface MyDua extends Base {
+  title: string;
+  text: string;
+  note: string;
+}
+/** A good deed, written for yourself only. Never counted, scored or shown anywhere else. */
+export interface Deed extends Base {
+  date: string; // YYYY-MM-DD
+  text: string;
+}
+/** A book, course or lecture series to learn from. */
+export interface LearningItem extends Base {
+  title: string;
+  by: string;
+  kind: 'book' | 'course' | 'lecture' | 'other';
+  status: 'want' | 'reading' | 'done';
+  link: string;
+  notes: string;
+}
+
 /** Things captured quickly that wait in the inbox until you sort them (tasks and expenses go straight to their lists). */
 export type InboxKind = 'idea' | 'note' | 'link' | 'reminder';
 
@@ -602,6 +624,11 @@ export interface AppData {
   friday: Record<string, string[]>;
   /** Qur'an memorisation (hifz), one entry per surah. Private, never scored. */
   hifz: HifzItem[];
+  /** Islamic library: starred duas (ids), your own duas, private good deeds, learning list. */
+  duaFavs: string[];
+  myDuas: MyDua[];
+  deeds: Deed[];
+  learning: LearningItem[];
   /** Yearly, monthly and weekly goals (daily goals are the top 3). */
   planGoals: PlanGoal[];
   /** Little things Simba brought you, one a day when you visit the rooms. */

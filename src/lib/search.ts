@@ -54,6 +54,9 @@ export function buildIndex(d: AppData): SearchEntry[] {
   for (const r of d.recipes) add({ key: `recipe-${r.id}`, kind: 'Recipe', title: r.name, sub: r.minutes ? `${r.minutes} min` : `${r.ingredients.length} ingredients`, href: '#/kitchen/recipes', date: '', text: `${r.ingredients.join(' ')} ${r.steps}` });
   for (const a of d.admin) add({ key: `admin-${a.id}`, kind: 'Admin', title: a.title, sub: [a.date ? `${a.dateLabel.toLowerCase()} ${a.date}` : '', a.finished ? 'finished' : `${a.steps.filter((x) => x.done).length}/${a.steps.length} steps`].filter(Boolean).join(' · '), href: '#/planner/admin', date: a.date, text: `${a.steps.map((x) => x.text).join(' ')} ${a.notes}` });
   for (const g of d.planGoals) add({ key: `plangoal-${g.id}`, kind: 'Goal', title: g.title, sub: `${g.level} ${g.period}${g.done ? ' · done' : ''}`, href: '#/planner/goals', date: g.period.length === 4 ? `${g.period}-01-01` : g.period.length === 7 ? `${g.period}-01` : g.period });
+  // The good deeds journal is private and never searchable; the learning list and your own duas are.
+  for (const l of d.learning) add({ key: `learning-${l.id}`, kind: 'Learning', title: l.title, sub: [l.by, l.status].filter(Boolean).join(' · '), href: '#/prayer/library', date: '', text: l.notes });
+  for (const m of d.myDuas) add({ key: `mydua-${m.id}`, kind: 'Dua', title: m.title, sub: 'my duas', href: '#/prayer/library', date: '', text: `${m.text} ${m.note}` });
   for (const n of d.lectureNotes) add({ key: `lecture-${n.id}`, kind: 'Lecture note', title: n.title, sub: [moduleName(n.subjectId), n.date].filter(Boolean).join(' · '), href: '#/study/notes', date: n.date, text: n.body });
   for (const n of d.notes) add({ key: `note-${n.id}`, kind: 'Journal', title: n.title || 'Untitled note', sub: n.updated.slice(0, 10), href: '#/more/journal', date: n.updated.slice(0, 10), text: n.body });
   for (const i of d.inbox) if (!i.done) add({ key: `inbox-${i.id}`, kind: 'Inbox', title: i.text, sub: i.kind, href: '#/planner/today', date: i.created, text: i.url });
@@ -178,6 +181,7 @@ export const COMMANDS: Command[] = [
   go("Qur'an", '#/prayer/quran', 'quran pages'),
   go('Tasbih', '#/prayer/tasbih', 'dhikr'),
   go("Jumu'ah", '#/prayer/friday', 'friday jumuah kahf khutbah'),
+  go('Islamic library', '#/prayer/library', 'dua duas good deeds journal learning books islam'),
   go('Hifz', '#/prayer/hifz', 'quran memorise memorisation revision surah'),
   go('Islamic calendar', '#/prayer/today', 'hijri eid ramadan arafah ashura date'),
   go('Ramadan', '#/prayer/ramadan', 'fasting iftar suhoor'),

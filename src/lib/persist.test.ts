@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { exportJson, normalize, parseBackup } from './backup';
+import { exportJson, normalize, parseBackup, validateData } from './backup';
 import { APP_KEY, PHOTOS_KEY, saveData, type KV } from './db';
 import { migrate, SCHEMA_VERSION, type Migration } from './migrate';
 import { createSnapshot, dailyBackup, DAILY_PREFIX, listAllSnapshots, listSnapshots, loadApp, openAnyway, restoreBackupText, restoreSnapshot, safeReplace, SNAPSHOT_PREFIX, UNREADABLE_PREFIX } from './persist';
@@ -128,6 +128,29 @@ describe('migrations', () => {
   });
 });
 
+describe('every new part of the data loads after saving', () => {
+  it('passes validation with an entry in every list added since Phase 2', () => {
+    const d = emptyData(TODAY);
+    d.groceries = [{ id: 'g', text: 'milk', done: false }];
+    d.pantry = [{ id: 'p', name: 'Rice', qty: 1, unit: 'kg', expires: '' }];
+    d.recipes = [{ id: 'r', name: 'Plov', ingredients: ['rice'], steps: '', minutes: null }];
+    d.meals = { [TODAY]: { dinner: { text: 'Plov', recipeId: 'r' } } };
+    d.admin = [{ id: 'a', title: 'Visa', area: 'visa', date: '', dateLabel: 'Expires', remind: 30, steps: [{ id: 's', text: 'x', done: false, due: '' }], notes: '', finished: false }];
+    d.lectureNotes = [{ id: 'n', subjectId: null, title: 'L1', date: TODAY, body: '', updated: '' }];
+    d.friday = { '2026-11-06': ['ghusl'] };
+    d.hifz = [{ id: '112', surah: 112, learned: 4, revised: '', interval: 1 }];
+    d.simbaGifts = [{ date: TODAY, gift: 'a pebble' }];
+    d.planGoals = [{ id: 'pg', level: 'week', period: '2026-11-02', title: 'x', done: false, parentId: null }];
+    d.duaFavs = ['knowledge'];
+    d.myDuas = [{ id: 'm', title: 'x', text: 'y', note: '' }];
+    d.deeds = [{ id: 'd', date: TODAY, text: 'x' }];
+    d.learning = [{ id: 'l', title: 'x', by: '', kind: 'book', status: 'want', link: '', notes: '' }];
+    const saved = JSON.parse(JSON.stringify(d));
+    expect(validateData(saved, TODAY)).toEqual([]);
+    expect(validateData({ ...saved, duaFavs: [{ id: 1 }] }, TODAY)).toEqual(['"duaFavs" has broken entries']);
+  });
+});
+
 describe('missing nested properties', () => {
   it('fills in every level without dropping anything you saved', () => {
     const d = emptyData(TODAY) as any;
@@ -152,7 +175,7 @@ describe('missing nested properties', () => {
 
   it('data saved before the kitchen and admin existed opens with empty lists; old bills and events keep working', () => {
     const d = emptyData(TODAY) as any;
-    for (const k of ['groceries', 'pantry', 'recipes', 'meals', 'admin', 'lectureNotes', 'friday', 'hifz', 'simbaGifts', 'planGoals']) delete d[k];
+    for (const k of ['groceries', 'pantry', 'recipes', 'meals', 'admin', 'lectureNotes', 'friday', 'hifz', 'simbaGifts', 'planGoals', 'duaFavs', 'myDuas', 'deeds', 'learning']) delete d[k];
     delete d.settings.prayer.method;
     delete d.settings.breakEvery;
     d.recurring = [{ id: 'b', name: 'Phone', amount: 10, categoryId: 'phone', day: 3, lastAdded: null }];
@@ -168,6 +191,7 @@ describe('missing nested properties', () => {
     expect(out.hifz).toEqual([]);
     expect(out.simbaGifts).toEqual([]);
     expect(out.planGoals).toEqual([]);
+    expect([out.duaFavs, out.myDuas, out.deeds, out.learning]).toEqual([[], [], [], []]);
     expect(out.settings.breakEvery).toBe(50);
     expect(out.settings.prayer.method).toBe('mwl');
     expect(out.recurring[0]).toEqual(d.recurring[0]);

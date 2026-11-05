@@ -262,11 +262,12 @@ export function PrayerLanterns() {
 }
 
 // ---------------------------------------------------------------- the Prayer page
-const PAGE_TABS = ['today', 'friday', 'tasbih', 'quran', 'hifz', 'ramadan'] as const;
+const PAGE_TABS = ['today', 'friday', 'tasbih', 'quran', 'hifz', 'library', 'ramadan'] as const;
 // Jumu'ah, hifz and the Islamic calendar load on first open (prefetched for offline in App.tsx).
 const JumuahTab = lazy(() => import('./Deen').then((m) => ({ default: m.JumuahTab })));
 const HifzTab = lazy(() => import('./Deen').then((m) => ({ default: m.HifzTab })));
 const IslamicCalendar = lazy(() => import('./Deen').then((m) => ({ default: m.IslamicCalendar })));
+const IslamicLibrary = lazy(() => import('./IslamicLibrary'));
 const opening = <p className="muted center">Opening…</p>;
 type PageTab = (typeof PAGE_TABS)[number];
 
@@ -288,6 +289,7 @@ export default function PrayerPage({ sub }: { sub?: string }) {
           { id: 'tasbih', label: 'Tasbih', icon: 'bead' },
           { id: 'quran', label: "Qur'an", icon: 'quran' },
           { id: 'hifz', label: 'Hifz', icon: 'book' },
+          { id: 'library', label: 'Library', icon: 'shelf' },
           { id: 'ramadan', label: 'Ramadan', icon: 'moon' },
         ]}
       />
@@ -297,6 +299,11 @@ export default function PrayerPage({ sub }: { sub?: string }) {
       {tab === 'friday' && (
         <Suspense fallback={opening}>
           <JumuahTab />
+        </Suspense>
+      )}
+      {tab === 'library' && (
+        <Suspense fallback={opening}>
+          <IslamicLibrary />
         </Suspense>
       )}
       {tab === 'hifz' && (

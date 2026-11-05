@@ -6125,3 +6125,41 @@ button.list__main {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* ---------- Islamic library ---------- */
+.dua-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.dua-card {
+  padding: 8px 10px;
+  background: var(--panel-hi);
+  border: 2px solid var(--panel-lo);
+}
+.dua-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dua-card__arabic {
+  margin: 6px 0;
+  font-family: 'Geeza Pro', 'Noto Naskh Arabic', 'Amiri', serif;
+  font-size: 24px;
+  line-height: 1.9;
+  text-align: right;
+}
+.dua-card__translit {
+  margin: 0 0 4px;
+  font-style: italic;
+}
+.learning-item {
+  flex-wrap: wrap;
+}
+.learning-item__more {
+  width: 100%;
+  padding: 0 8px 8px;
+}

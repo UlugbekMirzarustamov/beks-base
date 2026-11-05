@@ -64,7 +64,7 @@ export function parseBackup(text: string, today: string): AppData {
 const NOT_A_BACKUP = 'not a Bek\'s Base backup';
 const isPlain = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
 /** Lists of plain words rather than records. */
-const WORD_LISTS = new Set(['applied']);
+const WORD_LISTS = new Set(['applied', 'duaFavs']);
 const isDay = (v: unknown) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 /**
@@ -82,7 +82,7 @@ export function validateData(data: unknown, today: string): string[] {
     if (value === undefined) continue; // older backups simply don't have newer parts
     if (Array.isArray(def)) {
       if (!Array.isArray(value)) problems.push(`"${key}" should be a list`);
-      else if (!WORD_LISTS.has(key) && value.some((item) => !isPlain(item))) problems.push(`"${key}" has broken entries`);
+      else if (WORD_LISTS.has(key) ? value.some((item) => typeof item !== 'string') : value.some((item) => !isPlain(item))) problems.push(`"${key}" has broken entries`);
     } else if (isPlain(def)) {
       if (!isPlain(value)) problems.push(`"${key}" should be a group of values`);
     } else if (def !== null && value !== null && typeof value !== typeof def) problems.push(`"${key}" has the wrong type`);
