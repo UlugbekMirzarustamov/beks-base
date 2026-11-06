@@ -565,6 +565,8 @@ export interface Settings {
   pomodoroBreak: number;
   /** Remind me to take a short break after this many minutes in the app (0 = off). */
   breakEvery: number;
+  /** How Home is arranged: cards pinned to the top, cards hidden, Discover tips dismissed. */
+  home: { pinned: string[]; hidden: string[]; dismissed: string[] };
   /** Hard mode: stricter rules for weeks when you want to go all in. */
   hardMode: boolean;
 }

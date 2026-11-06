@@ -7,7 +7,8 @@ import { levelInfo } from '../lib/xp';
 import { Cabin } from '../scene/Cabin';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Bar, Empty, Panel } from '../ui/kit';
+import { Bar, Empty, Panel, Segmented, Sheet } from '../ui/kit';
+import { cardsIn, discoverTips, HOME_CARDS, type CardId } from '../lib/home';
 import { Clocks, MoodCheckIn } from './Extras';
 import { InstallCard } from '../ui/AppFeel';
 import { BackupCard, OnePercent, SimbaNeeds, TodayCard, WindDown } from './Daily';
@@ -30,7 +31,7 @@ import { SafeToSpendCard, SavingsMini } from './Money';
 import { classesOn, TaskRow, TopThree } from './Planner';
 import { PrayerLanterns, usePrayer } from './Prayer';
 import { useWeather, WeatherCard, windowWeather } from '../ui/Weather';
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { Fragment, useMemo, useState, useEffect, useRef, type ReactNode } from 'react';
 import { nextUnlock, pick, seasonOf, simbaMood, SIMBA_LINES, SIMBA_PETS, streak, UNLOCKS } from '../lib/cabin';
 import { barLevel, formatMoney, safeToSpend, spentInMonth } from '../lib/money';
 import { buzz, sfx } from '../lib/sound';
@@ -49,14 +50,27 @@ function greeting(): string {
 }
 
 export default function Home() {
-  const { data, today } = useStore();
+  const { data } = useStore();
   const { scene, bubble, petSimba, bekLine, tapBek, toggleRadio } = useCabinScene();
-  const lvl = levelInfo(data.xp);
-  const upcoming = data.tests.filter((t) => t.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-  const nextTest = upcoming[0];
-  const soonLimit = addDays(today, 7);
-  const dueSoon = data.tasks.filter((t) => !t.done && t.due && t.due <= soonLimit).sort((a, b) => (a.due ?? '').localeCompare(b.due ?? ''));
-  const studiedToday = data.studyLog.filter((s) => s.date === today).reduce((a, s) => a + s.minutes, 0);
+  const { today } = useStore();
+  const hour = zonedParts(new Date(), UK_TZ).hour;
+  const home = data.settings.home;
+  const [moreOpen, setMoreOpen] = useState(() => {
+    try {
+      return localStorage.getItem(MORE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const [arranging, setArranging] = useState(false);
+  const toggleMore = (open: boolean) => {
+    setMoreOpen(open);
+    try {
+      localStorage.setItem(MORE_KEY, open ? '1' : '0');
+    } catch {
+      /* not remembered in private mode */
+    }
+  };
 
   return (
     <div className="screen home">
@@ -70,129 +84,278 @@ export default function Home() {
           <p className="greeting">
             {greeting()}, Bek! <span className="muted">· {formatDay(today)} · {hijriLabel(today)}</span>
           </p>
-          <div className="greeting-row__buttons">
-            <button type="button" className="btn btn--small" onClick={() => window.dispatchEvent(new Event('beks:briefing'))}>
-              <PixelIcon name="sun" size={16} /> Today's briefing
+          <nav className="home-places" aria-label="Places">
+            <button type="button" className="home-place" onClick={() => window.dispatchEvent(new Event('beks:briefing'))}>
+              <PixelIcon name="sun" size={18} /> Briefing
             </button>
-            <a href="#/rooms" className="btn btn--small">
-              <PixelIcon name="house" size={16} /> Rooms
+            <a href="#/rooms" className="home-place">
+              <PixelIcon name="house" size={18} /> Rooms
             </a>
-            <a href="#/kitchen" className="btn btn--small">
-              <PixelIcon name="apple" size={16} /> Kitchen
+            <a href="#/kitchen" className="home-place">
+              <PixelIcon name="apple" size={18} /> Kitchen
             </a>
-            <a href="#/calm" className="btn btn--small">
-              <PixelIcon name="lantern" size={16} /> I need a minute
+            <a href="#/calm" className="home-place">
+              <PixelIcon name="lantern" size={18} /> A minute
             </a>
-          </div>
+          </nav>
         </div>
-        <Clocks />
         <InstallCard compact />
       </div>
       <QuickCapture />
       <WindDown />
       <div className="grid grid--home">
-        <TodayCard />
-        <ImportantDates />
-        <FridayCard />
-        <FajrRise />
-        <RamadanCard />
-        <MorningPromise />
-        <CampfireCard />
-        <OnePercent />
-        <TodayClasses />
-        <ComingUp />
-        <KitchenCard />
-        <InboxPanel compact />
-        <SafeToSpendCard />
-        <GhostRace />
-        <SimbaNeeds />
-        <WeatherCard />
-        <SavingsMini />
-        <BackupCard />
+        {cardsIn('now', home, hour).map((id) => (
+          <Fragment key={id}>{renderCard(id)}</Fragment>
+        ))}
+      </div>
+      <details className="home-more" open={moreOpen} onToggle={(e) => toggleMore((e.currentTarget as HTMLDetailsElement).open)}>
+        <summary>More for today</summary>
+        {moreOpen && (
+          <div className="grid grid--home">
+            {cardsIn('more', home, hour).map((id) => (
+              <Fragment key={id}>{renderCard(id)}</Fragment>
+            ))}
+          </div>
+        )}
+      </details>
+      <Discover />
+      <p className="center">
+        <button type="button" className="btn btn--small btn--ghost" onClick={() => setArranging(true)}>
+          <PixelIcon name="gear" size={14} /> Arrange Home
+        </button>
+      </p>
+      <Sheet open={arranging} onClose={() => setArranging(false)} title="Arrange Home">
+        <ArrangeHome />
+      </Sheet>
+    </div>
+  );
+}
 
-        <Panel title="Next test" icon="calendar">
-          {nextTest ? (
-            <a href="#/study/tests" className="next-test">
-              <span className="big-number">{daysBetween(today, nextTest.date)}</span>
-              <span>
-                <strong>{daysLeftLabel(daysBetween(today, nextTest.date))}</strong>
-                <br />
-                {nextTest.name}
-                <br />
-                <small className="muted">{formatDay(nextTest.date)}</small>
-              </span>
-            </a>
-          ) : null}
-          {nextTest ? (
-            <BossMini test={nextTest} />
-          ) : (
-            <Empty>
-              No tests coming up. <a href="#/study/tests">Add one →</a>
-            </Empty>
-          )}
-          {upcoming.length > 1 && (
-            <ul className="mini-list">
-              {upcoming.slice(1, 3).map((t) => (
-                <li key={t.id}>
-                  {t.name} — <strong>{daysLeftLabel(daysBetween(today, t.date))}</strong>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
+const MORE_KEY = 'beks:home-more';
 
+/** One Home card by id (each hides itself when there's nothing to say). */
+function renderCard(id: CardId): ReactNode {
+  switch (id) {
+    case 'today':
+      return <TodayCard />;
+    case 'quest':
+      return <OnePercent />;
+    case 'dates':
+      return <ImportantDates />;
+    case 'friday':
+      return <FridayCard />;
+    case 'fajr':
+      return <FajrRise />;
+    case 'ramadan':
+      return <RamadanCard />;
+    case 'promise':
+      return <MorningPromise />;
+    case 'campfire':
+      return <CampfireCard />;
+    case 'week':
+      return <WeekCard />;
+    case 'backup':
+      return <BackupCard />;
+    case 'classes':
+      return <TodayClasses />;
+    case 'coming':
+      return <ComingUp />;
+    case 'test':
+      return <NextTestCard />;
+    case 'top3':
+      return (
         <Panel title="Today's top 3" icon="star">
           <TopThree />
         </Panel>
-
-        <Panel title="Due soon" icon="check">
-          {dueSoon.length === 0 ? (
-            <Empty>Nothing due in the next 7 days.</Empty>
-          ) : (
-            <ul className="tasks">
-              {dueSoon.slice(0, 5).map((t) => (
-                <TaskRow key={t.id} task={t} />
-              ))}
-            </ul>
-          )}
-          <a href="#/planner/today" className="more-link">
-            All tasks →
-          </a>
-        </Panel>
-
+      );
+    case 'due':
+      return <DueCard />;
+    case 'kitchen':
+      return <KitchenCard />;
+    case 'inbox':
+      return <InboxPanel compact />;
+    case 'money':
+      return <SafeToSpendCard />;
+    case 'savings':
+      return <SavingsMini />;
+    case 'mood':
+      return (
         <Panel title="How are you today?" icon="heart">
           <MoodCheckIn />
           <a href="#/more/mood" className="more-link">
             This week →
           </a>
         </Panel>
+      );
+    case 'simba':
+      return <SimbaNeeds />;
+    case 'ghost':
+      return <GhostRace />;
+    case 'weather':
+      return <WeatherCard />;
+    case 'clocks':
+      return <Clocks />;
+    case 'level':
+      return <LevelCard />;
+  }
+}
 
-        {weekdayOf(today) >= 4 && !data.reflections[startOfWeek(today)]?.wentWell && (
-          <Panel title="Week's nearly done" icon="scroll">
-            <p>Take 3 minutes to look back: what went well, what was hard, what to try next week.</p>
-            <a href="#/reflect/week" className="btn btn--primary">
-              Reflect on my week
-            </a>
-          </Panel>
-        )}
+function NextTestCard() {
+  const { data, today } = useStore();
+  const upcoming = data.tests.filter((t) => t.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const nextTest = upcoming[0];
+  if (!nextTest) return null;
+  return (
+    <Panel title="Next test" icon="calendar">
+      <a href="#/study/tests" className="next-test">
+        <span className="big-number">{daysBetween(today, nextTest.date)}</span>
+        <span>
+          <strong>{daysLeftLabel(daysBetween(today, nextTest.date))}</strong>
+          <br />
+          {nextTest.name}
+          <br />
+          <small className="muted">{formatDay(nextTest.date)}</small>
+        </span>
+      </a>
+      <BossMini test={nextTest} />
+      {upcoming.length > 1 && (
+        <ul className="mini-list">
+          {upcoming.slice(1, 3).map((t) => (
+            <li key={t.id}>
+              {t.name} — <strong>{daysLeftLabel(daysBetween(today, t.date))}</strong>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
 
-        <Panel title={`Level ${lvl.level}`} icon="star" className="level-card">
-          <Bar value={lvl.into} max={lvl.needed} label="XP towards next level" color="var(--xp)" />
-          <p className="bar-caption">
-            {lvl.into} / {lvl.needed} XP to level {lvl.level + 1}
-          </p>
-          <p className="muted small">
-            <PixelIcon name="clock" size={14} /> {studiedToday} min studied today · Tasks +10 · Top 3 +15 · Pomodoro +25
-          </p>
-          <CabinUnlocks level={lvl.level} />
-          <div className="level-links">
-            <BadgeSummary />
-            <a href="#/more/shop" className="badge-summary">
-              <PixelIcon name="coin" size={16} /> {coins(data)} coins · Cabin shop →
-            </a>
-          </div>
-        </Panel>
+function DueCard() {
+  const { data, today } = useStore();
+  const soonLimit = addDays(today, 7);
+  const dueSoon = data.tasks.filter((t) => !t.done && t.due && t.due <= soonLimit).sort((a, b) => (a.due ?? '').localeCompare(b.due ?? ''));
+  if (!dueSoon.length) return null;
+  return (
+    <Panel title="Due soon" icon="check">
+      <ul className="tasks">
+        {dueSoon.slice(0, 5).map((t) => (
+          <TaskRow key={t.id} task={t} />
+        ))}
+      </ul>
+      <a href="#/planner/today" className="more-link">
+        All tasks →
+      </a>
+    </Panel>
+  );
+}
+
+function WeekCard() {
+  const { data, today } = useStore();
+  if (weekdayOf(today) < 4 || data.reflections[startOfWeek(today)]?.wentWell) return null;
+  return (
+    <Panel title="Week's nearly done" icon="scroll">
+      <p>Take 3 minutes to look back: what went well, what was hard, what to try next week.</p>
+      <a href="#/reflect/week" className="btn btn--primary">
+        Reflect on my week
+      </a>
+    </Panel>
+  );
+}
+
+function LevelCard() {
+  const { data, today } = useStore();
+  const lvl = levelInfo(data.xp);
+  const studiedToday = data.studyLog.filter((x) => x.date === today).reduce((a, x) => a + x.minutes, 0);
+  return (
+    <Panel title={`Level ${lvl.level}`} icon="star" className="level-card">
+      <Bar value={lvl.into} max={lvl.needed} label="XP towards next level" color="var(--xp)" />
+      <p className="bar-caption">
+        {lvl.into} / {lvl.needed} XP to level {lvl.level + 1}
+      </p>
+      <p className="muted small">
+        <PixelIcon name="clock" size={14} /> {studiedToday} min studied today · Tasks +10 · Top 3 +15 · Pomodoro +25
+      </p>
+      <CabinUnlocks level={lvl.level} />
+      <div className="level-links">
+        <BadgeSummary />
+        <a href="#/more/shop" className="badge-summary">
+          <PixelIcon name="coin" size={16} /> {coins(data)} coins · Cabin shop →
+        </a>
       </div>
+    </Panel>
+  );
+}
+
+/** Features you haven't tried yet, a few at a time. They leave once you use them (or tap "Not now"). */
+function Discover() {
+  const { data, update } = useStore();
+  const tips = discoverTips(data);
+  if (!tips.length) return null;
+  return (
+    <section className="discover" aria-label="Discover">
+      <p className="discover__title">Discover</p>
+      <ul className="discover__list">
+        {tips.map((t) => (
+          <li key={t.id} className="discover__tip">
+            <PixelIcon name={t.icon} size={22} />
+            <span className="grow">
+              <strong>{t.title}</strong>
+              <small>{t.pitch}</small>
+            </span>
+            <a href={t.href} className="btn btn--small btn--primary">
+              Open
+            </a>
+            <button type="button" className="icon-btn" onClick={() => update((d) => void d.settings.home.dismissed.push(t.id))} aria-label={`Not now: ${t.title}`}>
+              ✕
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Pin cards to the top of Home, or hide them. Nothing is deleted. */
+function ArrangeHome() {
+  const { data, update } = useStore();
+  const home = data.settings.home;
+  const set = (id: CardId, mode: 'pin' | 'auto' | 'hide') =>
+    update((d) => {
+      const h = d.settings.home;
+      h.pinned = h.pinned.filter((x) => x !== id);
+      h.hidden = h.hidden.filter((x) => x !== id);
+      if (mode === 'pin') h.pinned.push(id);
+      if (mode === 'hide') h.hidden.push(id);
+    });
+  return (
+    <div className="form">
+      <p className="muted small">Pinned cards always sit at the top. "Auto" cards show when they matter (or in More for today). Hidden cards stay in their station — nothing is deleted.</p>
+      <ul className="arrange-list">
+        {HOME_CARDS.map((c) => {
+          const mode = home.pinned.includes(c.id) ? 'pin' : home.hidden.includes(c.id) ? 'hide' : 'auto';
+          return (
+            <li key={c.id} className="arrange-row">
+              <span className="grow">{c.name}</span>
+              <Segmented<'pin' | 'auto' | 'hide'>
+                label={c.name}
+                value={mode}
+                onChange={(v) => set(c.id, v)}
+                options={[
+                  { value: 'pin', label: 'Pin' },
+                  { value: 'auto', label: 'Auto' },
+                  { value: 'hide', label: 'Hide' },
+                ]}
+              />
+            </li>
+          );
+        })}
+      </ul>
+      {home.dismissed.length > 0 && (
+        <button type="button" className="btn btn--small" onClick={() => update((d) => void (d.settings.home.dismissed = []))}>
+          Show Discover tips again
+        </button>
+      )}
     </div>
   );
 }

@@ -15,7 +15,7 @@ import { sfx } from '../lib/sound';
 import type { Category, CategoryIcon, Expense, RecurringBill, SavingsGoal } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Bar, Empty, Field, GroupedTabs, Panel, Segmented, Sheet, useConfirm, useSubRoute } from '../ui/kit';
 
 /** Each category icon also gets a colour for bars and charts. */
 export const CATEGORY_COLOR: Record<CategoryIcon, string> = {
@@ -39,20 +39,48 @@ export default function Money({ sub }: { sub?: string }) {
       <h1 className="screen__title">
         <PixelIcon name="chest" size={28} /> The Chest
       </h1>
-      <Tabs<Tab>
+      <GroupedTabs<Tab>
         label="Money sections"
         active={tab}
         onChange={setTab}
-        tabs={[
-          { id: 'plan', label: 'Plan', icon: 'chest' },
-          { id: 'wishes', label: 'Wishes', icon: 'star' },
-          { id: 'overview', label: 'Budget', icon: 'coin' },
-          { id: 'spending', label: 'Spending', icon: 'scroll' },
-          { id: 'savings', label: 'Savings', icon: 'gift' },
-          { id: 'charts', label: 'Charts', icon: 'calendar' },
-          { id: 'bills', label: 'Bills', icon: 'house' },
-          { id: 'setup', label: 'Limits', icon: 'gear' },
-          { id: 'tools', label: 'Tools', icon: 'globe' },
+        groups={[
+          {
+            id: 'today',
+            label: 'Today',
+            icon: 'coin',
+            tabs: [
+              { id: 'overview', label: 'Budget' },
+              { id: 'spending', label: 'Spending' },
+            ],
+          },
+          {
+            id: 'plan',
+            label: 'Plan & save',
+            icon: 'chest',
+            tabs: [
+              { id: 'plan', label: 'Plan' },
+              { id: 'wishes', label: 'Wishes' },
+              { id: 'savings', label: 'Savings' },
+            ],
+          },
+          {
+            id: 'bills',
+            label: 'Bills',
+            icon: 'house',
+            tabs: [
+              { id: 'bills', label: 'Bills' },
+            ],
+          },
+          {
+            id: 'more',
+            label: 'More',
+            icon: 'gear',
+            tabs: [
+              { id: 'charts', label: 'Charts' },
+              { id: 'setup', label: 'Limits' },
+              { id: 'tools', label: 'Tools' },
+            ],
+          },
         ]}
       />
       {tab === 'overview' && (

@@ -4,6 +4,17 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **A cozier, calmer app (nothing removed):** **Home** now shows the cabin, Today, one gentle suggestion
+  (today's 1% quest) and only what matters right now — birthdays and bills when they're close, Jumu'ah on
+  Fridays, Fajr and the promise in the morning, the wind-down at night, the week review Friday to Sunday.
+  Everything else waits in **More for today** (it remembers if you leave it open). **Arrange Home** lets you pin,
+  auto-place or hide every card. A small **Discover** shelf suggests up to three features you haven't tried
+  yet (Open / Not now). The long tab rows are now **about four calm groups per station** with the pages as a
+  small second row — Study (Exams & work · Learn · Practice · Tools), Prayer (Today · Qur'an · Library · Ramadan),
+  Money (Today · Plan & save · Bills · More), Planner, Reflect and More too; every old link still opens the same
+  page. A **softer look**: more breathing room, a warm accent colour per room, a little sleeping cat instead of
+  empty boxes, the page's light follows the time of day (warm morning, amber evening, deep night), and lit
+  lanterns glow gently (still for people who prefer less motion). Tests: 204 passing.
 - **Physics mastery** (Study → Tools → Physics): a **formula sheet** of 44 core formulas across mechanics,
   materials, circular motion & SHM, waves & light, electricity, thermal, fields and nuclear — every symbol and
   unit explained, searchable, one tap to add to your formula cards (spaced repetition); **solve any formula for

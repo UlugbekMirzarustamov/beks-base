@@ -6,7 +6,7 @@
  * so the browser Back button works and there's no server setup.
  */
 import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
-import { isNightUK } from './lib/dates';
+import { isNightUK, UK_TZ, zonedParts } from './lib/dates';
 import { applyMixer, setSfxEnabled, sfx } from './lib/sound';
 import { levelInfo } from './lib/xp';
 import Home from './screens/Home';
@@ -88,6 +88,16 @@ function readHash(): { screen: Screen; sub?: string } {
 export default function App() {
   const { data, update, openExpense } = useStore();
   const [route, setRoute] = useState(readHash);
+  // Morning, day, evening or night (UK time): the page's mood follows the time of day.
+  useEffect(() => {
+    const set = () => {
+      const h = zonedParts(new Date(), UK_TZ).hour;
+      document.documentElement.dataset.daypart = h >= 5 && h < 11 ? 'morning' : h >= 11 && h < 17 ? 'day' : h >= 17 && h < 21 ? 'evening' : 'night';
+    };
+    set();
+    const t = window.setInterval(set, 10 * 60_000);
+    return () => window.clearInterval(t);
+  }, []);
   const mainRef = useRef<HTMLElement>(null);
 
   // ----- Routing -----
@@ -209,7 +219,7 @@ export default function App() {
       </header>
       <PrayerBar />
 
-      <main id="main" ref={mainRef} tabIndex={-1} className="main">
+      <main id="main" ref={mainRef} tabIndex={-1} className="main" data-room={route.screen}>
         <ScreenBoundary key={route.screen}>
           <Suspense fallback={<p className="muted center">Opening…</p>}>
             {route.screen === 'home' && <Home />}

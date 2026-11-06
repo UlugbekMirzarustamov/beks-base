@@ -180,6 +180,7 @@ describe('missing nested properties', () => {
     for (const k of ['groceries', 'pantry', 'recipes', 'meals', 'admin', 'lectureNotes', 'friday', 'hifz', 'simbaGifts', 'planGoals', 'duaFavs', 'myDuas', 'deeds', 'learning', 'examQuestions', 'mocks']) delete d[k];
     delete d.settings.prayer.method;
     delete d.settings.breakEvery;
+    delete d.settings.home;
     d.recurring = [{ id: 'b', name: 'Phone', amount: 10, categoryId: 'phone', day: 3, lastAdded: null }];
     d.events = [{ id: 'e', title: 'Birthday', kind: 'birthday', date: '2000-01-02', start: '', end: '', endDate: '', repeat: 'yearly', until: '', location: '', notes: '' }];
     const out = normalize(d, TODAY);
@@ -195,6 +196,7 @@ describe('missing nested properties', () => {
     expect(out.planGoals).toEqual([]);
     expect([out.duaFavs, out.myDuas, out.deeds, out.learning, out.examQuestions, out.mocks]).toEqual([[], [], [], [], [], []]);
     expect(out.settings.breakEvery).toBe(50);
+    expect(out.settings.home).toEqual({ pinned: [], hidden: [], dismissed: [] });
     expect(out.settings.prayer.method).toBe('mwl');
     expect(out.recurring[0]).toEqual(d.recurring[0]);
     expect(out.events[0]).toEqual(d.events[0]);

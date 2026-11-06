@@ -10,7 +10,7 @@ import { XP } from '../lib/xp';
 import { useStore, useTimer } from '../state/store';
 import { PixelArt, PixelIcon } from '../ui/icons';
 import { bossFor, POMODORO_HIT, type Boss, type BossKind } from '../lib/boss';
-import { Bar, Empty, Field, Panel, Segmented, Sheet, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Bar, Empty, Field, GroupedTabs, Panel, Segmented, Sheet, useConfirm, useSubRoute } from '../ui/kit';
 
 const TABS = ['tests', 'mock', 'assignments', 'notes', 'topics', 'mistakes', 'cards', 'timer', 'tools'] as const;
 // Loads on first open (prefetched for offline use in App.tsx).
@@ -28,20 +28,48 @@ export default function Study({ sub }: { sub?: string }) {
       <h1 className="screen__title">
         <PixelIcon name="shelf" size={28} /> The Bookshelf
       </h1>
-      <Tabs<Tab>
+      <GroupedTabs<Tab>
         label="Study sections"
         active={tab}
         onChange={setTab}
-        tabs={[
-          { id: 'tests', label: 'Tests', icon: 'calendar' },
-          { id: 'mock', label: 'Mock exam', icon: 'sword' },
-          { id: 'assignments', label: 'Assignments', icon: 'scroll' },
-          { id: 'notes', label: 'Notes', icon: 'pencil' },
-          { id: 'topics', label: 'Topics', icon: 'book' },
-          { id: 'mistakes', label: 'Mistakes', icon: 'cross' },
-          { id: 'cards', label: 'Formulas', icon: 'card' },
-          { id: 'timer', label: 'Timer', icon: 'clock' },
-          { id: 'tools', label: 'Tools', icon: 'table' },
+        groups={[
+          {
+            id: 'today',
+            label: 'Exams & work',
+            icon: 'calendar',
+            tabs: [
+              { id: 'tests', label: 'Exams' },
+              { id: 'assignments', label: 'Assignments' },
+            ],
+          },
+          {
+            id: 'learn',
+            label: 'Learn',
+            icon: 'book',
+            tabs: [
+              { id: 'notes', label: 'Notes' },
+              { id: 'topics', label: 'Topics' },
+              { id: 'cards', label: 'Formulas' },
+              { id: 'mistakes', label: 'Mistakes' },
+            ],
+          },
+          {
+            id: 'practice',
+            label: 'Practice',
+            icon: 'sword',
+            tabs: [
+              { id: 'mock', label: 'Mock exam' },
+              { id: 'timer', label: 'Focus timer' },
+            ],
+          },
+          {
+            id: 'tools',
+            label: 'Tools',
+            icon: 'table',
+            tabs: [
+              { id: 'tools', label: 'Tools' },
+            ],
+          },
         ]}
       />
       {tab === 'tests' && <Tests />}

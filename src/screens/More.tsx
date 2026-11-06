@@ -13,7 +13,7 @@ import { createInitialData, upgrade } from '../lib/seed';
 import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { GroupedTabs, Panel, Segmented, useConfirm, useSubRoute } from '../ui/kit';
 import { SoundMixer } from '../ui/SoundMixer';
 import { BreakSetting } from '../ui/BreakReminder';
 import { InstallCard } from '../ui/AppFeel';
@@ -33,18 +33,46 @@ export default function More({ sub }: { sub?: string }) {
       <h1 className="screen__title">
         <PixelIcon name="scroll" size={28} /> The Lantern Corner
       </h1>
-      <Tabs<Tab>
+      <GroupedTabs<Tab>
         label="More sections"
         active={tab}
         onChange={setTab}
-        tabs={[
-          { id: 'shop', label: 'Shop', icon: 'coin' },
-          { id: 'badges', label: 'Badges', icon: 'star' },
-          { id: 'words', label: 'Words', icon: 'book' },
-          { id: 'habits', label: 'Habits', icon: 'check' },
-          { id: 'mood', label: 'Mood', icon: 'heart' },
-          { id: 'journal', label: 'Journal', icon: 'scroll' },
-          { id: 'settings', label: 'Settings', icon: 'gear' },
+        groups={[
+          {
+            id: 'me',
+            label: 'Me',
+            icon: 'heart',
+            tabs: [
+              { id: 'mood', label: 'Mood' },
+              { id: 'habits', label: 'Habits' },
+              { id: 'journal', label: 'Journal' },
+            ],
+          },
+          {
+            id: 'words',
+            label: 'Words',
+            icon: 'book',
+            tabs: [
+              { id: 'words', label: 'Words' },
+            ],
+          },
+          {
+            id: 'cabin',
+            label: 'Cabin',
+            icon: 'coin',
+            tabs: [
+              { id: 'shop', label: 'Shop' },
+              { id: 'badges', label: 'Badges' },
+            ],
+          },
+          {
+            id: 'settings',
+            label: 'Settings',
+            icon: 'gear',
+            tabs: [
+              { id: 'settings', label: 'Settings' },
+            ],
+          },
         ]}
       />
       {tab === 'shop' && <CabinShop />}

@@ -11,7 +11,7 @@ import type { AppData, Task, Weekday } from '../lib/types';
 import { XP } from '../lib/xp';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Empty, Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Empty, Field, GroupedTabs, Panel, Segmented, useConfirm, useSubRoute } from '../ui/kit';
 
 const TABS = ['today', 'goals', 'calendar', 'week', 'timetable', 'admin'] as const;
 // The calendar loads on first open (it's prefetched for offline use in App.tsx).
@@ -27,17 +27,38 @@ export default function Planner({ sub }: { sub?: string }) {
       <h1 className="screen__title">
         <PixelIcon name="table" size={28} /> The Crafting Table
       </h1>
-      <Tabs<Tab>
+      <GroupedTabs<Tab>
         label="Planner sections"
         active={tab}
         onChange={setTab}
-        tabs={[
-          { id: 'today', label: 'Today', icon: 'check' },
-          { id: 'goals', label: 'Goals', icon: 'star' },
-          { id: 'calendar', label: 'Calendar', icon: 'calendar' },
-          { id: 'week', label: 'Week plan', icon: 'clock' },
-          { id: 'timetable', label: 'Timetable', icon: 'clock' },
-          { id: 'admin', label: 'Admin', icon: 'scroll' },
+        groups={[
+          {
+            id: 'today',
+            label: 'Today',
+            icon: 'check',
+            tabs: [
+              { id: 'today', label: 'Today' },
+              { id: 'goals', label: 'Goals' },
+            ],
+          },
+          {
+            id: 'calendar',
+            label: 'Calendar',
+            icon: 'calendar',
+            tabs: [
+              { id: 'calendar', label: 'Calendar' },
+              { id: 'week', label: 'Week plan' },
+              { id: 'timetable', label: 'Timetable' },
+            ],
+          },
+          {
+            id: 'admin',
+            label: 'Admin',
+            icon: 'scroll',
+            tabs: [
+              { id: 'admin', label: 'Admin' },
+            ],
+          },
         ]}
       />
       {tab === 'today' && (

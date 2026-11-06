@@ -85,7 +85,7 @@ export function emptyData(today: string): AppData {
       gbpPerUsd: 0.76,
       currencyChecked: true,
       pomodoroWork: 25,
-      pomodoroBreak: 5, breakEvery: 50,
+      pomodoroBreak: 5, breakEvery: 50, home: { pinned: [], hidden: [], dismissed: [] },
       hardMode: false,
     },
     monthlyBudget: DEFAULT_BUDGET,

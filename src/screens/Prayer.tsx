@@ -19,7 +19,7 @@ import type { CalcMethod, PrayerName } from '../lib/types';
 import { useStore } from '../state/store';
 import { RamadanTab } from './Ramadan';
 import { PixelIcon } from '../ui/icons';
-import { Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Field, GroupedTabs, Panel, Segmented, useConfirm, useSubRoute } from '../ui/kit';
 import { Quran, Tasbih } from './Devotion';
 
 
@@ -279,18 +279,46 @@ export default function PrayerPage({ sub }: { sub?: string }) {
         <PixelIcon name="mat" size={28} /> The Prayer Mat
       </h1>
       <p className="muted small hijri-line">{hijriLabel(todayUK())}</p>
-      <Tabs<PageTab>
+      <GroupedTabs<PageTab>
         label="Prayer sections"
         active={tab}
         onChange={setTab}
-        tabs={[
-          { id: 'today', label: 'Prayers', icon: 'lantern' },
-          { id: 'friday', label: "Jumu'ah", icon: 'mat' },
-          { id: 'tasbih', label: 'Tasbih', icon: 'bead' },
-          { id: 'quran', label: "Qur'an", icon: 'quran' },
-          { id: 'hifz', label: 'Hifz', icon: 'book' },
-          { id: 'library', label: 'Library', icon: 'shelf' },
-          { id: 'ramadan', label: 'Ramadan', icon: 'moon' },
+        groups={[
+          {
+            id: 'today',
+            label: 'Today',
+            icon: 'lantern',
+            tabs: [
+              { id: 'today', label: 'Prayers' },
+              { id: 'tasbih', label: 'Tasbih' },
+              { id: 'friday', label: "Jumu'ah" },
+            ],
+          },
+          {
+            id: 'quran',
+            label: "Qur'an",
+            icon: 'quran',
+            tabs: [
+              { id: 'quran', label: 'Reading' },
+              { id: 'hifz', label: 'Hifz' },
+            ],
+          },
+          {
+            id: 'library',
+            label: 'Library',
+            icon: 'shelf',
+            tabs: [
+              { id: 'library', label: 'Library' },
+            ],
+          },
+          {
+            id: 'ramadan',
+            label: 'Ramadan',
+            icon: 'moon',
+            tabs: [
+              { id: 'ramadan', label: 'Ramadan' },
+            ],
+          },
         ]}
       />
       {tab === 'today' && <PrayersToday />}

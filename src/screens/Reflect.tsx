@@ -16,7 +16,7 @@ import { sfx } from '../lib/sound';
 import type { Letter, NightLog } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Empty, Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
+import { Empty, Field, GroupedTabs, Panel, Segmented, useConfirm, useSubRoute } from '../ui/kit';
 import { WeekReflect } from './Extras';
 import { VisionBoard } from './Push';
 import { pixelLevel, type PixelKind } from '../lib/pixels';
@@ -38,17 +38,38 @@ export default function Reflect({ sub }: { sub?: string }) {
       <a href="#/archive" className="more-link archive-link">
         Look back through everything in the archive →
       </a>
-      <Tabs<Tab>
+      <GroupedTabs<Tab>
         label="Reflect sections"
         active={tab}
         onChange={setTab}
-        tabs={[
-          { id: 'tonight', label: 'Tonight', icon: 'moon' },
-          { id: 'week', label: 'Week', icon: 'calendar' },
-          { id: 'sky', label: 'My sky', icon: 'star' },
-          { id: 'year', label: 'Year', icon: 'calendar' },
-          { id: 'vision', label: 'Vision', icon: 'photo' },
-          { id: 'letters', label: 'Letters', icon: 'letter' },
+        groups={[
+          {
+            id: 'tonight',
+            label: 'Tonight',
+            icon: 'moon',
+            tabs: [
+              { id: 'tonight', label: 'Tonight' },
+              { id: 'week', label: 'This week' },
+            ],
+          },
+          {
+            id: 'memories',
+            label: 'Memories',
+            icon: 'star',
+            tabs: [
+              { id: 'sky', label: 'My sky' },
+              { id: 'year', label: 'Year' },
+              { id: 'letters', label: 'Letters' },
+            ],
+          },
+          {
+            id: 'dreams',
+            label: 'Dreams',
+            icon: 'photo',
+            tabs: [
+              { id: 'vision', label: 'Vision board' },
+            ],
+          },
         ]}
       />
       {tab === 'tonight' && <Tonight onLit={() => setTab('sky')} />}

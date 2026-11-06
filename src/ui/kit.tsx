@@ -5,7 +5,7 @@
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { sfx } from '../lib/sound';
 import { useStore, type ToastKind } from '../state/store';
-import { PixelIcon, type IconName } from './icons';
+import { PixelArt, PixelIcon, type IconName } from './icons';
 
 /** A chunky wooden/stone window. */
 export function Panel(props: { title?: ReactNode; icon?: IconName; actions?: ReactNode; className?: string; children: ReactNode }) {
@@ -79,6 +79,41 @@ export function Tabs<T extends string>(props: { tabs: TabDef<T>[]; active: T; on
           {t.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+export interface TabGroup<T extends string> {
+  id: string;
+  label: string;
+  icon?: IconName;
+  tabs: TabDef<T>[];
+}
+
+/** The last page opened in each group, so going back to a group returns you there. */
+const lastInGroup = new Map<string, string>();
+
+/**
+ * A few calm group tabs instead of a long row: the pages inside the chosen group appear as a small
+ * second row (only when the group has more than one). The active page id stays the same as before,
+ * so every link (#/study/notes…) still works.
+ */
+export function GroupedTabs<T extends string>(props: { groups: TabGroup<T>[]; active: T; onChange: (id: T) => void; label: string }) {
+  const group = props.groups.find((g) => g.tabs.some((t) => t.id === props.active)) ?? props.groups[0];
+  lastInGroup.set(`${props.label}:${group.id}`, props.active);
+  const open = (id: string) => {
+    const g = props.groups.find((x) => x.id === id)!;
+    const remembered = lastInGroup.get(`${props.label}:${g.id}`) as T | undefined;
+    props.onChange(remembered && g.tabs.some((t) => t.id === remembered) ? remembered : g.tabs[0].id);
+  };
+  return (
+    <div className="grouped-tabs">
+      <Tabs tabs={props.groups.map((g) => ({ id: g.id, label: g.label, icon: g.icon }))} active={group.id} onChange={open} label={props.label} />
+      {group.tabs.length > 1 && (
+        <div className="subtabs">
+          <Segmented<T> label={`${group.label} pages`} value={props.active} onChange={props.onChange} options={group.tabs.map((t) => ({ value: t.id, label: t.label }))} />
+        </div>
+      )}
     </div>
   );
 }
@@ -205,9 +240,16 @@ export function Field(props: { label: string; children: ReactNode; hint?: string
   );
 }
 
+/** A gentle "nothing here yet" note, with a little sleeping-cat drawing instead of a bare box. */
 export function Empty({ children }: { children: ReactNode }) {
-  return <p className="empty">{children}</p>;
+  return (
+    <div className="empty">
+      <PixelArt rows={SLEEPY_CAT} palette={{ k: '#2b1d0e', s: '#e8892b', w: '#fff3d6', z: '#9a8a70' }} size={44} />
+      <p>{children}</p>
+    </div>
+  );
 }
+const SLEEPY_CAT = ['..........z.', '.........z..', '..k.k.......', '.ksksk......', 'ksssskkkkkk.', 'kskksssssssk', 'kssssswwssk.', '.kkkkkkkkk..'];
 
 const TOAST_ICON: Record<ToastKind, IconName> = {
   pop: 'coin',

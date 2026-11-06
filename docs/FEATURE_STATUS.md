@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-05** — Physics mastery tools: 200 tests passing, production build passing.
+Last verified: **2026-11-06** — Cozy redesign (calm Home, grouped tabs, softer look): 204 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -19,7 +19,11 @@ Paths are relative to `src/`.
 | Cabin home with station links | Implemented | `scene/Cabin.tsx` (`stations()`), `screens/Home.tsx` |
 | Daily dashboard "Today" card: top 3, now/next class, next prayer, money left today, deadlines & exams this week, goal progress | Implemented | `TodayCard` in `screens/Daily.tsx`, `lib/today.ts` (tests in `lib/today.test.ts`) |
 | Sleep & energy check-in (not scored) | Implemented | `checkins` in `lib/types.ts`; suggestion from bedtime + Fajr rise (`sleptHours`) |
-| Customisable dashboard | Not started | Phase 5 |
+| Calm Home: Today + 1% quest + only what matters now (dates when close, Jumu'ah on Fridays, Fajr/promise in the morning, week review Fri–Sun, backup when due); the rest in "More for today" | Implemented | `cardsIn`, `placeOf` in `lib/home.ts` (tests in `lib/home.test.ts`); `screens/Home.tsx` |
+| Customisable dashboard: Arrange Home (pin / auto / hide every card) | Implemented | `ArrangeHome` in `screens/Home.tsx`; `settings.home` |
+| Discover shelf: up to 3 features not used yet, each with Open / Not now | Implemented | `DISCOVER`, `discoverTips` in `lib/home.ts` |
+| Grouped tabs (about 4 per station, pages as a small second row; every old link still works) | Implemented | `GroupedTabs` in `ui/kit.tsx`; Study, Prayer, Money, Planner, Reflect, More |
+| Softer look: warm accent per room, more spacing, sleeping-cat empty states, time-of-day light, glowing lit lanterns | Implemented | Cozy layer in `styles.css`; `data-room` and `data-daypart` set in `App.tsx`; `Empty` in `ui/kit.tsx` |
 | Morning briefing (incl. photo, focus, vision goal, quote of the day) | Implemented | `screens/Briefing.tsx`; `QUOTES`, `quoteOfTheDay` in `lib/daily.ts` |
 | Goals: yearly, monthly, weekly (each can support one a level up, year goals a vision-board dream), daily = top 3; carry over unfinished; week progress on Home | Implemented | `screens/Goals.tsx` (Planner → Goals); `lib/goals.ts` (tests in `lib/goals.test.ts`); `goalProgress` in `lib/today.ts` |
 | Today cards (classes now/next, money, weather, next test, top 3, due, mood, level) | Implemented | `screens/Home.tsx` |
@@ -100,7 +104,7 @@ Paths are relative to `src/`.
 | Prayer calculation methods (MWL default, ISNA, Egyptian, Karachi, Umm al-Qura) | Implemented | `METHODS` in `lib/prayer.ts` (tests in `lib/islamic.test.ts`); Prayer settings |
 | Hijri date (Home greeting, Prayer page) + Islamic calendar of the next occasions | Implemented | `hijriLabel`, `nextOccasions` in `lib/islamic.ts`; `IslamicCalendar` in `screens/Deen.tsx` |
 | Jumu'ah routine: Friday checklist (private), mosque khutbah time, last hour before Maghrib | Implemented | `JumuahTab` in `screens/Deen.tsx` (Prayer → Jumu'ah); `FRIDAY_STEPS` in `lib/islamic.ts` |
-| Friday card on Home on a real Friday | Needs verification | `FridayCard` in `screens/Home.tsx` — built on Thursday; the Friday check (`isFriday`) is tested |
+| Friday card on Home on a real Friday | Implemented | `FridayCard` in `screens/Home.tsx` — seen on Home on Friday 6 Nov |
 | Qur'an memorisation (hifz) per surah + spaced revision (solid → 3/7/14/30/60 days, shaky → tomorrow), never scored | Implemented | `HifzTab` in `screens/Deen.tsx` (Prayer → Hifz); `dueForRevision`, `afterRevision` in `lib/islamic.ts`; `lib/surahs.ts` |
 | Dua collection (20 duas by situation: Arabic, transliteration, meaning, source), starred duas, my own duas | Implemented | `IslamicLibrary.tsx` (Prayer → Library); `lib/duas.ts` (tests in `lib/duas.test.ts`) |
 | Private good deeds journal (hidden until tapped; never counted, searched or shown elsewhere) | Implemented | `Deeds` in `screens/IslamicLibrary.tsx`; excluded from `buildIndex` (test) |
