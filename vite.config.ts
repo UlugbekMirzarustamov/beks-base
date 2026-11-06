@@ -6,5 +6,13 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   base: './',
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        // React in its own file: the app's own file stays smaller, and React stays cached between updates.
+        manualChunks: (id) => (/node_modules\/(react|react-dom|scheduler)\//.test(id) ? 'react' : undefined),
+      },
+    },
+  },
   test: { environment: 'node' },
 });

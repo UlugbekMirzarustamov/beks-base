@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-06** — Cozy redesign (calm Home, grouped tabs, softer look): 204 tests passing, production build passing.
+Last verified: **2026-11-06** — Cozy redesign (calm Home, grouped tabs, softer look): 203 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**

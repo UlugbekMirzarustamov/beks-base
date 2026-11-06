@@ -14,7 +14,8 @@ Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUD
   Money (Today · Plan & save · Bills · More), Planner, Reflect and More too; every old link still opens the same
   page. A **softer look**: more breathing room, a warm accent colour per room, a little sleeping cat instead of
   empty boxes, the page's light follows the time of day (warm morning, amber evening, deep night), and lit
-  lanterns glow gently (still for people who prefer less motion). Tests: 204 passing.
+  lanterns glow gently (still for people who prefer less motion). React now loads as its own file, so the
+  app's main file is smaller (and the size warning is gone). Tests: 203 passing.
 - **Physics mastery** (Study → Tools → Physics): a **formula sheet** of 44 core formulas across mechanics,
   materials, circular motion & SHM, waves & light, electricity, thermal, fields and nuclear — every symbol and
   unit explained, searchable, one tap to add to your formula cards (spaced repetition); **solve any formula for
