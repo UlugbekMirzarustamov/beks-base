@@ -147,6 +147,8 @@ describe('every new part of the data loads after saving', () => {
     d.learning = [{ id: 'l', title: 'x', by: '', kind: 'book', status: 'want', link: '', notes: '' }];
     d.examQuestions = [{ id: 'eq', subjectId: null, topicId: null, question: 'q', answer: 'a', marks: 2 }];
     d.mocks = [{ id: 'mk', subjectId: null, testId: null, date: TODAY, minutes: 5, used: 60, score: 1, max: 2, leftApp: 0, items: [{ question: 'q', answer: 'a', given: '', marks: 2, got: 1 }] }];
+    d.dreamRoom = [{ id: 'dr', name: 'Desk', price: 120, kind: 'desk', bought: TODAY }];
+    d.pot = { total: 4200, start: TODAY, months: 5, days: 140, cap: 15 };
     const saved = JSON.parse(JSON.stringify(d));
     expect(validateData(saved, TODAY)).toEqual([]);
     expect(validateData({ ...saved, duaFavs: [{ id: 1 }] }, TODAY)).toEqual(['"duaFavs" has broken entries']);
@@ -177,7 +179,7 @@ describe('missing nested properties', () => {
 
   it('data saved before the kitchen and admin existed opens with empty lists; old bills and events keep working', () => {
     const d = emptyData(TODAY) as any;
-    for (const k of ['groceries', 'pantry', 'recipes', 'meals', 'admin', 'lectureNotes', 'friday', 'hifz', 'simbaGifts', 'planGoals', 'duaFavs', 'myDuas', 'deeds', 'learning', 'examQuestions', 'mocks']) delete d[k];
+    for (const k of ['groceries', 'pantry', 'recipes', 'meals', 'admin', 'lectureNotes', 'friday', 'hifz', 'simbaGifts', 'planGoals', 'duaFavs', 'myDuas', 'deeds', 'learning', 'examQuestions', 'mocks', 'dreamRoom']) delete d[k];
     delete d.settings.prayer.method;
     delete d.settings.breakEvery;
     delete d.settings.home;
@@ -194,7 +196,7 @@ describe('missing nested properties', () => {
     expect(out.hifz).toEqual([]);
     expect(out.simbaGifts).toEqual([]);
     expect(out.planGoals).toEqual([]);
-    expect([out.duaFavs, out.myDuas, out.deeds, out.learning, out.examQuestions, out.mocks]).toEqual([[], [], [], [], [], []]);
+    expect([out.duaFavs, out.myDuas, out.deeds, out.learning, out.examQuestions, out.mocks, out.dreamRoom]).toEqual([[], [], [], [], [], [], []]);
     expect(out.settings.breakEvery).toBe(50);
     expect(out.settings.home).toEqual({ pinned: [], hidden: [], dismissed: [] });
     expect(out.settings.prayer.method).toBe('mwl');

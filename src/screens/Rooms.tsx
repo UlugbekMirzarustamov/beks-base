@@ -4,12 +4,13 @@
  * for the pantry, stars for nights you wrote…), and Simba does something different in each one.
  * Original pixel art, drawn here as tiny SVG sprites. Logic lives in lib/rooms.ts. No points, no penalties.
  */
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { formatDay, zonedParts, UK_TZ } from '../lib/dates';
 import { gardenOfYear, gardenYears, giftFor, giftWaiting, museum, ROOMS, roomStats, type Exhibit, type RoomId, type RoomStats } from '../lib/rooms';
 import { sfx } from '../lib/sound';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
+import { Sprite, type Pal, type Rows } from '../ui/Sprite';
 import { BreakSetting } from '../ui/BreakReminder';
 import { Empty, Panel, useSubRoute } from '../ui/kit';
 
@@ -18,20 +19,8 @@ const MONTHS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 const BOOK_COLOURS = ['#c0392b', '#2a6fa8', '#5fa83b', '#e8a317', '#7a4fa3', '#16a085'];
 
 // ---------------------------------------------------------------- sprites
-type Rows = string[];
-type Pal = Record<string, string>;
 const K = '#2b1d0e';
 const WOOD: Pal = { w: '#7a4a24', d: '#4a2c14', k: K };
-
-/** A pixel sprite that scales with its box (position and width set by the room layout). */
-function Sprite({ rows, pal, at, label }: { rows: Rows; pal: Pal; at: CSSProperties; label?: string }) {
-  const w = Math.max(...rows.map((r) => r.length));
-  return (
-    <svg className="room__sprite" style={at} viewBox={`0 0 ${w} ${rows.length}`} shapeRendering="crispEdges" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-      {rows.flatMap((row, y) => [...row].map((ch, x) => (pal[ch] ? <rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={pal[ch]} /> : null)))}
-    </svg>
-  );
-}
 
 /** A bookshelf holding `n` books (3 shelves × 12). */
 function shelf(n: number): { rows: Rows; pal: Pal } {

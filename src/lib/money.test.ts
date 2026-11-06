@@ -215,3 +215,36 @@ describe('money plan (a pot that must last 5 months)', () => {
     expect(daysUntil(100, 40, 0)).toBeNull();
   });
 });
+
+describe('plan in days with a daily cap and a dream room jar', () => {
+  const pot = { total: 4200, start: '2026-11-01', months: 5, days: 140, cap: 15 };
+  const buy = (amount: number, date: string, extra: Partial<Expense> = {}): Expense => ({ id: `${date}-${amount}-${extra.fromDream ? 'd' : ''}`, amount, date, categoryId: 'other', note: '', ...extra });
+
+  it('lasts exactly 140 days, gives $15 a day, and saves the rest in the dream jar', () => {
+    const s = potStatus(pot, [], '2026-11-11');
+    expect(s.totalDays).toBe(140);
+    expect(s.end).toBe('2027-03-20');
+    expect(s.daily).toBe(15);
+    expect(s.dreamPerDay).toBe(15); // $4200 / 140 = $30 a day: $15 to spend, $15 to the jar
+    expect(s.dreamJar).toBe(150); // 10 finished days
+    expect(s.dreamTotal).toBe(2100);
+  });
+
+  it('dream purchases come out of the jar, never out of the daily allowance or the wish fund', () => {
+    const plain = potStatus(pot, [buy(10, '2026-11-05')], '2026-11-11');
+    const withDream = potStatus(pot, [buy(10, '2026-11-05'), buy(100, '2026-11-08', { fromDream: true })], '2026-11-11');
+    expect(withDream.dreamJar).toBe(50);
+    expect(withDream.fund).toBe(plain.fund);
+    expect(withDream.leftToday).toBe(plain.leftToday);
+    expect(withDream.remaining).toBe(plain.remaining - 100);
+  });
+
+  it('keeps the old behaviour without a cap, and never raises the allowance above what the pot allows', () => {
+    const old = potStatus({ total: 2000, start: '2026-11-01', months: 4 }, [], '2026-11-11');
+    expect(old.dreamPerDay).toBe(0);
+    expect(old.dreamJar).toBe(0);
+    const small = potStatus({ total: 1000, start: '2026-11-01', months: 5, days: 140, cap: 15 }, [], '2026-11-11');
+    expect(small.daily).toBe(7.14); // $1000 / 140 is below the cap
+    expect(small.dreamPerDay).toBe(0);
+  });
+});

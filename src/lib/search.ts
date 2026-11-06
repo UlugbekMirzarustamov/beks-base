@@ -58,6 +58,7 @@ export function buildIndex(d: AppData): SearchEntry[] {
   for (const l of d.learning) add({ key: `learning-${l.id}`, kind: 'Learning', title: l.title, sub: [l.by, l.status].filter(Boolean).join(' · '), href: '#/prayer/library', date: '', text: l.notes });
   for (const m of d.myDuas) add({ key: `mydua-${m.id}`, kind: 'Dua', title: m.title, sub: 'my duas', href: '#/prayer/library', date: '', text: `${m.text} ${m.note}` });
   for (const q of d.examQuestions) add({ key: `examq-${q.id}`, kind: 'Exam question', title: q.question, sub: `${moduleName(q.subjectId)} · ${q.marks} marks`, href: '#/study/mock', date: '', text: q.answer });
+  for (const it of d.dreamRoom) add({ key: `dream-${it.id}`, kind: 'Dream room', title: it.name, sub: `${money(it.price)}${it.bought ? ` · bought ${it.bought}` : ''}`, href: '#/money/dream', date: it.bought ?? '' });
   for (const n of d.lectureNotes) add({ key: `lecture-${n.id}`, kind: 'Lecture note', title: n.title, sub: [moduleName(n.subjectId), n.date].filter(Boolean).join(' · '), href: '#/study/notes', date: n.date, text: n.body });
   for (const n of d.notes) add({ key: `note-${n.id}`, kind: 'Journal', title: n.title || 'Untitled note', sub: n.updated.slice(0, 10), href: '#/more/journal', date: n.updated.slice(0, 10), text: n.body });
   for (const i of d.inbox) if (!i.done) add({ key: `inbox-${i.id}`, kind: 'Inbox', title: i.text, sub: i.kind, href: '#/planner/today', date: i.created, text: i.url });
@@ -94,7 +95,7 @@ export type ArchiveArea = 'study' | 'money' | 'planner' | 'reflect' | 'kitchen' 
 export const ARCHIVE_AREAS: { id: ArchiveArea; label: string; kinds: string[] }[] = [
   { id: 'planner', label: 'Planner', kinds: ['Task', 'Goal', 'Event', 'Inbox', 'Inbox (done)'] },
   { id: 'study', label: 'Study', kinds: ['Lecture note', 'Exam question', 'Assignment', 'Exam', 'Mistake', 'Formula', 'Topic', 'Word'] },
-  { id: 'money', label: 'Money', kinds: ['Purchase', 'Bill', 'Subscription', 'Wish', 'Savings jar'] },
+  { id: 'money', label: 'Money', kinds: ['Purchase', 'Bill', 'Subscription', 'Wish', 'Savings jar', 'Dream room'] },
   { id: 'reflect', label: 'Journal & reflect', kinds: ['Journal', 'Night log', 'Week review', 'Campfire', 'Vision', 'Letter'] },
   { id: 'kitchen', label: 'Kitchen', kinds: ['Recipe', 'Meal', 'Pantry', 'Shopping'] },
   { id: 'admin', label: 'Admin', kinds: ['Admin'] },
@@ -179,6 +180,7 @@ export const COMMANDS: Command[] = [
   go('Wishes', '#/money/wishes', 'wish fund'),
   go('Spending', '#/money/spending', 'purchases expenses'),
   go('Savings jars', '#/money/savings', 'goals'),
+  go('Dream room', '#/money/dream', 'dream room jar save furniture desk savings'),
   go('Bills', '#/money/bills', 'recurring subscriptions'),
   go('Prayer times', '#/prayer/today', 'salah namaz lanterns'),
   go("Qur'an", '#/prayer/quran', 'quran pages'),

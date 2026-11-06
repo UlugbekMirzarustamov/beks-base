@@ -4,7 +4,7 @@
  * Also exports <ExpenseSheet> (the quick "add purchase" pop-up used by the big + button)
  * and <SafeToSpendCard> (also shown on Home).
  */
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { guessColumns, parseCsv, rowsToPurchases, type ColumnGuess } from '../lib/csv';
 import { addDays, addMonths, daysBetween, daysInMonth, formatDay, formatMonth, monthOf, relativeDays } from '../lib/dates';
 import { uid } from '../lib/id';
@@ -29,7 +29,9 @@ export const CATEGORY_COLOR: Record<CategoryIcon, string> = {
 };
 const ICON_CHOICES: CategoryIcon[] = ['house', 'apple', 'bus', 'phone', 'star', 'coin', 'box'];
 
-const TABS = ['plan', 'wishes', 'overview', 'spending', 'savings', 'charts', 'bills', 'setup', 'tools'] as const;
+// The dream room loads on first open (prefetched for offline use in App.tsx).
+const DreamTab = lazy(() => import('./DreamRoom'));
+const TABS = ['plan', 'wishes', 'overview', 'spending', 'savings', 'dream', 'charts', 'bills', 'setup', 'tools'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function Money({ sub }: { sub?: string }) {
@@ -61,6 +63,7 @@ export default function Money({ sub }: { sub?: string }) {
               { id: 'plan', label: 'Plan' },
               { id: 'wishes', label: 'Wishes' },
               { id: 'savings', label: 'Savings' },
+              { id: 'dream', label: 'Dream room' },
             ],
           },
           {
@@ -96,6 +99,11 @@ export default function Money({ sub }: { sub?: string }) {
       {tab === 'savings' && <Savings />}
       {tab === 'charts' && <Charts />}
       {tab === 'bills' && <Bills />}
+      {tab === 'dream' && (
+        <Suspense fallback={<p className="muted center">Opening…</p>}>
+          <DreamTab />
+        </Suspense>
+      )}
       {tab === 'setup' && <BudgetSetup />}
       {tab === 'tools' && (
         <div className="grid grid--2">

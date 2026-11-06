@@ -4,6 +4,14 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Money plan in days, a $15 daily maximum, and a dream room:** the money plan can now last a number of
+  **days** (e.g. 140) as well as months, with an optional **"most I can spend a day"** (e.g. $15). Your daily
+  allowance never goes above it, and the rest of each day's share drops into the **dream room jar** — worked
+  out from the plan, never copied (unspent allowance still goes to the wish fund as before). The new **Dream room**
+  (Money → Plan & save → Dream room, also linked from Today's money) is a pixel room you build piece by piece:
+  list what you want with real prices; each piece goes from a faint blueprint to glowing "ready" when the jar
+  covers it (with how many days to go for the next), and "I bought it" records the purchase from the jar so it
+  never eats your daily allowance. Existing plans keep working unchanged until you edit them. Tests: 208 passing.
 - **A cozier, calmer app (nothing removed):** **Home** now shows the cabin, Today, one gentle suggestion
   (today's 1% quest) and only what matters right now — birthdays and bills when they're close, Jumu'ah on
   Fridays, Fajr and the promise in the morning, the wind-down at night, the week review Friday to Sunday.

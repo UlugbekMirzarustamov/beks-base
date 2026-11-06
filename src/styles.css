@@ -6589,3 +6589,22 @@ html[data-daypart='night'] body::before {
     }
   }
 }
+
+/* ---------- Dream room ---------- */
+.room--dream {
+  --room-wall: #e9d8b8;
+  --room-floor: #a77b4f;
+}
+.dream-piece.is-saving .room__sprite {
+  opacity: 0.22;
+  filter: grayscale(1);
+}
+.dream-piece.is-ready .room__sprite {
+  filter: drop-shadow(0 0 3px #ffd23f);
+}
+.pot-today__dream {
+  color: inherit;
+}
+.dream-row.is-bought .list__text > span:first-child {
+  opacity: 0.8;
+}

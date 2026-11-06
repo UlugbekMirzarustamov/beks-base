@@ -1,5 +1,6 @@
 /**
- * 💰 The money plan: one pot (e.g. $2,000) that has to last N months.
+ * 💰 The money plan: one pot (e.g. $4,200) that has to last N days or months, with an optional daily maximum
+ *    (the rest of each day's share goes into the dream room jar — see DreamRoom.tsx).
  *  - <PotToday>     today's allowance, what's left today, the pot and the wish fund
  *  - <PlanTab>      the pot, a "runway" to the end date, and a money calendar
  *  - <Wishes>       things you're saving for with the money you don't spend
@@ -42,6 +43,11 @@ export function PotToday() {
         <PixelIcon name="star" size={16} /> Wish fund: <strong>{formatMoney(s.fund)}</strong>
         {s.leftToday > 0 && <small> (+{formatMoney(s.leftToday)} tonight if you stop here)</small>}
       </a>
+      {s.dreamPerDay > 0 && (
+        <a href="#/money/dream" className="pot-today__fund pot-today__dream">
+          <PixelIcon name="house" size={16} /> Dream room jar: <strong>{formatMoney(s.dreamJar)}</strong> <small>(+{formatMoney(s.dreamPerDay)} every day)</small>
+        </a>
+      )}
       <button type="button" className="btn btn--primary btn--wide" onClick={() => openExpense()}>
         <PixelIcon name="plus" size={18} /> I spent something
       </button>
@@ -78,7 +84,8 @@ export function PlanTab() {
         <Bar value={pot.total - s.remaining} max={pot.total} label="Pot used" level={s.fund < 0 ? 'warn' : 'ok'} />
         <ul className="insights">
           <li>
-            <PixelIcon name="coin" size={14} /> Plan: <strong>{formatMoney(s.daily)}</strong> a day ({formatMoney(pot.total)} ÷ {s.totalDays} days).
+            <PixelIcon name="coin" size={14} /> Plan: <strong>{formatMoney(s.daily)}</strong> a day for {s.totalDays} days
+            {s.dreamPerDay > 0 ? ` (your maximum) + ${formatMoney(s.dreamPerDay)} a day into the dream room jar` : ` (${formatMoney(pot.total)} ÷ ${s.totalDays} days)`}.
           </li>
           <li>
             <PixelIcon name="star" size={14} /> If you used your savings too, you could spend <strong>{formatMoney(s.evenPerDay)}</strong> a day from now on.
@@ -146,35 +153,70 @@ export function PlanTab() {
 
 function PlanSetup({ current, onSaved }: { current?: Pot; onSaved?: (p: Pot) => void }) {
   const { update, today, toast } = useStore();
-  const [form, setForm] = useState({ total: current ? String(current.total) : '', start: current?.start ?? today, months: String(current?.months ?? 5) });
+  const [form, setForm] = useState({
+    total: current ? String(current.total) : '',
+    start: current?.start ?? today,
+    length: String(current ? (current.days ?? current.months) : 140),
+    unit: (current ? (current.days ? 'days' : 'months') : 'days') as 'days' | 'months',
+    cap: current ? (current.cap ? String(current.cap) : '') : '15',
+  });
   const save = (e: FormEvent) => {
     e.preventDefault();
     const total = parseAmount(form.total);
-    const months = Math.round(Number(form.months));
-    if (!(total > 0) || !(months >= 1 && months <= 24) || !form.start) {
-      toast('Check the amount, start date and months', 'error');
+    const length = Math.round(Number(form.length));
+    const cap = form.cap.trim() ? parseAmount(form.cap) : 0;
+    const okLength = form.unit === 'days' ? length >= 7 && length <= 730 : length >= 1 && length <= 24;
+    if (!(total > 0) || !okLength || !form.start || Number.isNaN(cap) || cap < 0) {
+      toast('Check the amount, start date, length and daily maximum', 'error');
       return;
     }
-    const p: Pot = { total, start: form.start, months };
+    // `months` stays filled in (older parts of the app and backups expect it); `days` wins when set.
+    const p: Pot = form.unit === 'days' ? { total, start: form.start, months: Math.max(1, Math.round(length / 30)), days: length } : { total, start: form.start, months: length };
+    if (cap > 0) p.cap = cap;
     if (onSaved) onSaved(p);
     else {
       update((d) => void (d.pot = { ...p, lastCloseout: today }));
       toast('Money plan started!', 'pop');
     }
   };
+  const share = (() => {
+    const total = parseAmount(form.total);
+    const length = Math.round(Number(form.length));
+    if (!(total > 0) || !(length > 0)) return null;
+    const days = form.unit === 'days' ? length : length * 30.4;
+    return total / days;
+  })();
+  const cap = form.cap.trim() ? parseAmount(form.cap) : 0;
   return (
     <form className="form" onSubmit={save}>
       <div className="form__row form__row--wrap">
         <Field label="Money in the pot ($)" className="grow">
-          <input className="input" inputMode="decimal" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} placeholder="e.g. 2000" />
+          <input className="input" inputMode="decimal" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} placeholder="e.g. 4200" />
         </Field>
         <Field label="Starting">
           <input className="input" type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
         </Field>
-        <Field label="Months">
-          <input className="input" type="number" min={1} max={24} value={form.months} onChange={(e) => setForm({ ...form, months: e.target.value })} />
+      </div>
+      <div className="form__row">
+        <Field label="It has to last" className="grow">
+          <input className="input" inputMode="numeric" value={form.length} onChange={(e) => setForm({ ...form, length: e.target.value })} />
+        </Field>
+        <Field label="Unit" className="grow">
+          <select className="input" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value as 'days' | 'months' })} aria-label="Days or months">
+            <option value="days">days</option>
+            <option value="months">months</option>
+          </select>
         </Field>
       </div>
+      <Field label="Most I can spend a day ($, optional)" hint="Anything above this goes into your dream room jar every day.">
+        <input className="input" inputMode="decimal" value={form.cap} onChange={(e) => setForm({ ...form, cap: e.target.value })} placeholder="e.g. 15" />
+      </Field>
+      {share !== null && (
+        <p className="muted small">
+          That's about {formatMoney(share)} a day.
+          {cap > 0 && share > cap ? ` You spend up to ${formatMoney(cap)}; ${formatMoney(share - cap)} a day builds your dream room.` : cap > 0 ? ' (Less than your maximum, so nothing goes to the dream room jar.)' : ''}
+        </p>
+      )}
       <button type="submit" className="btn btn--primary">
         {current ? 'Save plan' : 'Start my money plan'}
       </button>

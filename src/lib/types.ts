@@ -38,6 +38,8 @@ export interface Expense extends Base {
   recurringId?: string;
   /** Bought with the wish fund: comes out of the fund, not out of that day's allowance. */
   fromWish?: boolean;
+  /** Bought for the dream room: comes out of the dream room jar, not out of that day's allowance. */
+  fromDream?: boolean;
 }
 
 export interface RecurringBill extends Base {
@@ -330,6 +332,17 @@ export interface MockResult extends Base {
   /** How many times you left the app during the exam (just recorded, never a penalty). */
   leftApp: number;
   items: { question: string; answer: string; given: string; marks: number; got: number }[];
+}
+
+// ---------- Dream room ----------
+export type DreamKind = 'desk' | 'chair' | 'bed' | 'lamp' | 'plant' | 'rug' | 'shelf' | 'monitor' | 'wardrobe' | 'poster' | 'speaker' | 'other';
+/** Something for your dream room, paid for from the dream room jar. */
+export interface DreamItem extends Base {
+  name: string;
+  price: number; // dollars
+  kind: DreamKind;
+  /** The day you bought it (it was recorded as a purchase from the jar). */
+  bought?: string;
 }
 
 /** Things captured quickly that wait in the inbox until you sort them (tasks and expenses go straight to their lists). */
@@ -653,6 +666,8 @@ export interface AppData {
   friday: Record<string, string[]>;
   /** Qur'an memorisation (hifz), one entry per surah. Private, never scored. */
   hifz: HifzItem[];
+  /** The dream room: things you're saving for with the dream room jar, in order. */
+  dreamRoom: DreamItem[];
   /** Mock exams: your question bank and finished mocks. */
   examQuestions: ExamQuestion[];
   mocks: MockResult[];
