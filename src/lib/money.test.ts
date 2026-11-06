@@ -226,14 +226,14 @@ describe('plan in days with a daily cap and a dream room jar', () => {
     expect(s.end).toBe('2027-03-20');
     expect(s.daily).toBe(15);
     expect(s.dreamPerDay).toBe(15); // $4200 / 140 = $30 a day: $15 to spend, $15 to the jar
-    expect(s.dreamJar).toBe(150); // 10 finished days
+    expect(s.dreamJar).toBe(2100); // the whole plan's extra, there from day one
     expect(s.dreamTotal).toBe(2100);
   });
 
   it('dream purchases come out of the jar, never out of the daily allowance or the wish fund', () => {
     const plain = potStatus(pot, [buy(10, '2026-11-05')], '2026-11-11');
     const withDream = potStatus(pot, [buy(10, '2026-11-05'), buy(100, '2026-11-08', { fromDream: true })], '2026-11-11');
-    expect(withDream.dreamJar).toBe(50);
+    expect(withDream.dreamJar).toBe(2000);
     expect(withDream.fund).toBe(plain.fund);
     expect(withDream.leftToday).toBe(plain.leftToday);
     expect(withDream.remaining).toBe(plain.remaining - 100);

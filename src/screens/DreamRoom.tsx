@@ -53,7 +53,7 @@ export default function DreamRoom() {
   const s = data.pot ? potStatus(data.pot, data.expenses, today) : null;
   const jar = s?.dreamJar ?? 0;
   const perDay = s?.dreamPerDay ?? 0;
-  const progress = dreamProgress(data.dreamRoom, jar, perDay);
+  const progress = dreamProgress(data.dreamRoom, jar, 0);
 
   const moveUp = (id: string) =>
     update((d) => {
@@ -78,25 +78,19 @@ export default function DreamRoom() {
     toast(`${it.name} is in your room! 🎉`, 'pop');
   };
 
-  const next = progress.find((p) => p.state === 'saving');
   return (
     <div className="grid grid--2">
       <Panel title="Dream room jar" icon="house">
         {!data.pot ? (
           <Empty>Start a money plan first (Money → Plan). Set a daily maximum, and everything above it builds your dream room.</Empty>
         ) : perDay <= 0 ? (
-          <Empty>Set a "most I can spend a day" in Money → Plan → Change the plan. Everything above it lands here every day.</Empty>
+          <Empty>Set a "most I can spend a day" in Money → Plan → Change the plan. Everything above it, for the whole plan, lands here at once.</Empty>
         ) : (
           <>
             <p className="big-number big-number--small">{formatMoney(jar)}</p>
             <p className="muted">
-              +{formatMoney(perDay)} every day · about {formatMoney(s!.dreamTotal)} by {formatDay(s!.end)}
+              {formatMoney(s!.dreamTotal)} for your whole plan, ready to use now · spend it on your room
             </p>
-            {next && next.daysToGo !== null && (
-              <p className="small">
-                Next: {next.item.name} in about {next.daysToGo} day{next.daysToGo === 1 ? '' : 's'}.
-              </p>
-            )}
           </>
         )}
       </Panel>
@@ -129,9 +123,7 @@ export default function DreamRoom() {
                       ? `Bought ${formatDay(p.item.bought!)} ✨`
                       : p.state === 'ready'
                         ? 'Ready — the jar covers it'
-                        : p.daysToGo !== null
-                          ? `About ${p.daysToGo} day${p.daysToGo === 1 ? '' : 's'} to go`
-                          : 'Saving for it'}
+                        : 'More than the jar has left'}
                   </small>
                 </span>
               </div>

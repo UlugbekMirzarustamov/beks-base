@@ -1,6 +1,6 @@
 /**
  * 💰 The money plan: one pot (e.g. $4,200) that has to last N days or months, with an optional daily maximum
- *    (the rest of each day's share goes into the dream room jar — see DreamRoom.tsx).
+ *    (everything above it, for the whole plan, goes into the dream room jar at once — see DreamRoom.tsx).
  *  - <PotToday>     today's allowance, what's left today, the pot and the wish fund
  *  - <PlanTab>      the pot, a "runway" to the end date, and a money calendar
  *  - <Wishes>       things you're saving for with the money you don't spend
@@ -45,7 +45,7 @@ export function PotToday() {
       </a>
       {s.dreamPerDay > 0 && (
         <a href="#/money/dream" className="pot-today__fund pot-today__dream">
-          <PixelIcon name="house" size={16} /> Dream room jar: <strong>{formatMoney(s.dreamJar)}</strong> <small>(+{formatMoney(s.dreamPerDay)} every day)</small>
+          <PixelIcon name="house" size={16} /> Dream room jar: <strong>{formatMoney(s.dreamJar)}</strong>
         </a>
       )}
       <button type="button" className="btn btn--primary btn--wide" onClick={() => openExpense()}>
@@ -85,7 +85,7 @@ export function PlanTab() {
         <ul className="insights">
           <li>
             <PixelIcon name="coin" size={14} /> Plan: <strong>{formatMoney(s.daily)}</strong> a day for {s.totalDays} days
-            {s.dreamPerDay > 0 ? ` (your maximum) + ${formatMoney(s.dreamPerDay)} a day into the dream room jar` : ` (${formatMoney(pot.total)} ÷ ${s.totalDays} days)`}.
+            {s.dreamPerDay > 0 ? ` (your maximum); the other ${formatMoney(s.dreamTotal)} went into the dream room jar right away` : ` (${formatMoney(pot.total)} ÷ ${s.totalDays} days)`}.
           </li>
           <li>
             <PixelIcon name="star" size={14} /> If you used your savings too, you could spend <strong>{formatMoney(s.evenPerDay)}</strong> a day from now on.
@@ -208,13 +208,13 @@ function PlanSetup({ current, onSaved }: { current?: Pot; onSaved?: (p: Pot) => 
           </select>
         </Field>
       </div>
-      <Field label="Most I can spend a day ($, optional)" hint="Anything above this goes into your dream room jar every day.">
+      <Field label="Most I can spend a day ($, optional)" hint="Everything above this, for the whole plan, goes into your dream room jar straight away.">
         <input className="input" inputMode="decimal" value={form.cap} onChange={(e) => setForm({ ...form, cap: e.target.value })} placeholder="e.g. 15" />
       </Field>
       {share !== null && (
         <p className="muted small">
           That's about {formatMoney(share)} a day.
-          {cap > 0 && share > cap ? ` You spend up to ${formatMoney(cap)}; ${formatMoney(share - cap)} a day builds your dream room.` : cap > 0 ? ' (Less than your maximum, so nothing goes to the dream room jar.)' : ''}
+          {cap > 0 && share > cap ? ` You spend up to ${formatMoney(cap)}; ${formatMoney((share - cap) * (form.unit === 'days' ? Math.round(Number(form.length)) : Math.round(Number(form.length) * 30.4)))} goes into your dream room jar straight away.` : cap > 0 ? ' (Less than your maximum, so nothing goes to the dream room jar.)' : ''}
         </p>
       )}
       <button type="submit" className="btn btn--primary">

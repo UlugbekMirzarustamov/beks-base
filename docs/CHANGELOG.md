@@ -4,6 +4,8 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Dream room jar fills at once:** the whole plan's extra (what's above your daily maximum × every day of the
+  plan) is in the jar straight away instead of dripping in day by day, so you can start buying room pieces now.
 - **Money plan in days, a $15 daily maximum, and a dream room:** the money plan can now last a number of
   **days** (e.g. 140) as well as months, with an optional **"most I can spend a day"** (e.g. $15). Your daily
   allowance never goes above it, and the rest of each day's share drops into the **dream room jar** — worked

@@ -79,7 +79,7 @@ Paths are relative to `src/`.
 |---|---|---|
 | USD amounts with £ entry; so'm converter | Implemented | `screens/Money.tsx`, `lib/money.ts` |
 | Money plan (pot → daily allowance) for N days or months, with an optional daily maximum (e.g. $15) | Implemented | `lib/pot.ts` (`days`, `cap`), `screens/Plan.tsx`, tests in `lib/money.test.ts` |
-| Dream room jar (each day's share above the maximum) + Dream room: pieces with prices, blueprint → ready → bought, "I bought it" records the purchase from the jar | Implemented | `potStatus().dreamJar` in `lib/pot.ts`; `lib/dream.ts` (tests in `lib/dream.test.ts`); `screens/DreamRoom.tsx` (Money → Plan & save → Dream room) |
+| Dream room jar (the share above the maximum for the whole plan, all there from day one) + Dream room: pieces with prices, blueprint → ready → bought, "I bought it" records the purchase from the jar | Implemented | `potStatus().dreamJar` in `lib/pot.ts`; `lib/dream.ts` (tests in `lib/dream.test.ts`); `screens/DreamRoom.tsx` (Money → Plan & save → Dream room) |
 | Wish fund, wishes, ETA, slider, buy from fund | Implemented | `screens/Plan.tsx` (`Wishes`), `lib/pot.ts` |
 | Runway, money calendar, nightly "you saved" | Implemented | `screens/Plan.tsx` |
 | Budget & category limits, savings jars, bills, charts, CSV import, insights | Implemented | `screens/Money.tsx`, `lib/csv.ts`, `lib/daily.ts` (`moneyInsights`) |

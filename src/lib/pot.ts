@@ -3,7 +3,8 @@
  * (e.g. $2,000 for 140 days). Every purchase comes out of the pot.
  *
  * Optional daily cap (e.g. $15): the allowance is never more than the cap, and the rest of each day's
- * share goes into the DREAM ROOM JAR — worked out from the plan (never copied), spent only on dream items.
+ * share is set aside for the whole plan at once in the DREAM ROOM JAR (it is all there from day one) —
+ * worked out from the plan (never copied), spent only on dream items.
  *
  * The idea in one line: you get the same allowance every day
  * (pot ÷ days). Whatever you DON'T spend goes into your WISH FUND;
@@ -52,9 +53,9 @@ export interface PotStatus {
   daily: number;
   /** What goes into the dream room jar each day (0 without a cap). */
   dreamPerDay: number;
-  /** Dream room jar now: saved so far (finished days) minus dream items bought. */
+  /** Dream room jar now: the whole plan's extra (dreamTotal), there from day one, minus dream items bought. */
   dreamJar: number;
-  /** What the dream room jar will have reached by the last day (before any purchases). */
+  /** Everything the dream room jar gets: the extra per day × every day of the plan. */
   dreamTotal: number;
   /** Full days already finished in the plan (before today). */
   daysPassed: number;
@@ -109,8 +110,8 @@ export function potStatus(p: Pot, expenses: Expense[], today: string): PotStatus
   }
   let underStreak = 0;
   for (let d = addDays(today, -1); d >= p.start && (byDay.get(d) ?? 0) <= daily; d = addDays(d, -1)) underStreak++;
-  const dreamJar = roundPennies(dreamPerDay * daysPassed - dreamSpent);
   const dreamTotal = roundPennies(dreamPerDay * totalDays);
+  const dreamJar = roundPennies(dreamTotal - dreamSpent);
   return { end, totalDays, daily, dreamPerDay: roundPennies(dreamPerDay), dreamJar, dreamTotal, daysPassed, daysLeft, spentToday, spentTotal, remaining, leftToday: roundPennies(daily - spentToday), fund, evenPerDay, avgPerDay, runsOutOn, underStreak };
 }
 
