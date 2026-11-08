@@ -354,7 +354,7 @@ export function Journal() {
             <li key={n.id}>
               <button type="button" className={`note-link ${n.id === openId ? 'is-open' : ''}`} onClick={() => setOpenId(n.id)} aria-current={n.id === openId}>
                 <strong>{n.title || 'Untitled'}</strong>
-                <small className="muted">{formatDay(n.updated.slice(0, 10))}</small>
+                <small className="muted">{formatDay(n.updated.slice(0, 10))} · {clockIn(UK_TZ, new Date(n.updated))}</small>
               </button>
             </li>
           ))}

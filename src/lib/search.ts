@@ -61,6 +61,7 @@ export function buildIndex(d: AppData): SearchEntry[] {
   for (const it of d.dreamRoom) add({ key: `dream-${it.id}`, kind: 'Dream room', title: it.name, sub: `${money(it.price)}${it.bought ? ` · bought ${it.bought}` : ''}`, href: '#/money/dream', date: it.bought ?? '' });
   for (const n of d.lectureNotes) add({ key: `lecture-${n.id}`, kind: 'Lecture note', title: n.title, sub: [moduleName(n.subjectId), n.date].filter(Boolean).join(' · '), href: '#/study/notes', date: n.date, text: n.body });
   for (const n of d.notes) add({ key: `note-${n.id}`, kind: 'Journal', title: n.title || 'Untitled note', sub: n.updated.slice(0, 10), href: '#/more/journal', date: n.updated.slice(0, 10), text: n.body });
+  for (const e of d.diary) add({ key: `diary-${e.id}`, kind: 'Diary', title: e.text.slice(0, 80), sub: e.time ? `${e.date} ${e.time}` : e.date, href: '#/reflect/diary', date: e.date, text: e.text });
   for (const i of d.inbox) if (!i.done) add({ key: `inbox-${i.id}`, kind: 'Inbox', title: i.text, sub: i.kind, href: '#/planner/today', date: i.created, text: i.url });
   for (const v of d.vocab) add({ key: `word-${v.id}`, kind: 'Word', title: v.word, sub: v.meaning, href: '#/more/words', date: '', text: v.sentence });
   for (const f of d.flashcards) add({ key: `card-${f.id}`, kind: 'Formula', title: f.front, sub: f.back, href: '#/study/cards', date: '' });
@@ -96,7 +97,7 @@ export const ARCHIVE_AREAS: { id: ArchiveArea; label: string; kinds: string[] }[
   { id: 'planner', label: 'Planner', kinds: ['Task', 'Goal', 'Event', 'Inbox', 'Inbox (done)'] },
   { id: 'study', label: 'Study', kinds: ['Lecture note', 'Exam question', 'Assignment', 'Exam', 'Mistake', 'Formula', 'Topic', 'Word'] },
   { id: 'money', label: 'Money', kinds: ['Purchase', 'Bill', 'Subscription', 'Wish', 'Savings jar', 'Dream room'] },
-  { id: 'reflect', label: 'Journal & reflect', kinds: ['Journal', 'Night log', 'Week review', 'Campfire', 'Vision', 'Letter'] },
+  { id: 'reflect', label: 'Journal & reflect', kinds: ['Journal', 'Diary', 'Night log', 'Week review', 'Campfire', 'Vision', 'Letter'] },
   { id: 'kitchen', label: 'Kitchen', kinds: ['Recipe', 'Meal', 'Pantry', 'Shopping'] },
   { id: 'admin', label: 'Admin', kinds: ['Admin'] },
 ];

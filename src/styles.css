@@ -6608,3 +6608,22 @@ html[data-daypart='night'] body::before {
 .dream-row.is-bought .list__text > span:first-child {
   opacity: 0.8;
 }
+
+/* Diary (Reflect) */
+.diary-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 2px dashed var(--edge);
+}
+.diary-entry__when {
+  margin: 0;
+  font-size: 1rem;
+}
+.diary-entry__text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

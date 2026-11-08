@@ -9,10 +9,11 @@
  *  - Vision   your vision board: big goals with a picture and a why.
  *  - Letters  sealed letters to future you that only open on a chosen date.
  */
-import { useState, type FormEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { addDays, daysBetween, formatDay, relativeDays } from '../lib/dates';
 import { uid } from '../lib/id';
 import { sfx } from '../lib/sound';
+import { addToDiary, parseDiaryFile, sortDiary, stampNow } from '../lib/diary';
 import type { Letter, NightLog } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
@@ -22,7 +23,7 @@ import { VisionBoard } from './Push';
 import { pixelLevel, type PixelKind } from '../lib/pixels';
 import { spendByDay } from '../lib/pot';
 
-const TABS = ['tonight', 'week', 'sky', 'year', 'vision', 'letters'] as const;
+const TABS = ['tonight', 'diary', 'week', 'sky', 'year', 'vision', 'letters'] as const;
 type Tab = (typeof TABS)[number];
 
 /** XP for lighting a star (logging a night). */
@@ -49,6 +50,7 @@ export default function Reflect({ sub }: { sub?: string }) {
             icon: 'moon',
             tabs: [
               { id: 'tonight', label: 'Tonight' },
+              { id: 'diary', label: 'Diary' },
               { id: 'week', label: 'This week' },
             ],
           },
@@ -73,6 +75,7 @@ export default function Reflect({ sub }: { sub?: string }) {
         ]}
       />
       {tab === 'tonight' && <Tonight onLit={() => setTab('sky')} />}
+      {tab === 'diary' && <Diary />}
       {tab === 'week' && <WeekReflect />}
       {tab === 'sky' && <Sky />}
       {tab === 'year' && <YearPixels />}
@@ -93,7 +96,7 @@ function Tonight({ onLit }: { onLit: () => void }) {
 
   const edit = (change: Partial<NightLog>) =>
     update((d) => {
-      d.nightLogs[today] = { ...(d.nightLogs[today] ?? emptyLog()), ...change };
+      d.nightLogs[today] = { ...(d.nightLogs[today] ?? emptyLog()), ...change, savedAt: stampNow().time };
     });
 
   const light = () => {
@@ -112,7 +115,7 @@ function Tonight({ onLit }: { onLit: () => void }) {
   return (
     <div className="grid grid--2">
       <Panel title={`Tonight · ${formatDay(today)}`} icon="moon" className="tonight">
-        <p className="muted small">One minute before bed. No essays — just honest notes. Saved automatically.</p>
+        <p className="muted small">One minute before bed. No essays — just honest notes. Saved automatically.{log.savedAt ? ` Last saved at ${log.savedAt}.` : ''}</p>
         {yesterday?.tomorrow && (
           <p className="tonight__echo">
             <PixelIcon name="scroll" size={16} /> Last night you planned: <strong>“{yesterday.tomorrow}”</strong>. Did you?
@@ -154,6 +157,86 @@ function Tonight({ onLit }: { onLit: () => void }) {
           Every night you log becomes a star in <a href="#/reflect/sky">your sky</a>. Nights in a row join up into constellations — try not
           to break the chain.
         </p>
+      </Panel>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- Diary
+function Diary() {
+  const { data, update, toast } = useStore();
+  const ask = useConfirm();
+  const [text, setText] = useState('');
+  const entries = sortDiary(data.diary);
+
+  const save = (e: FormEvent) => {
+    e.preventDefault();
+    if (!text.trim()) return;
+    const stamp = stampNow();
+    update((d) => {
+      d.diary.push({ id: uid(), ...stamp, text });
+    });
+    setText('');
+    toast(`Saved · ${formatDay(stamp.date)} at ${stamp.time}`, 'pop');
+  };
+
+  const addFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const incoming = parseDiaryFile(await file.text());
+    if (!incoming) {
+      toast("That isn't a diary file. Nothing was changed.", 'error');
+      return;
+    }
+    const added = addToDiary([...data.diary], incoming);
+    update((d) => {
+      addToDiary(d.diary, incoming);
+    });
+    toast(added ? `Added ${added} diary ${added === 1 ? 'entry' : 'entries'}` : 'Those entries are already here', 'pop');
+  };
+
+  const remove = async (id: string) => {
+    if (!(await ask('Delete this diary entry?'))) return;
+    update((d) => {
+      d.diary = d.diary.filter((x) => x.id !== id);
+    });
+  };
+
+  return (
+    <div className="grid grid--2">
+      <Panel title="Write" icon="scroll">
+        <form className="form" onSubmit={save}>
+          <Field label="Anything you want to say">
+            <textarea className="input" rows={8} value={text} onChange={(e) => setText(e.target.value)} />
+          </Field>
+          <button type="submit" className="btn btn--primary btn--wide" disabled={!text.trim()}>
+            Save with today's date and time
+          </button>
+        </form>
+        <p className="muted small">Stays on this phone only.</p>
+        <label className="btn btn--wide">
+          Add entries from a file
+          <input type="file" accept="application/json,.json" className="visually-hidden" onChange={addFile} />
+        </label>
+      </Panel>
+      <Panel title="Your diary" icon="moon">
+        {entries.length === 0 ? (
+          <Empty>Nothing written yet.</Empty>
+        ) : (
+          entries.map((entry) => (
+            <article key={entry.id} className="diary-entry">
+              <h3 className="diary-entry__when">
+                {formatDay(entry.date)}
+                {entry.time ? ` · ${entry.time}` : ''}
+              </h3>
+              <p className="diary-entry__text">{entry.text}</p>
+              <button type="button" className="btn btn--small" onClick={() => remove(entry.id)}>
+                Delete
+              </button>
+            </article>
+          ))
+        )}
       </Panel>
     </div>
   );
@@ -226,7 +309,7 @@ function Sky() {
           <span className="muted">last 8 weeks</span>
         </div>
       </Panel>
-      <Panel title={picked ? formatDay(picked) : 'Pick a star'} icon="scroll">
+      <Panel title={picked ? `${formatDay(picked)}${pickedLog?.savedAt ? ` · ${pickedLog.savedAt}` : ''}` : 'Pick a star'} icon="scroll">
         {pickedLog ? (
           <div className="night-read">
             <p className="night-read__line">“{pickedLog.line}”</p>

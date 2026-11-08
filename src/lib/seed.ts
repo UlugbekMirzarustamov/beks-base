@@ -151,6 +151,7 @@ export function emptyData(today: string): AppData {
     mocks: [],
     dreamRoom: [],
     inbox: [],
+    diary: [],
     assignments: [],
     checkins: {},
     rise: {},

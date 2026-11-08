@@ -4,6 +4,9 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Diary with date and time:** a new Reflect → Diary tab saves each entry with its date and time. Older entries can be
+  added from a private file on the phone (only ever adds; adding twice changes nothing). Tonight and Journal now show the
+  time they were last saved too.
 - **Dream room jar fills at once:** the whole plan's extra (what's above your daily maximum × every day of the
   plan) is in the jar straight away instead of dripping in day by day, so you can start buying room pieces now.
 - **Money plan in days, a $15 daily maximum, and a dream room:** the money plan can now last a number of

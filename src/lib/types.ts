@@ -411,6 +411,16 @@ export interface NightLog {
   tomorrow: string;
   /** XP already given for this night (so editing doesn't give it twice). */
   rewarded?: boolean;
+  /** When this night was last written, "HH:MM" UK time. */
+  savedAt?: string;
+}
+
+/** One diary entry in Reflect. Older imported entries may have no time. */
+export interface DiaryEntry {
+  id: string;
+  date: string; // "YYYY-MM-DD"
+  time?: string; // "HH:MM"
+  text: string;
 }
 
 /** A sealed letter to future you. It can only be read on/after `openOn`. */
@@ -657,6 +667,8 @@ export interface AppData {
   assignments: Assignment[];
   /** Quick Capture inbox (ideas, notes, links, reminders). */
   inbox: InboxItem[];
+  /** Diary entries, each with its own date and time. */
+  diary: DiaryEntry[];
   /** Kitchen: shopping list, what's at home, recipes, and meals planned per day ("YYYY-MM-DD"). */
   groceries: GroceryItem[];
   pantry: PantryItem[];

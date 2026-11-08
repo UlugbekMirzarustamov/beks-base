@@ -117,6 +117,7 @@ Paths are relative to `src/`.
 | Worship never scored (no XP for prayer, fasting, taraweeh, tasbih, Qur'an) | Implemented | `screens/Prayer.tsx`, `screens/Ramadan.tsx`, `screens/Devotion.tsx` |
 | Fajr rise "I'm up" before sunrise | Needs verification | Only the after-sunrise path was checked in the browser |
 | Reflect: tonight & stars, my sky, week, year in pixels, vision board, letters | Implemented | `screens/Reflect.tsx`, `lib/pixels.ts`, `screens/Push.tsx` (`VisionBoard`) |
+| Diary with automatic date and time; add older entries from a private file; searchable | Implemented | `lib/diary.ts`, `screens/Reflect.tsx` (`Diary`), `lib/diary.test.ts` |
 | Gratitude jar, journal, habits | Implemented | `screens/Calm.tsx`, `screens/Extras.tsx` |
 | Morning promise (no penalty unless hard mode), you vs last week, hard mode | Implemented | `lib/push.ts` (tests), `screens/Push.tsx` |
 | XP, levels, coins, 25 badges | Implemented | `lib/xp.ts`, `lib/badges.ts`, `screens/Badges.tsx` |
