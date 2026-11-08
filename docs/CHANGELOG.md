@@ -4,6 +4,8 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Four dated diary entries published at Bek's request:** `public/four-nights.json` feeds the Diary once and the linkable
+  `four-nights.html` page. The offline worker no longer saves separate pages as the app's home screen.
 - **Diary with date and time:** a new Reflect → Diary tab saves each entry with its date and time. Older entries can be
   added from a private file on the phone (only ever adds; adding twice changes nothing). Tonight and Journal now show the
   time they were last saved too.

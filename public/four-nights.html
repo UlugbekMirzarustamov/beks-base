@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Four November Nights</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #111a2e; color: #e7e9f0; font: 18px/1.7 Georgia, "Times New Roman", serif; }
+  main { max-width: 62ch; margin: 0 auto; padding: 56px 16px; display: grid; gap: 40px; }
+  article { display: grid; gap: 12px; }
+  article + article { border-top: 1px solid #2c3854; padding-top: 40px; }
+  h2 { margin: 0; font: 14px/1.4 ui-monospace, Menlo, monospace; letter-spacing: 0.04em; color: #e9c46a; }
+  p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main id="entries"></main>
+<script>
+  fetch('./four-nights.json')
+    .then(function (r) { return r.json(); })
+    .then(function (file) {
+      var main = document.getElementById('entries');
+      file.entries.forEach(function (e) {
+        var day = new Date(e.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+        var article = document.createElement('article');
+        var h2 = document.createElement('h2');
+        h2.textContent = e.time ? day + ' · ' + e.time : day;
+        var p = document.createElement('p');
+        p.textContent = e.text;
+        article.append(h2, p);
+        main.append(article);
+      });
+    });
+</script>
+</body>
+</html>

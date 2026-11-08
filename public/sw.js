@@ -10,7 +10,7 @@
  * Your DATA is not stored here — that's in IndexedDB. This only stores the app itself.
  * Bump VERSION to force phones to drop the old cached files.
  */
-const VERSION = 'ulus-base-v5';
+const VERSION = 'ulus-base-v6';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -46,8 +46,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(VERSION).then((c) => c.put('./index.html', copy));
+          // Only the app itself may become the saved copy, never a separate page like four-nights.html.
+          const path = new URL(req.url).pathname;
+          if (res.ok && (path.endsWith('/') || path.endsWith('/index.html'))) {
+            const copy = res.clone();
+            caches.open(VERSION).then((c) => c.put('./index.html', copy));
+          }
           return res;
         })
         .catch(() => caches.match('./index.html')),

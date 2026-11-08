@@ -9,7 +9,7 @@
  *  - Vision   your vision board: big goals with a picture and a why.
  *  - Letters  sealed letters to future you that only open on a chosen date.
  */
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { addDays, daysBetween, formatDay, relativeDays } from '../lib/dates';
 import { uid } from '../lib/id';
 import { sfx } from '../lib/sound';
@@ -163,11 +163,35 @@ function Tonight({ onLit }: { onLit: () => void }) {
 }
 
 // ---------------------------------------------------------------- Diary
+const FIRST_ENTRIES = 'diary-four-nights';
+
 function Diary() {
   const { data, update, toast } = useStore();
   const ask = useConfirm();
   const [text, setText] = useState('');
   const entries = sortDiary(data.diary);
+
+  // One time only: bring in the entries published with the site. Deleting one later won't bring it back.
+  const needsFirstEntries = !data.applied.includes(FIRST_ENTRIES);
+  useEffect(() => {
+    if (!needsFirstEntries) return;
+    let cancelled = false;
+    fetch('./four-nights.json')
+      .then((r) => (r.ok ? r.text() : null))
+      .then((body) => {
+        const incoming = body ? parseDiaryFile(body) : null;
+        if (!incoming || cancelled) return;
+        update((d) => {
+          if (d.applied.includes(FIRST_ENTRIES)) return;
+          addToDiary(d.diary, incoming);
+          d.applied.push(FIRST_ENTRIES);
+        });
+      })
+      .catch(() => {}); // offline: try again next time the Diary opens
+    return () => {
+      cancelled = true;
+    };
+  }, [needsFirstEntries, update]);
 
   const save = (e: FormEvent) => {
     e.preventDefault();
