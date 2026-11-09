@@ -4,6 +4,14 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Living world and daily growth:** the brown background is now a pixel sky that follows real Sheffield time (sunrise,
+  day, sunset, stars at night) with drifting clouds, birds, and real rain or snow, plus a little landscape for each section
+  (the cabin on Home, a forest for Money, a library for Study, a town for Planner, mountains for Reflect, a mosque for Prayer).
+  Panels float like signs and screens slide in. The morning top-3 screen is now a wooden door that swings open. New: a
+  **streak flame** on Home that grows each day you set your top 3 and do the evening check-in (a missed day shrinks it a
+  little, it never goes back to zero), a **yesterday vs today** line, a one-tap **Focus** mode, a **Month story** in Reflect
+  (with a nudge on the 1st–3rd), and the **+ button** now opens a menu: spent money, note, reminder or today's goals.
+  Nothing new is stored. Tests: 236 passing.
 - **Brighter rooms:** lighter panels and walls, and each section has its own colour (green Money, blue Study, orange Planner,
   purple Reflect), with a coloured banner, pixel bunting and panel tops.
 - **Morning door, evening check-in, easier reading:** the app now opens only after you write today's top 3 (type them or

@@ -23,10 +23,11 @@ function ukNow(today: string) {
 
 const whenLabel = (date: string, time: string, today: string) => `${date === today ? 'today' : formatDay(date)}${time ? ` at ${time}` : ''}`;
 
-export function QuickCapture() {
+/** `kind` starts it on one kind (the + menu's Note or Reminder); otherwise it guesses from the words. */
+export function QuickCapture({ kind }: { kind?: CaptureKind } = {}) {
   const { data, update, today, toast } = useStore();
   const [text, setText] = useState('');
-  const [chosen, setChosen] = useState<CaptureKind | null>(null);
+  const [chosen, setChosen] = useState<CaptureKind | null>(kind ?? null);
   const parsed = parseCapture(text, today, ukNow(today).mins);
   const p = { ...parsed, kind: chosen ?? parsed.kind };
 
@@ -57,7 +58,7 @@ export function QuickCapture() {
     sfx('pop');
     toast(message, 'pop');
     setText('');
-    setChosen(null);
+    setChosen(kind ?? null);
   };
 
   return (

@@ -50,19 +50,33 @@ export function TopThreeDoor() {
       return now.map((t) => (t.trim() ? t : (left.shift() ?? '')));
     });
   };
+  const [opening, setOpening] = useState(false);
   const enter = (e: FormEvent) => {
     e.preventDefault();
-    if (!ready) return;
-    update((d) => {
-      const keep = d.priorities.date === today ? d.priorities.done : [false, false, false];
-      d.priorities = { date: today, items: items.map((t) => t.trim()), done: keep, entered: true };
-    });
+    if (!ready || opening) return;
+    const save = () =>
+      update((d) => {
+        const keep = d.priorities.date === today ? d.priorities.done : [false, false, false];
+        d.priorities = { date: today, items: items.map((t) => t.trim()), done: keep, entered: true };
+      });
+    // Let the door swing open first (instantly for people who prefer less motion).
+    const quick = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    setOpening(true);
+    if (quick) save();
+    else window.setTimeout(save, 1100);
   };
 
   return (
-    <main className="day-door">
-      <form className="day-door__card" onSubmit={enter}>
-        <PixelIcon name="house" size={40} />
+    <main className={`day-door ${opening ? 'is-opening' : ''}`}>
+      <div className="door-sign" aria-hidden="true">
+        BEK'S BASE
+      </div>
+      <div className="door-frame">
+        <div className="door-light" aria-hidden="true" />
+      <form className="door-leaf" onSubmit={enter}>
+        <span className="door-leaf__window" aria-hidden="true" />
+        <span className="door-leaf__knob" aria-hidden="true" />
+        <div className="door-note">
         <h1 className="day-door__title">Good to see you</h1>
         <p>{formatDay(today)}. What are your top 3 goals today? Write them to come in.</p>
         {items.map((t, i) => (
@@ -81,10 +95,12 @@ export function TopThreeDoor() {
           <PixelIcon name="star" size={16} /> Fill them for me
         </button>
         <button type="submit" className="btn btn--primary btn--wide" disabled={!ready}>
-          Open my day
+          {opening ? 'Opening…' : 'Open my day'}
         </button>
         <p className="muted small">The door opens again from {DOOR_FROM_HOUR}am each day.</p>
+        </div>
       </form>
+      </div>
     </main>
   );
 }

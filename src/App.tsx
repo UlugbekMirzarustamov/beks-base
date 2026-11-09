@@ -23,6 +23,8 @@ import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Study from './screens/Study';
 import { EveningCheckin, TopThreeDoor, useDoorShut } from './screens/DayDoor';
+import { FocusMode, QuickAdd } from './screens/Growth';
+import { SkyWorld } from './ui/SkyWorld';
 import { useStore, useTimer } from './state/store';
 import { PixelIcon, type IconName } from './ui/icons';
 import { Toaster } from './ui/kit';
@@ -173,10 +175,12 @@ export default function App() {
 
   const doorShut = useDoorShut();
   const lvl = levelInfo(data.xp);
+  const [addOpen, setAddOpen] = useState(false);
 
   if (doorShut)
     return (
       <>
+        <SkyWorld room="home" night={night} />
         <TopThreeDoor />
         <PrayerCall />
         <Toaster />
@@ -185,6 +189,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <SkyWorld room={route.screen} night={night} />
       <a className="skip-link" href="#main">
         Skip to content
       </a>
@@ -250,10 +255,10 @@ export default function App() {
         </ScreenBoundary>
       </main>
 
-      <button type="button" className="fab" onClick={() => openExpense()} aria-label="Add a purchase">
+      <button type="button" className="fab" onClick={() => setAddOpen(true)} aria-label="Add something: money, note, reminder or goals" aria-haspopup="dialog">
         <span aria-hidden="true">+</span>
-        <small aria-hidden="true">$</small>
       </button>
+      <QuickAdd open={addOpen} onClose={() => setAddOpen(false)} />
 
       <nav className="tabbar" aria-label="Main">
         {NAV.map((n) => (
@@ -265,6 +270,7 @@ export default function App() {
       </nav>
 
       <EveningCheckin />
+      <FocusMode />
       <ExpenseSheet />
       <MorningBriefing />
       <PotCloseout />

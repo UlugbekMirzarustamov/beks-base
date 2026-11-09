@@ -15,6 +15,7 @@ import { BackupCard, OnePercent, SimbaNeeds, TodayCard, WindDown } from './Daily
 import { CampfireCard } from './Campfire';
 import { FajrRise, GhostRace, MorningPromise } from './Push';
 import { InboxPanel, QuickCapture } from './Capture';
+import { DayFlame, MonthNudge } from './Growth';
 import { RamadanCard, useRamadan } from './Ramadan';
 import { openPhotos, photoOfTheDay, usePhotos } from './Photos';
 import { BossMini } from './Study';
@@ -101,6 +102,8 @@ export default function Home() {
         </div>
         <InstallCard compact />
       </div>
+      <MonthNudge />
+      <DayFlame />
       <QuickCapture />
       <WindDown />
       <div className="grid grid--home">

@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-09** — Morning door + evening check-in: 226 tests passing, production build passing.
+Last verified: **2026-11-09** — Living world, flame, focus mode, month story, + menu: 236 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -81,6 +81,11 @@ Paths are relative to `src/`.
 | Money plan (pot → daily allowance) for N days or months, with an optional daily maximum (e.g. $15) | Implemented | `lib/pot.ts` (`days`, `cap`), `screens/Plan.tsx`, tests in `lib/money.test.ts` |
 | Dream room jar (the share above the maximum for the whole plan, all there from day one) + Dream room: pieces with prices, blueprint → ready → bought, "I bought it" records the purchase from the jar | Implemented | `potStatus().dreamJar` in `lib/pot.ts`; `lib/dream.ts` (tests in `lib/dream.test.ts`); `screens/DreamRoom.tsx` (Money → Plan & save → Dream room) |
 | Morning door (top 3 required to enter, typed or suggested) + evening check-in (what you did, how you felt) + week view of goals done and evening words | Implemented | `lib/dayDoor.ts` (tests in `lib/dayDoor.test.ts`); `screens/DayDoor.tsx`; `WeekReflect` in `screens/Extras.tsx` |
+| Living world: sky behind every screen that follows Sheffield sunrise/sunset (sun or moon, clouds, birds, stars, real rain/snow) and a pixel landscape per section (cabin, forest, library, town, peaks, mosque, lake, garden, meadow); panels float like signs; the morning door is a wooden door that swings open | Implemented | `ui/SkyWorld.tsx`; door in `screens/DayDoor.tsx`; `.world`, `.door-*` in `styles.css` |
+| Streak flame (grows each day with top 3 + evening check-in, shrinks on missed days, never back to zero once lit; no XP), yesterday-vs-today line, one-tap Focus button | Implemented | `flame`, `bestSelf` in `lib/growth.ts` (tests in `lib/growth.test.ts`); `DayFlame` in `screens/Growth.tsx` |
+| Focus mode: dimmed full-screen countdown using the normal study timer, shows your next goal, rain sound toggle | Implemented | `FocusMode` in `screens/Growth.tsx` |
+| Month story (Reflect → Month story): goals done, days with a top 3, evening check-ins, focus time, money spent, usual mood, best day, lines from happiest days; Home nudge on the 1st–3rd | Implemented | `monthStory` in `lib/growth.ts`; `MonthStoryView`, `MonthNudge` in `screens/Growth.tsx` |
+| + button menu: spent money, note/idea, reminder, edit today's top 3 | Implemented | `QuickAdd` in `screens/Growth.tsx`; `QuickCapture({ kind })` in `screens/Capture.tsx` |
 | Wish fund, wishes, ETA, slider, buy from fund | Implemented | `screens/Plan.tsx` (`Wishes`), `lib/pot.ts` |
 | Runway, money calendar, nightly "you saved" | Implemented | `screens/Plan.tsx` |
 | Budget & category limits, savings jars, bills, charts, CSV import, insights | Implemented | `screens/Money.tsx`, `lib/csv.ts`, `lib/daily.ts` (`moneyInsights`) |

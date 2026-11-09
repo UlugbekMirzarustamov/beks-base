@@ -20,11 +20,12 @@ import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Empty, Field, GroupedTabs, Panel, Segmented, useConfirm, useSubRoute } from '../ui/kit';
 import { WeekReflect } from './Extras';
+import { MonthStoryView } from './Growth';
 import { VisionBoard } from './Push';
 import { pixelLevel, type PixelKind } from '../lib/pixels';
 import { spendByDay } from '../lib/pot';
 
-const TABS = ['tonight', 'diary', 'week', 'sky', 'year', 'vision', 'letters'] as const;
+const TABS = ['tonight', 'diary', 'week', 'month', 'sky', 'year', 'vision', 'letters'] as const;
 type Tab = (typeof TABS)[number];
 
 /** XP for lighting a star (logging a night). */
@@ -53,6 +54,7 @@ export default function Reflect({ sub }: { sub?: string }) {
               { id: 'tonight', label: 'Tonight' },
               { id: 'diary', label: 'Diary' },
               { id: 'week', label: 'This week' },
+              { id: 'month', label: 'Month story' },
             ],
           },
           {
@@ -78,6 +80,7 @@ export default function Reflect({ sub }: { sub?: string }) {
       {tab === 'tonight' && <Tonight onLit={() => setTab('sky')} />}
       {tab === 'diary' && <Diary />}
       {tab === 'week' && <WeekReflect />}
+      {tab === 'month' && <MonthStoryView />}
       {tab === 'sky' && <Sky />}
       {tab === 'year' && <YearPixels />}
       {tab === 'vision' && <VisionBoard />}
