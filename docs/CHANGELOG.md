@@ -4,6 +4,11 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Morning door, evening check-in, easier reading:** the app now opens only after you write today's top 3 (type them or
+  tap "Fill them for me"; from 4am). From 7pm a small card asks what you did and how you felt; it can wait, and on Sundays it
+  leads to your week. The week now shows top-3 goals done and your words each evening. Sentences use a rounded, readable font;
+  titles, numbers and buttons stay pixel.
+- **Fixed:** deleting a diary entry made the app show its recovery screen on the next open (no data was lost).
 - **Live diary:** after connecting a GitHub key on the device, every Diary entry posts to the public site file, and the Diary
   pulls new site entries when opened. The key stays on the device, outside app data and backups.
 - **Four dated diary entries published at Bek's request:** `public/four-nights.json` feeds the Diary once and the linkable

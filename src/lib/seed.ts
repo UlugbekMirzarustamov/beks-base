@@ -103,6 +103,7 @@ export function emptyData(today: string): AppData {
     studyLog: [],
     tasks: [],
     priorities: { date: today, items: ['', '', ''], done: [false, false, false] },
+    dayGoals: {},
     timetable: [],
     sessions: [],
     studyBlocks: [],

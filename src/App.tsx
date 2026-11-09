@@ -22,6 +22,7 @@ import { CommandPalette, openSearch } from './screens/Search';
 import Planner from './screens/Planner';
 import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Study from './screens/Study';
+import { EveningCheckin, TopThreeDoor, useDoorShut } from './screens/DayDoor';
 import { useStore, useTimer } from './state/store';
 import { PixelIcon, type IconName } from './ui/icons';
 import { Toaster } from './ui/kit';
@@ -170,7 +171,17 @@ export default function App() {
 
   const toggleTheme = () => update((d) => void (d.settings.theme = night ? 'day' : 'night'));
 
+  const doorShut = useDoorShut();
   const lvl = levelInfo(data.xp);
+
+  if (doorShut)
+    return (
+      <>
+        <TopThreeDoor />
+        <PrayerCall />
+        <Toaster />
+      </>
+    );
 
   return (
     <div className="app">
@@ -253,6 +264,7 @@ export default function App() {
         ))}
       </nav>
 
+      <EveningCheckin />
       <ExpenseSheet />
       <MorningBriefing />
       <PotCloseout />

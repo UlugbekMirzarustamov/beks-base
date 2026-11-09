@@ -216,6 +216,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ...prev,
         recurring: r.bills,
         expenses: r.expenses,
+        dayGoals: newDay && !prev.priorities.example && prev.priorities.items.some((t) => t.trim()) ? { ...prev.dayGoals, [prev.priorities.date]: { items: prev.priorities.items, done: prev.priorities.done } } : prev.dayGoals,
         priorities: newDay ? { date: today, items: ['', '', ''], done: [false, false, false] } : prev.priorities,
       },
     );

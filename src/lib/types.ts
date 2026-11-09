@@ -144,6 +144,8 @@ export interface Priorities {
   items: string[]; // always 3
   done: boolean[]; // always 3
   example?: boolean;
+  /** You went through the morning door today (it then stays open while you edit). */
+  entered?: boolean;
 }
 
 /** 0 = Monday … 6 = Sunday */
@@ -616,6 +618,8 @@ export interface AppData {
 
   tasks: Task[];
   priorities: Priorities;
+  /** Past days' top 3, by date, so the week can show what got done. */
+  dayGoals: Record<string, { items: string[]; done: boolean[] }>;
   timetable: ClassSlot[];
   /** Real dated classes (school timetable) */
   sessions: ClassSession[];

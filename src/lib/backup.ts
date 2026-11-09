@@ -91,7 +91,7 @@ export function parseBackup(text: string, today: string): AppData {
 const NOT_A_BACKUP = 'not a Bek\'s Base backup';
 const isPlain = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
 /** Lists of plain words rather than records. */
-const WORD_LISTS = new Set(['applied', 'duaFavs']);
+const WORD_LISTS = new Set(['applied', 'duaFavs', 'diaryRemoved']);
 const isDay = (v: unknown) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 /**

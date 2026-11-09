@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-06** — Money plan in days with a daily maximum + dream room: 208 tests passing, production build passing.
+Last verified: **2026-11-09** — Morning door + evening check-in: 226 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -80,6 +80,7 @@ Paths are relative to `src/`.
 | USD amounts with £ entry; so'm converter | Implemented | `screens/Money.tsx`, `lib/money.ts` |
 | Money plan (pot → daily allowance) for N days or months, with an optional daily maximum (e.g. $15) | Implemented | `lib/pot.ts` (`days`, `cap`), `screens/Plan.tsx`, tests in `lib/money.test.ts` |
 | Dream room jar (the share above the maximum for the whole plan, all there from day one) + Dream room: pieces with prices, blueprint → ready → bought, "I bought it" records the purchase from the jar | Implemented | `potStatus().dreamJar` in `lib/pot.ts`; `lib/dream.ts` (tests in `lib/dream.test.ts`); `screens/DreamRoom.tsx` (Money → Plan & save → Dream room) |
+| Morning door (top 3 required to enter, typed or suggested) + evening check-in (what you did, how you felt) + week view of goals done and evening words | Implemented | `lib/dayDoor.ts` (tests in `lib/dayDoor.test.ts`); `screens/DayDoor.tsx`; `WeekReflect` in `screens/Extras.tsx` |
 | Wish fund, wishes, ETA, slider, buy from fund | Implemented | `screens/Plan.tsx` (`Wishes`), `lib/pot.ts` |
 | Runway, money calendar, nightly "you saved" | Implemented | `screens/Plan.tsx` |
 | Budget & category limits, savings jars, bills, charts, CSV import, insights | Implemented | `screens/Money.tsx`, `lib/csv.ts`, `lib/daily.ts` (`moneyInsights`) |

@@ -9,6 +9,7 @@
  */
 import { useEffect, useState, type FormEvent } from 'react';
 import { addDays, clockIn, formatDay, startOfWeek, TASHKENT_TZ, UK_TZ, weekdayOf, WEEKDAYS, zonedParts } from '../lib/dates';
+import { weekInWords } from '../lib/dayDoor';
 import { formatMoney } from '../lib/money';
 import { uid } from '../lib/id';
 import type { Habit, Mood, Reflection, VocabWord } from '../lib/types';
@@ -418,6 +419,7 @@ export function WeekReflect() {
   const [monday, setMonday] = useState(thisMonday);
   const saved = data.reflections[monday];
   const stats = weekStats(data, monday);
+  const words = weekInWords(data, monday, today);
   const pastWeeks = Object.keys(data.reflections)
     .filter((w) => w !== monday)
     .sort()
@@ -478,6 +480,27 @@ export function WeekReflect() {
             <span>average mood</span>
           </li>
         </ul>
+        {words.goalsSet > 0 && (
+          <p>
+            Top 3 goals done: <strong>{words.goalsDone} of {words.goalsSet}</strong>
+          </p>
+        )}
+        {words.days.length > 0 && (
+          <>
+            <p className="field__label">What you wrote each evening</p>
+            <ul className="list">
+              {words.days.map((w) => (
+                <li key={w.date} className="week-word">
+                  <small className="muted">
+                    {formatDay(w.date)}
+                    {w.mood ? ` · ${MOODS[w.mood - 1].label}` : ''}
+                  </small>
+                  <span>{w.line || 'No words that day'}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
         {pastWeeks.length > 0 && (
           <details className="details">
             <summary>Past reflections ({pastWeeks.length})</summary>
