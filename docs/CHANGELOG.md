@@ -4,6 +4,8 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Brighter rooms:** lighter panels and walls, and each section has its own colour (green Money, blue Study, orange Planner,
+  purple Reflect), with a coloured banner, pixel bunting and panel tops.
 - **Morning door, evening check-in, easier reading:** the app now opens only after you write today's top 3 (type them or
   tap "Fill them for me"; from 4am). From 7pm a small card asks what you did and how you felt; it can wait, and on Sundays it
   leads to your week. The week now shows top-3 goals done and your words each evening. Sentences use a rounded, readable font;

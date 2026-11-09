@@ -26,20 +26,20 @@
   --amber: #e8a317;
 
   /* Day theme */
-  --page: #6b4a2b;
-  --page-2: #634427;
-  --panel: #f3e3bd;
-  --panel-hi: #fff6dc;
-  --panel-lo: #cdb58a;
+  --page: #a26f40;
+  --page-2: #996839;
+  --panel: #fff0cc;
+  --panel-hi: #fffbec;
+  --panel-lo: #e0c793;
   --edge: #3b2512;
   --ink: #2f1d0c;
-  --ink-soft: #6b5134;
+  --ink-soft: #5f4528;
   --field: #fffaf0;
   --bar-bg: #4a3424;
   --focus: #ffcf3f;
-  --wood-bar: #6e4522;
-  --wood-bar-hi: #8a5a2e;
-  --wood-bar-lo: #4a2e15;
+  --wood-bar: #8a5428;
+  --wood-bar-hi: #ad7238;
+  --wood-bar-lo: #5e3716;
 
   --font-title: 'Press Start 2P', 'Courier New', monospace;
   --font-num: 'VT323', 'Courier New', monospace;
@@ -6393,10 +6393,10 @@ main[data-room='study'] {
   --accent: #2a6fa8;
 }
 main[data-room='money'] {
-  --accent: #c9963a;
+  --accent: #3f9b4a;
 }
 main[data-room='planner'] {
-  --accent: #5fa83b;
+  --accent: #d9822b;
 }
 main[data-room='reflect'] {
   --accent: #7a4fa3;
@@ -6405,7 +6405,7 @@ main[data-room='prayer'] {
   --accent: #16a085;
 }
 main[data-room='kitchen'] {
-  --accent: #e8892b;
+  --accent: #c2553a;
 }
 main[data-room='rooms'] {
   --accent: #f27ab8;
@@ -6702,4 +6702,37 @@ html[data-daypart='night'] body::before {
   display: grid;
   gap: 2px;
   padding: 6px 0;
+}
+
+/* Brighter rooms: each section gets its own colour wash, banner and panel tops */
+.main {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 38%, transparent), transparent 340px);
+}
+.panel {
+  border-top: 7px solid var(--accent);
+}
+.panel__title {
+  color: color-mix(in srgb, var(--accent) 55%, var(--ink));
+}
+.screen__title {
+  position: relative;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: var(--accent);
+  border: var(--bevel) solid var(--edge);
+  border-bottom: var(--bevel) solid var(--edge);
+}
+/* Pixel bunting hanging under each banner */
+.screen__title::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  height: 8px;
+  background:
+    linear-gradient(90deg, var(--gold) 50%, transparent 0) 0 0 / 16px 8px repeat-x;
+}
+:root[data-theme='night'] .panel__title {
+  color: color-mix(in srgb, var(--accent) 45%, #fff);
 }
