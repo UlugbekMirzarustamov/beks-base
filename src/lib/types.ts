@@ -669,6 +669,8 @@ export interface AppData {
   inbox: InboxItem[];
   /** Diary entries, each with its own date and time. */
   diary: DiaryEntry[];
+  /** Entries deleted here, so the live site can't bring them back. */
+  diaryRemoved: string[];
   /** Kitchen: shopping list, what's at home, recipes, and meals planned per day ("YYYY-MM-DD"). */
   groceries: GroceryItem[];
   pantry: PantryItem[];

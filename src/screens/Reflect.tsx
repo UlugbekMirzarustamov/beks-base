@@ -14,6 +14,7 @@ import { addDays, daysBetween, formatDay, relativeDays } from '../lib/dates';
 import { uid } from '../lib/id';
 import { sfx } from '../lib/sound';
 import { addToDiary, parseDiaryFile, sortDiary, stampNow } from '../lib/diary';
+import { entryKey, forgetPublishKey, loadPublishKey, publishDiary, savePublishKey, type PublishResult } from '../lib/publish';
 import type { Letter, NightLog } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
@@ -163,35 +164,65 @@ function Tonight({ onLit }: { onLit: () => void }) {
 }
 
 // ---------------------------------------------------------------- Diary
-const FIRST_ENTRIES = 'diary-four-nights';
-
 function Diary() {
   const { data, update, toast } = useStore();
   const ask = useConfirm();
   const [text, setText] = useState('');
   const entries = sortDiary(data.diary);
 
-  // One time only: bring in the entries published with the site. Deleting one later won't bring it back.
-  const needsFirstEntries = !data.applied.includes(FIRST_ENTRIES);
+  const [liveKey, setLiveKey] = useState<string | null>(null);
+  const [keyInput, setKeyInput] = useState('');
+  const [status, setStatus] = useState<PublishResult | 'sending' | null>(null);
+
   useEffect(() => {
-    if (!needsFirstEntries) return;
+    loadPublishKey().then(setLiveKey).catch(() => {});
+  }, []);
+
+  // Every time the Diary opens: bring in anything new from the site.
+  useEffect(() => {
     let cancelled = false;
-    fetch('./four-nights.json')
+    fetch('./four-nights.json', { cache: 'no-store' })
       .then((r) => (r.ok ? r.text() : null))
       .then((body) => {
         const incoming = body ? parseDiaryFile(body) : null;
         if (!incoming || cancelled) return;
         update((d) => {
-          if (d.applied.includes(FIRST_ENTRIES)) return;
-          addToDiary(d.diary, incoming);
-          d.applied.push(FIRST_ENTRIES);
+          addToDiary(d.diary, incoming.filter((e) => !d.diaryRemoved.includes(entryKey(e))));
         });
       })
-      .catch(() => {}); // offline: try again next time the Diary opens
+      .catch(() => {}); // offline: try again next time
     return () => {
       cancelled = true;
     };
-  }, [needsFirstEntries, update]);
+  }, [update]);
+
+  // When connected: keep the site matching this diary.
+  useEffect(() => {
+    if (!liveKey) return;
+    let cancelled = false;
+    setStatus('sending');
+    publishDiary(liveKey, data.diary, data.diaryRemoved).then((result) => {
+      if (!cancelled) setStatus(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [liveKey, data.diary, data.diaryRemoved]);
+
+  const connect = async (e: FormEvent) => {
+    e.preventDefault();
+    const key = keyInput.trim();
+    if (!key) return;
+    await savePublishKey(key);
+    setKeyInput('');
+    setLiveKey(key);
+  };
+
+  const disconnect = async () => {
+    await forgetPublishKey();
+    setLiveKey(null);
+    setStatus(null);
+  };
 
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -223,6 +254,8 @@ function Diary() {
   const remove = async (id: string) => {
     if (!(await ask('Delete this diary entry?'))) return;
     update((d) => {
+      const entry = d.diary.find((x) => x.id === id);
+      if (entry) d.diaryRemoved.push(entryKey(entry));
       d.diary = d.diary.filter((x) => x.id !== id);
     });
   };
@@ -238,7 +271,30 @@ function Diary() {
             Save with today's date and time
           </button>
         </form>
-        <p className="muted small">Stays on this phone only.</p>
+        {liveKey ? (
+          <div className="form">
+            <p className="small">
+              <strong>Live.</strong>{' '}
+              {status === 'sending' && 'Posting to your site…'}
+              {status === 'live' && 'Your site is up to date. New entries appear there within a few minutes.'}
+              {status === 'failed' && "Couldn't reach your site. It will try again next time the Diary opens."}
+              {status === 'bad-key' && 'GitHub refused the key. Disconnect and paste a new one.'}
+            </p>
+            <button type="button" className="btn btn--small" onClick={disconnect}>
+              Disconnect from my site
+            </button>
+          </div>
+        ) : (
+          <form className="form" onSubmit={connect}>
+            <p className="muted small">Not live: new entries stay in this browser. If you connect, every diary entry goes on your public site.</p>
+            <Field label="GitHub key">
+              <input className="input" type="password" autoComplete="off" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} />
+            </Field>
+            <button type="submit" className="btn btn--wide" disabled={!keyInput.trim()}>
+              Connect and go live
+            </button>
+          </form>
+        )}
         <label className="btn btn--wide">
           Add entries from a file
           <input type="file" accept="application/json,.json" className="visually-hidden" onChange={addFile} />

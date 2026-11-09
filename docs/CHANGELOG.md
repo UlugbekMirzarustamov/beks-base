@@ -4,6 +4,8 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Live diary:** after connecting a GitHub key on the device, every Diary entry posts to the public site file, and the Diary
+  pulls new site entries when opened. The key stays on the device, outside app data and backups.
 - **Four dated diary entries published at Bek's request:** `public/four-nights.json` feeds the Diary once and the linkable
   `four-nights.html` page. The offline worker no longer saves separate pages as the app's home screen.
 - **Diary with date and time:** a new Reflect → Diary tab saves each entry with its date and time. Older entries can be

@@ -18,7 +18,7 @@
 <body>
 <main id="entries"></main>
 <script>
-  fetch('./four-nights.json')
+  fetch('./four-nights.json', { cache: 'no-store' })
     .then(function (r) { return r.json(); })
     .then(function (file) {
       var main = document.getElementById('entries');

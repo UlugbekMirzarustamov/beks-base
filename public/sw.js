@@ -10,7 +10,7 @@
  * Your DATA is not stored here — that's in IndexedDB. This only stores the app itself.
  * Bump VERSION to force phones to drop the old cached files.
  */
-const VERSION = 'ulus-base-v6';
+const VERSION = 'ulus-base-v7';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -41,6 +41,8 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  // The live diary must always be fresh, never a saved copy.
+  if (new URL(req.url).pathname.endsWith('/four-nights.json')) return;
 
   if (req.mode === 'navigate') {
     event.respondWith(
