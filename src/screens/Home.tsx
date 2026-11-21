@@ -671,7 +671,7 @@ function useCabinScene() {
     const lines = [
       `${lit}/5 lanterns lit today. ${lit === 5 ? 'Alhamdulillah!' : 'Keep going!'}`,
       data.pot
-        ? `${formatMoney(potStatus(data.pot, data.expenses, today).leftToday)} left today · wish fund ${formatMoney(potStatus(data.pot, data.expenses, today).fund)}.`
+        ? `${formatMoney(potStatus(data.pot, data.expenses, today).leftToday)} left today · Saved ${formatMoney(potStatus(data.pot, data.expenses, today).fund)}.`
         : `${formatMoney(safeToSpend(data.monthlyBudget, data.expenses, today).perDay)} safe to spend today.`,
       nextClass ? `Next: ${nextClass.name} at ${nextClass.start}${nextClass.room ? ` in ${nextClass.room}` : ''}.` : 'No more classes today!',
       pick(['Bismillah, let’s do this.', 'Small steps every day.', 'Far from home, but doing great.', 'One Pomodoro, then tea?']),

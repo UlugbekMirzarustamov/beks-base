@@ -163,7 +163,7 @@ export function MorningBriefing() {
             <span>
               {data.pot ? (
                 <>
-                  Today: <strong>{formatMoney(potStatus(data.pot, data.expenses, today).leftToday)}</strong> to spend · wish fund{' '}
+                  Today: <strong>{formatMoney(potStatus(data.pot, data.expenses, today).leftToday)}</strong> to spend · Saved{' '}
                   {formatMoney(potStatus(data.pot, data.expenses, today).fund)}
                 </>
               ) : (

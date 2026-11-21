@@ -4,6 +4,11 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Money plan, simpler:** "Start again from today" (Money → Plan, at the bottom) takes the money you have now, money set
+  aside for one big bill (e.g. $1,900 rent) and the last day (your old plan's end is filled in). What's left is split
+  equally across the days, and each day's leftover goes into **Saved** (the old "wish fund") at the end of the day. A new
+  "Paid rent" button takes payments from the set-aside money, never from the day. The $15 daily maximum, the dream room
+  jar and the Dream room screen are gone (the old list stays in your saved data). Tests: 235 passing.
 - **Living world and daily growth:** the brown background is now a pixel sky that follows real Sheffield time (sunrise,
   day, sunset, stars at night) with drifting clouds, birds, and real rain or snow, plus a little landscape for each section
   (the cabin on Home, a forest for Money, a library for Study, a town for Planner, mountains for Reflect, a mosque for Prayer).

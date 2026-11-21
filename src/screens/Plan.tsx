@@ -1,16 +1,16 @@
 /**
- * 💰 The money plan: one pot (e.g. $4,200) that has to last N days or months, with an optional daily maximum
- *    (everything above it, for the whole plan, goes into the dream room jar at once — see DreamRoom.tsx).
- *  - <PotToday>     today's allowance, what's left today, the pot and the wish fund
- *  - <PlanTab>      the pot, a "runway" to the end date, and a money calendar
+ * 💰 The money plan: one pot (e.g. $5,300) that has to last until a set day, with money set aside for one big bill
+ *    (e.g. $1,900 rent). The rest is split equally across the days.
+ *  - <PotToday>     today's allowance, what's left today, the pot, Saved and the set-aside money
+ *  - <PlanTab>      the pot, a "runway" to the end date, a money calendar, and "start again from today"
  *  - <Wishes>       things you're saving for with the money you don't spend
- *  - <PotCloseout>  each new day: "Yesterday you saved $X → wish fund"
+ *  - <PotCloseout>  each new day: "Yesterday you saved $X → Saved"
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { addDays, daysBetween, formatDay } from '../lib/dates';
 import { uid } from '../lib/id';
 import { formatMoney, parseAmount } from '../lib/money';
-import { daysUntil, potStatus, spendByDay, type Pot } from '../lib/pot';
+import { daysUntil, freshPot, potEnd, potStatus, spendByDay, type Pot } from '../lib/pot';
 import { sfx } from '../lib/sound';
 import type { Wish } from '../lib/types';
 import { wishReady } from '../lib/push';
@@ -40,18 +40,53 @@ export function PotToday() {
         <span className="muted small">{s.daysLeft} days to go</span>
       </div>
       <a href="#/money/wishes" className={`pot-today__fund ${s.fund < 0 ? 'is-negative' : ''}`}>
-        <PixelIcon name="star" size={16} /> Wish fund: <strong>{formatMoney(s.fund)}</strong>
-        {s.leftToday > 0 && <small> (+{formatMoney(s.leftToday)} tonight if you stop here)</small>}
+        <PixelIcon name="star" size={16} /> Saved: <strong>{formatMoney(s.fund)}</strong>
+        {s.leftToday > 0 && <small> (+{formatMoney(s.leftToday)} goes in tonight if you stop here)</small>}
       </a>
-      {s.dreamPerDay > 0 && (
-        <a href="#/money/dream" className="pot-today__fund pot-today__dream">
-          <PixelIcon name="house" size={16} /> Dream room jar: <strong>{formatMoney(s.dreamJar)}</strong>
-        </a>
-      )}
+      {s.setAside > 0 && <SetAsideLine />}
       <button type="button" className="btn btn--primary btn--wide" onClick={() => openExpense()}>
         <PixelIcon name="plus" size={18} /> I spent something
       </button>
     </Panel>
+  );
+}
+
+/** "Rent set aside: $1,900" with a Paid button — paying it never touches a day's allowance. */
+function SetAsideLine() {
+  const { data, update, today, toast } = useStore();
+  const ask = useConfirm();
+  const pot = data.pot!;
+  const s = potStatus(pot, data.expenses, today);
+  const label = pot.setAsideLabel || 'Rent';
+  const [amount, setAmount] = useState('');
+  const pay = async (e: FormEvent) => {
+    e.preventDefault();
+    const value = amount.trim() ? parseAmount(amount) : s.setAsideLeft;
+    if (!(value > 0)) {
+      toast('Type how much you paid', 'error');
+      return;
+    }
+    if (!(await ask(`Record ${formatMoney(value)} paid for ${label.toLowerCase()}? It comes out of the ${formatMoney(s.setAsideLeft)} set aside, not today's money.`, { ok: 'Yes, I paid it', danger: false }))) return;
+    const categoryId = data.categories.some((c) => c.id === 'rent') ? 'rent' : (data.categories[0]?.id ?? 'other');
+    update((d) => void d.expenses.push({ id: uid(), amount: value, date: today, categoryId, note: label, fromSetAside: true }));
+    setAmount('');
+    toast(`${label} paid: ${formatMoney(value)}`, 'pop');
+  };
+  return (
+    <form className="pot-today__setaside" onSubmit={pay}>
+      <span>
+        <PixelIcon name="house" size={16} /> {label} set aside: <strong>{formatMoney(s.setAsideLeft)}</strong>
+        {s.setAsidePaid > 0 && <small className="muted"> (paid {formatMoney(s.setAsidePaid)})</small>}
+      </span>
+      {s.setAsideLeft > 0 && (
+        <span className="pot-today__pay">
+          <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={String(s.setAsideLeft)} aria-label={`Amount paid for ${label}`} />
+          <button type="submit" className="btn btn--small">
+            Paid {label.toLowerCase()}
+          </button>
+        </span>
+      )}
+    </form>
   );
 }
 
@@ -84,8 +119,8 @@ export function PlanTab() {
         <Bar value={pot.total - s.remaining} max={pot.total} label="Pot used" level={s.fund < 0 ? 'warn' : 'ok'} />
         <ul className="insights">
           <li>
-            <PixelIcon name="coin" size={14} /> Plan: <strong>{formatMoney(s.daily)}</strong> a day for {s.totalDays} days
-            {s.dreamPerDay > 0 ? ` (your maximum); the other ${formatMoney(s.dreamTotal)} went into the dream room jar right away` : ` (${formatMoney(pot.total)} ÷ ${s.totalDays} days)`}.
+            <PixelIcon name="coin" size={14} /> Plan: <strong>{formatMoney(s.daily)}</strong> a day for {s.totalDays} days (
+            {s.setAside > 0 ? `${formatMoney(pot.total)} − ${formatMoney(s.setAside)} ${(pot.setAsideLabel || 'rent').toLowerCase()} = ${formatMoney(s.spendable)}` : formatMoney(pot.total)} ÷ {s.totalDays} days). What you don’t spend goes into Saved each night.
           </li>
           <li>
             <PixelIcon name="star" size={14} /> If you used your savings too, you could spend <strong>{formatMoney(s.evenPerDay)}</strong> a day from now on.
@@ -137,12 +172,12 @@ export function PlanTab() {
           })}
         </ol>
         <details className="details">
-          <summary>Change the plan</summary>
+          <summary>Start again from today (new amount, rent, end date)</summary>
           <PlanSetup
             current={pot}
             onSaved={(p) => {
-              update((x) => void (x.pot = { ...p, lastCloseout: x.pot?.lastCloseout ?? today }));
-              toast('Plan updated', 'pop');
+              update((x) => void (x.pot = { ...p, lastCloseout: today }));
+              toast('New plan started from today', 'pop');
             }}
           />
         </details>
@@ -153,72 +188,55 @@ export function PlanTab() {
 
 function PlanSetup({ current, onSaved }: { current?: Pot; onSaved?: (p: Pot) => void }) {
   const { update, today, toast } = useStore();
+  // Starting again keeps the old plan's last day; a first plan defaults to 140 days.
   const [form, setForm] = useState({
-    total: current ? String(current.total) : '',
-    start: current?.start ?? today,
-    length: String(current ? (current.days ?? current.months) : 140),
-    unit: (current ? (current.days ? 'days' : 'months') : 'days') as 'days' | 'months',
-    cap: current ? (current.cap ? String(current.cap) : '') : '15',
+    total: '',
+    setAside: current?.setAside ? String(current.setAside) : '',
+    label: current?.setAsideLabel || 'Rent',
+    end: current ? potEnd(current) : addDays(today, 139),
   });
+  const total = parseAmount(form.total);
+  const setAside = form.setAside.trim() ? parseAmount(form.setAside) : 0;
+  const days = form.end >= today ? daysBetween(today, form.end) + 1 : 0;
+  const valid = total > 0 && !Number.isNaN(setAside) && setAside >= 0 && setAside < total && days >= 1 && days <= 730;
   const save = (e: FormEvent) => {
     e.preventDefault();
-    const total = parseAmount(form.total);
-    const length = Math.round(Number(form.length));
-    const cap = form.cap.trim() ? parseAmount(form.cap) : 0;
-    const okLength = form.unit === 'days' ? length >= 7 && length <= 730 : length >= 1 && length <= 24;
-    if (!(total > 0) || !okLength || !form.start || Number.isNaN(cap) || cap < 0) {
-      toast('Check the amount, start date, length and daily maximum', 'error');
+    if (!valid) {
+      toast('Check the money, the amount set aside (less than the money) and the last day', 'error');
       return;
     }
-    // `months` stays filled in (older parts of the app and backups expect it); `days` wins when set.
-    const p: Pot = form.unit === 'days' ? { total, start: form.start, months: Math.max(1, Math.round(length / 30)), days: length } : { total, start: form.start, months: length };
-    if (cap > 0) p.cap = cap;
+    const p = freshPot(total, setAside, today, form.end, form.label.trim() || 'Rent');
     if (onSaved) onSaved(p);
     else {
       update((d) => void (d.pot = { ...p, lastCloseout: today }));
       toast('Money plan started!', 'pop');
     }
   };
-  const share = (() => {
-    const total = parseAmount(form.total);
-    const length = Math.round(Number(form.length));
-    if (!(total > 0) || !(length > 0)) return null;
-    const days = form.unit === 'days' ? length : length * 30.4;
-    return total / days;
-  })();
-  const cap = form.cap.trim() ? parseAmount(form.cap) : 0;
   return (
     <form className="form" onSubmit={save}>
-      <div className="form__row form__row--wrap">
-        <Field label="Money in the pot ($)" className="grow">
-          <input className="input" inputMode="decimal" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} placeholder="e.g. 4200" />
-        </Field>
-        <Field label="Starting">
-          <input className="input" type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
-        </Field>
-      </div>
-      <div className="form__row">
-        <Field label="It has to last" className="grow">
-          <input className="input" inputMode="numeric" value={form.length} onChange={(e) => setForm({ ...form, length: e.target.value })} />
-        </Field>
-        <Field label="Unit" className="grow">
-          <select className="input" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value as 'days' | 'months' })} aria-label="Days or months">
-            <option value="days">days</option>
-            <option value="months">months</option>
-          </select>
-        </Field>
-      </div>
-      <Field label="Most I can spend a day ($, optional)" hint="Everything above this, for the whole plan, goes into your dream room jar straight away.">
-        <input className="input" inputMode="decimal" value={form.cap} onChange={(e) => setForm({ ...form, cap: e.target.value })} placeholder="e.g. 15" />
+      {current && <p className="muted small">This starts a fresh plan from today. Your old Saved total and the old dream room jar are cleared; past purchases stay in your history.</p>}
+      <Field label="Money I have now ($)">
+        <input className="input" inputMode="decimal" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} placeholder="e.g. 5300" />
       </Field>
-      {share !== null && (
-        <p className="muted small">
-          That's about {formatMoney(share)} a day.
-          {cap > 0 && share > cap ? ` You spend up to ${formatMoney(cap)}; ${formatMoney((share - cap) * (form.unit === 'days' ? Math.round(Number(form.length)) : Math.round(Number(form.length) * 30.4)))} goes into your dream room jar straight away.` : cap > 0 ? ' (Less than your maximum, so nothing goes to the dream room jar.)' : ''}
+      <div className="form__row form__row--wrap">
+        <Field label="Set aside for a big bill ($, optional)" className="grow">
+          <input className="input" inputMode="decimal" value={form.setAside} onChange={(e) => setForm({ ...form, setAside: e.target.value })} placeholder="e.g. 1900" />
+        </Field>
+        <Field label="What for" className="grow">
+          <input className="input" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} maxLength={20} />
+        </Field>
+      </div>
+      <Field label="It has to last until (last day)">
+        <input className="input" type="date" min={today} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
+      </Field>
+      {valid && (
+        <p className="alert alert--ok">
+          {setAside > 0 ? `${formatMoney(total)} − ${formatMoney(setAside)} ${form.label.trim().toLowerCase() || 'rent'} = ${formatMoney(total - setAside)}. ` : ''}
+          That's <strong>{formatMoney(Math.floor(((total - setAside) / days) * 100) / 100)}</strong> a day for {days} days. What you don’t spend each day goes into Saved.
         </p>
       )}
       <button type="submit" className="btn btn--primary">
-        {current ? 'Save plan' : 'Start my money plan'}
+        {current ? 'Start again from today' : 'Start my money plan'}
       </button>
     </form>
   );
@@ -251,7 +269,7 @@ export function Wishes() {
   };
 
   const grant = async (w: Wish) => {
-    if (!(await ask(`Buy "${w.name}" for about ${formatMoney(w.cost)}? It comes out of your pot and wish fund.`, { ok: 'Make it come true', danger: false }))) return;
+    if (!(await ask(`Buy "${w.name}" for about ${formatMoney(w.cost)}? It comes out of your pot and your Saved money.`, { ok: 'Make it come true', danger: false }))) return;
     const cat = data.categories.find((c) => c.id === 'fun') ?? data.categories.find((c) => c.id === 'other') ?? data.categories[0];
     update((d) => {
       const item = d.wishes.find((x) => x.id === w.id);
@@ -271,7 +289,7 @@ export function Wishes() {
   const perDay = savingPerDay + extra;
   return (
     <div className="grid grid--2">
-      <Panel title="Wish fund" icon="star" className="wish-fund">
+      <Panel title="Saved" icon="star" className="wish-fund">
         <p className={`big-number ${s.fund < 0 ? 'is-zero' : ''}`}>{formatMoney(s.fund)}</p>
         <p className="muted">
           Every day you spend less than {formatMoney(s.daily)}, the rest lands here. Overspending takes from it.
@@ -332,7 +350,7 @@ export function Wishes() {
             </p>
             {ready ? (
               <>
-                <p className="alert alert--ok">Your wish fund can cover this now — without touching the money you need.</p>
+                <p className="alert alert--ok">Your Saved money can cover this now — without touching the money you need.</p>
                 <button type="button" className="btn btn--primary" onClick={() => grant(w)}>
                   <PixelIcon name="star" size={16} /> Make it come true
                 </button>
@@ -371,7 +389,7 @@ export function Wishes() {
 }
 
 // ---------------------------------------------------------------- the nightly "you saved…"
-/** On the first open of a new day: tell Bek what yesterday added to (or took from) the wish fund. */
+/** On the first open of a new day: tell Bek what yesterday added to (or took from) Saved. */
 export function PotCloseout() {
   const { data, update, today, toast } = useStore();
   const pot = data.pot;
@@ -386,7 +404,7 @@ export function PotCloseout() {
       const spent = spendByDay(data.expenses, yesterday, yesterday).get(yesterday) ?? 0;
       const diff = Math.round((s.daily - spent) * 100) / 100;
       if (diff > 0) {
-        toast(`Yesterday you saved ${formatMoney(diff)} → wish fund is now ${formatMoney(s.fund)}`, 'pop');
+        toast(`Yesterday you saved ${formatMoney(diff)} → Saved is now ${formatMoney(s.fund)}`, 'pop');
         setTimeout(() => sfx('coin'), 300);
       } else if (diff < 0) toast(`Yesterday was ${formatMoney(-diff)} over. Today's a fresh ${formatMoney(s.daily)}.`, 'info');
     }

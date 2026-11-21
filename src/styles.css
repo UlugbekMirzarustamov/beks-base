@@ -6591,25 +6591,6 @@ html[data-daypart='night'] body::before {
   }
 }
 
-/* ---------- Dream room ---------- */
-.room--dream {
-  --room-wall: #e9d8b8;
-  --room-floor: #a77b4f;
-}
-.dream-piece.is-saving .room__sprite {
-  opacity: 0.22;
-  filter: grayscale(1);
-}
-.dream-piece.is-ready .room__sprite {
-  filter: drop-shadow(0 0 3px #ffd23f);
-}
-.pot-today__dream {
-  color: inherit;
-}
-.dream-row.is-bought .list__text > span:first-child {
-  opacity: 0.8;
-}
-
 /* Diary (Reflect) */
 .diary-entry {
   display: flex;
@@ -7650,4 +7631,30 @@ html[data-daypart] body::before {
 /* room at the end of each page to see the whole landscape */
 .app {
   padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + clamp(110px, 24vh, 230px));
+}
+
+/* Money set aside for one big bill (e.g. rent), with a "Paid" button */
+.pot-today__setaside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(79, 168, 234, 0.14);
+  border: 2px dashed #4fa8ea;
+}
+.pot-today__setaside > span:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.pot-today__pay {
+  display: flex;
+  gap: 6px;
+}
+.pot-today__pay .input {
+  width: 92px;
+  min-height: 36px;
 }

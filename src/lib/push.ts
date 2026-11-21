@@ -14,7 +14,7 @@ import type { AppData } from './types';
 export const HARD_RULES = [
   'The ghost of last week gets 10% faster: you must beat last week by 10%.',
   'A broken morning promise costs 50 coins (normally it costs nothing).',
-  'Wishes only unlock when your wish fund covers them + 10% safety.',
+  'Wishes only unlock when your Saved money covers them + 10% safety.',
 ];
 export const PROMISE_XP = 25;
 /** Only hard mode (which you switch on yourself) takes coins for a broken promise. */

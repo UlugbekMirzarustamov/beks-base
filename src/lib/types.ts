@@ -40,6 +40,8 @@ export interface Expense extends Base {
   fromWish?: boolean;
   /** Bought for the dream room: comes out of the dream room jar, not out of that day's allowance. */
   fromDream?: boolean;
+  /** Paid from the money set aside for one bill (e.g. rent): never out of that day's allowance. */
+  fromSetAside?: boolean;
 }
 
 export interface RecurringBill extends Base {
