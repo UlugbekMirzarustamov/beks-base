@@ -4,6 +4,9 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Undo a wish and reset Saved:** each wish under "Wishes come true" has a bin button that removes the wish and the purchase
+  it made (the money goes back). The Saved card has **Set Saved to $0**: Saved starts from zero again, then each day's
+  leftover adds up as before.
 - **Money plan, simpler:** "Start again from today" (Money → Plan, at the bottom) takes the money you have now, money set
   aside for one big bill (e.g. $1,900 rent) and the last day (your old plan's end is filled in). What's left is split
   equally across the days, and each day's leftover goes into **Saved** (the old "wish fund") at the end of the day. A new

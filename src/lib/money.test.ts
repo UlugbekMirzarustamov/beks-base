@@ -252,3 +252,15 @@ describe('a fresh plan with rent set aside', () => {
     expect(old.daily).toBe(30);
   });
 });
+
+describe('setting Saved back to zero', () => {
+  it('starts Saved from $0 now and keeps adding each night', () => {
+    const pot = freshPot(5300, 1900, '2026-11-21', '2027-04-09');
+    const day = (amount: number, date: string): Expense => ({ id: date, amount, date, categoryId: 'other', note: '' });
+    const before = potStatus(pot, [day(4.28, '2026-11-21')], '2026-11-22');
+    expect(before.fund).toBe(20);
+    const reset = { ...pot, savedAdjust: -before.fund };
+    expect(potStatus(reset, [day(4.28, '2026-11-21')], '2026-11-22').fund).toBe(0);
+    expect(potStatus(reset, [day(4.28, '2026-11-21')], '2026-11-23').fund).toBe(24.28); // the next night adds a full day
+  });
+});

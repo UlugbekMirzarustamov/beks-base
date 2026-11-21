@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-21** — Money plan with rent set aside and Saved: 235 tests passing, production build passing.
+Last verified: **2026-11-21** — Money plan with rent set aside, Saved reset and wish undo: 236 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -79,7 +79,7 @@ Paths are relative to `src/`.
 |---|---|---|
 | USD amounts with £ entry; so'm converter | Implemented | `screens/Money.tsx`, `lib/money.ts` |
 | Money plan (pot → daily allowance) for N days or months, with an optional daily maximum (e.g. $15) | Implemented | `lib/pot.ts` (`days`, `cap`), `screens/Plan.tsx`, tests in `lib/money.test.ts` |
-| Money plan from today: "money I have now" + money set aside for one big bill (e.g. rent) + last day; (money − set aside) ÷ days = the same allowance each day; each day's leftover goes into **Saved** at the end of the day; "Paid rent" takes from the set-aside money, never from the day. The $15 daily maximum, dream room jar and Dream room screen were removed (the old dream room list stays in saved data) | Implemented | `freshPot`, `potStatus` in `lib/pot.ts` (tests in `lib/money.test.ts`); `PlanSetup`, `SetAsideLine` in `screens/Plan.tsx` |
+| Money plan from today: "money I have now" + money set aside for one big bill (e.g. rent) + last day; (money − set aside) ÷ days = the same allowance each day; each day's leftover goes into **Saved** at the end of the day; "Paid rent" takes from the set-aside money, never from the day. Wishes come true can be removed (with their purchase), and "Set Saved to $0" zeroes Saved (`savedAdjust`). The $15 daily maximum, dream room jar and Dream room screen were removed (the old dream room list stays in saved data) | Implemented | `freshPot`, `potStatus` in `lib/pot.ts` (tests in `lib/money.test.ts`); `PlanSetup`, `SetAsideLine` in `screens/Plan.tsx` |
 | Morning door (top 3 required to enter, typed or suggested) + evening check-in (what you did, how you felt) + week view of goals done and evening words | Implemented | `lib/dayDoor.ts` (tests in `lib/dayDoor.test.ts`); `screens/DayDoor.tsx`; `WeekReflect` in `screens/Extras.tsx` |
 | Living world: sky behind every screen that follows Sheffield sunrise/sunset (sun or moon, clouds, birds, stars, real rain/snow) and a pixel landscape per section (cabin, forest, library, town, peaks, mosque, lake, garden, meadow); panels float like signs; the morning door is a wooden door that swings open | Implemented | `ui/SkyWorld.tsx`; door in `screens/DayDoor.tsx`; `.world`, `.door-*` in `styles.css` |
 | Streak flame (grows each day with top 3 + evening check-in, shrinks on missed days, never back to zero once lit; no XP), yesterday-vs-today line, one-tap Focus button | Implemented | `flame`, `bestSelf` in `lib/growth.ts` (tests in `lib/growth.test.ts`); `DayFlame` in `screens/Growth.tsx` |

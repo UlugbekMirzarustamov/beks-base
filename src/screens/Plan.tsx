@@ -286,6 +286,29 @@ export function Wishes() {
     update((d) => void (d.wishes = d.wishes.filter((x) => x.id !== w.id)));
   };
 
+  /** Undo a wish that came true: removes the wish and the purchase it recorded, so the money comes back. */
+  const removeDone = async (w: Wish) => {
+    const isIt = (e: { fromWish?: boolean; note: string; date: string }) => Boolean(e.fromWish) && e.note === `Wish: ${w.name}` && e.date === w.bought;
+    const paid = data.expenses.find(isIt);
+    if (!(await ask(`Remove "${w.name}" from your wishes come true?${paid ? ` Its ${formatMoney(paid.amount)} purchase is removed too, so the money goes back.` : ''}`, { ok: 'Remove it' }))) return;
+    update((d) => {
+      d.wishes = d.wishes.filter((x) => x.id !== w.id);
+      const i = d.expenses.findIndex(isIt);
+      if (i >= 0) d.expenses.splice(i, 1);
+    });
+    toast(`${w.name} removed`, 'info');
+  };
+
+  const zeroSaved = async () => {
+    if (!(await ask(`Set Saved to $0? It's ${formatMoney(s.fund)} now. From tonight, each day's leftover adds up from zero again.`, { ok: 'Set to $0', danger: false }))) return;
+    update((d) => {
+      if (!d.pot) return;
+      const now = potStatus(d.pot, d.expenses, today).fund;
+      d.pot.savedAdjust = Math.round(((d.pot.savedAdjust ?? 0) - now) * 100) / 100;
+    });
+    toast('Saved is now $0', 'pop');
+  };
+
   const perDay = savingPerDay + extra;
   return (
     <div className="grid grid--2">
@@ -307,6 +330,11 @@ export function Wishes() {
             'Spend a little less than your allowance for a few days and estimates will appear.'
           )}
         </p>
+        {s.fund !== 0 && (
+          <button type="button" className="btn btn--small" onClick={zeroSaved}>
+            Set Saved to $0
+          </button>
+        )}
       </Panel>
 
       <Panel title="Make a wish" icon="plus">
@@ -375,10 +403,13 @@ export function Wishes() {
             {done.map((w) => (
               <li key={w.id}>
                 <PixelIcon name={w.icon} size={22} />
-                <span>
+                <span className="grow">
                   <strong>{w.name}</strong>
                   <small className="muted"> · {formatMoney(w.cost)} · {formatDay(w.bought!)}</small>
                 </span>
+                <button type="button" className="icon-btn" onClick={() => removeDone(w)} aria-label={`Remove ${w.name} and its purchase`}>
+                  <PixelIcon name="trash" size={16} />
+                </button>
               </li>
             ))}
           </ul>

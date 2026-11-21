@@ -24,6 +24,8 @@ export interface Pot {
   setAside?: number;
   /** What the set-aside money is for (e.g. "Rent"). */
   setAsideLabel?: string;
+  /** Added to Saved (set by "Set Saved to $0"): Saved starts again from zero, then grows each night. */
+  savedAdjust?: number;
   /** No longer used (the old daily maximum + dream room jar). Kept so old saved plans still load. */
   cap?: number;
   /** Last day the app showed "yesterday you saved…" (so it only shows once a day). */
@@ -119,7 +121,7 @@ export function potStatus(p: Pot, expenses: Expense[], today: string): PotStatus
   const spentTotal = roundPennies(everyday + wishSpent + setAsidePaid + dreamSpent);
   const spentBefore = roundPennies(everyday - spentToday);
   const remaining = roundPennies(p.total - spentTotal);
-  const fund = roundPennies(daily * daysPassed - spentBefore - wishSpent - dreamSpent - Math.max(0, spentToday - daily));
+  const fund = roundPennies(daily * daysPassed - spentBefore - wishSpent - dreamSpent - Math.max(0, spentToday - daily) + (p.savedAdjust ?? 0));
   const evenPerDay = daysLeft > 0 ? Math.max(0, Math.floor(roundPennies(((spendable - spentBefore - wishSpent - dreamSpent) / daysLeft) * 100)) / 100) : 0;
   const daysSoFar = daysPassed + (spentToday > 0 ? 1 : 0);
   const avgPerDay = daysSoFar > 0 && everyday > 0 ? roundPennies(everyday / daysSoFar) : null;
