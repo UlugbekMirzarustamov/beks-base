@@ -6,8 +6,7 @@
  */
 import type { AppData } from './types';
 
-export type CardId =
-  | 'today'
+export type CardId =| 'today'
   | 'dates'
   | 'friday'
   | 'fajr'
@@ -59,7 +58,6 @@ export const HOME_CARDS: { id: CardId; name: string; place: 'now' | 'more' }[] =
   { id: 'ghost', name: 'You vs last week', place: 'more' },
   { id: 'weather', name: 'Weather', place: 'more' },
   { id: 'clocks', name: 'Clocks (UK / Tashkent)', place: 'more' },
-  { id: 'level', name: 'Level, badges & shop', place: 'more' },
 ];
 
 /**

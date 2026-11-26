@@ -540,7 +540,7 @@ function Mistakes() {
         </button>
       }
     >
-      <p className="muted small">Every mistake is XP in disguise. Write down WHY, then review it before the test.</p>
+      <p className="muted small">Every mistake is a lesson in disguise. Write down WHY, then review it before the test.</p>
       <Segmented
         label="Show"
         value={show}

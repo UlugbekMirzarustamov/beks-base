@@ -57,7 +57,7 @@ export function OnePercent() {
         <p className="field__label">Today's quest</p>
         <p className="quest__text">{quest.text}</p>
         <button type="button" className={`btn btn--small ${done ? '' : 'btn--primary'}`} onClick={toggleQuest} aria-pressed={done}>
-          {done ? 'Done ✓ (tap to undo)' : `I did it (+${QUEST_XP} XP)`}
+          {done ? 'Done ✓ (tap to undo)' : 'I did it'}
         </button>
       </div>
 

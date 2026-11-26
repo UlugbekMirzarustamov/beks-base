@@ -622,6 +622,8 @@ export interface AppData {
   priorities: Priorities;
   /** Past days' top 3, by date, so the week can show what got done. */
   dayGoals: Record<string, { items: string[]; done: boolean[] }>;
+  /** Bek's Quest: finished quests (the field journal), the mission in progress, projects and daily swaps. */
+  quest: QuestState;
   timetable: ClassSlot[];
   /** Real dated classes (school timetable) */
   sessions: ClassSession[];
@@ -716,4 +718,37 @@ export interface AppData {
   shop: { owned: string[]; placed: Record<string, string>; spent: number };
   /** One-time updates already applied to this data (e.g. "mixer", "usd"). */
   applied: string[];
+}
+
+// ---------- Bek's Quest ----------
+/** Where a quest was started from. */
+export type QuestFrom = 'bored' | 'sos' | 'daily' | 'pick';
+/** One finished quest: a line in the field journal. */
+export interface QuestDone {
+  id: string;
+  questId: string;
+  date: string; // YYYY-MM-DD
+  /** Real minutes spent (starts as the quest's estimate). */
+  minutes: number;
+  /** One line about how it went. */
+  note: string;
+  /** A photo saved on the photo wall (its id), if one was added. */
+  photoId?: string;
+  from: QuestFrom;
+}
+/** A multi-step project; `steps[i]` is the day that step was done, or null. */
+export interface QuestProject {
+  id: string;
+  templateId: string;
+  started: string;
+  steps: (string | null)[];
+  finished?: string;
+}
+export interface QuestState {
+  log: QuestDone[];
+  /** The mission you accepted and haven't finished yet. */
+  active: { questId: string; from: QuestFrom; started: string } | null;
+  projects: QuestProject[];
+  /** Daily missions you swapped for another, by day. */
+  swaps: Record<string, string[]>;
 }

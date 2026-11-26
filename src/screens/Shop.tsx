@@ -1,13 +1,13 @@
 /**
- * The cabin shop: spend coins (earned from XP) on decorations for the cabin.
+ * Decorate the cabin: every decoration is free to put on display, swap or put away.
+ * (No coins or XP any more.)
  */
 import { useEffect, useRef } from 'react';
-import { coins, coinsEarned, SHOP_ITEMS, SLOT_NAMES, type ShopItem } from '../lib/shop';
+import { SHOP_ITEMS, SLOT_NAMES, type ShopItem } from '../lib/shop';
 import { sfx } from '../lib/sound';
 import { DECOR_SIZE, drawDecor } from '../scene/Cabin';
 import { useStore } from '../state/store';
-import { PixelIcon } from '../ui/icons';
-import { Panel, useConfirm } from '../ui/kit';
+import { Panel } from '../ui/kit';
 
 /** A crisp, scaled-up pixel preview of one item. */
 function Preview({ id }: { id: string }) {
@@ -23,24 +23,10 @@ function Preview({ id }: { id: string }) {
 }
 
 function ItemCard({ item }: { item: ShopItem }) {
-  const { data, update, toast } = useStore();
-  const ask = useConfirm();
-  const owned = data.shop.owned.includes(item.id);
+  const { data, update } = useStore();
   const shown = data.shop.placed[item.slot] === item.id;
-  const wallet = coins(data);
   const takenBy = SHOP_ITEMS.find((i) => i.id === data.shop.placed[item.slot] && i.id !== item.id);
 
-  const buy = async () => {
-    if (wallet < item.price) return;
-    if (!(await ask(`Buy "${item.name}" for ${item.price} coins?`, { ok: 'Buy', danger: false }))) return;
-    update((d) => {
-      d.shop.owned.push(item.id);
-      d.shop.spent += item.price;
-      d.shop.placed[item.slot] = item.id; // put it straight into the cabin
-    });
-    sfx('coin');
-    toast(`${item.name} is now in your cabin!`, 'level');
-  };
   const display = () => {
     update((d) => void (d.shop.placed[item.slot] = item.id));
     sfx('pop');
@@ -48,16 +34,12 @@ function ItemCard({ item }: { item: ShopItem }) {
   const putAway = () => update((d) => void delete d.shop.placed[item.slot]);
 
   return (
-    <li className={`shop-item ${owned ? 'is-owned' : ''} ${shown ? 'is-shown' : ''}`}>
+    <li className={`shop-item is-owned ${shown ? 'is-shown' : ''}`}>
       <Preview id={item.id} />
       <strong>{item.name}</strong>
       <small className="muted">{item.description}</small>
       <small className="shop-item__slot">Goes on the {SLOT_NAMES[item.slot]}</small>
-      {!owned ? (
-        <button type="button" className="btn btn--primary btn--small" onClick={buy} disabled={wallet < item.price}>
-          <PixelIcon name="coin" size={14} /> {item.price}
-        </button>
-      ) : shown ? (
+      {shown ? (
         <button type="button" className="btn btn--small" onClick={putAway}>
           Put away
         </button>
@@ -71,20 +53,11 @@ function ItemCard({ item }: { item: ShopItem }) {
 }
 
 export function CabinShop() {
-  const { data } = useStore();
-  const wallet = coins(data);
-  const items = [...SHOP_ITEMS].sort((a, b) => a.price - b.price);
   return (
-    <Panel title="Cabin shop" icon="coin">
-      <div className="shop-wallet">
-        <PixelIcon name="coin" size={36} />
-        <span className="big-number big-number--small">{wallet}</span>
-        <span className="muted small">
-          coins · you earn 1 coin for every 2 XP ({coinsEarned(data)} earned so far). Pray, study, reflect and save to earn more.
-        </span>
-      </div>
+    <Panel title="Decorate the cabin" icon="house">
+      <p className="muted small">Pick what goes where. Everything is free; one thing shows in each spot.</p>
       <ul className="shop">
-        {items.map((item) => (
+        {SHOP_ITEMS.map((item) => (
           <ItemCard key={item.id} item={item} />
         ))}
       </ul>

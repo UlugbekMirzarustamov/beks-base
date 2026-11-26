@@ -1,12 +1,9 @@
 /**
  * Growing a little every day, worked out from what's already saved (nothing new is stored):
- *  - flame():      a flame that grows each day you set your top 3 AND write the evening check-in.
- *                  A missed day makes it a bit smaller, but once lit it never goes back to zero.
- *  - bestSelf():   yesterday vs today, so you can try to beat yourself.
  *  - monthStory(): a short look back over one month.
  * Prayers are never counted here (worship is never scored).
  */
-import { addDays, daysBetween, monthOf } from './dates';
+import { addDays, monthOf } from './dates';
 import { spentInMonth } from './money';
 import type { AppData, Mood } from './types';
 
@@ -33,64 +30,6 @@ export function statsOn(d: AppData, day: string): DayStats {
   const g = goalsOn(d, day);
   const focusMin = d.studyLog.reduce((sum, s) => (s.date === day ? sum + s.minutes : sum), 0);
   return { goalsSet: g.set, goalsDone: g.done, focusMin, wrote: eveningDoneOn(d, day) };
-}
-
-// ---------------------------------------------------------------- the flame
-export const FLAME_MAX = 60;
-const LOOKBACK = 365;
-
-export interface Flame {
-  /** 0 = never lit yet. Once lit, never below 1. */
-  heat: number;
-  /** 0 (not lit) … 5 (blazing): how big to draw it. */
-  size: 0 | 1 | 2 | 3 | 4 | 5;
-  goalsToday: boolean;
-  eveningToday: boolean;
-}
-
-export function flameSize(heat: number): Flame['size'] {
-  if (heat <= 0) return 0;
-  if (heat < 3) return 1;
-  if (heat < 7) return 2;
-  if (heat < 14) return 3;
-  if (heat < 30) return 4;
-  return 5;
-}
-
-export function flame(d: AppData, today: string): Flame {
-  // Start from the first day anything was written (at most a year back).
-  const days = [...Object.keys(d.dayGoals), ...Object.keys(d.nightLogs), d.priorities.date].filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k) && k < today);
-  let day = days.length ? days.reduce((a, b) => (a < b ? a : b)) : today;
-  if (daysBetween(day, today) > LOOKBACK) day = addDays(today, -LOOKBACK);
-
-  let heat = 0;
-  for (; day < today; day = addDays(day, 1)) {
-    const goals = goalsSetOn(d, day);
-    const evening = eveningDoneOn(d, day);
-    if (goals && evening) heat = Math.min(FLAME_MAX, heat + 1);
-    else if (!goals && !evening && heat > 0) heat = Math.max(1, heat - 1);
-    // only one of the two: the flame holds steady
-  }
-  const goalsToday = goalsSetOn(d, today);
-  const eveningToday = eveningDoneOn(d, today);
-  if (goalsToday && eveningToday) heat = Math.min(FLAME_MAX, heat + 1);
-  return { heat, size: flameSize(heat), goalsToday, eveningToday };
-}
-
-// ---------------------------------------------------------------- yesterday vs today
-export interface BestSelf {
-  yesterday: DayStats;
-  today: DayStats;
-  /** True once today is ahead of yesterday on goals done or focus minutes. */
-  beaten: boolean;
-}
-
-export function bestSelf(d: AppData, today: string): BestSelf | null {
-  const yesterday = statsOn(d, addDays(today, -1));
-  if (!yesterday.goalsSet && !yesterday.focusMin && !yesterday.wrote) return null;
-  const now = statsOn(d, today);
-  const beaten = now.goalsDone > yesterday.goalsDone || now.focusMin > yesterday.focusMin;
-  return { yesterday, today: now, beaten };
 }
 
 // ---------------------------------------------------------------- the month story

@@ -18,7 +18,8 @@ an international student. It runs as an installable, offline web app (PWA) on hi
 5. **Explain simply.** Bek is a beginner developer: plain words, short reasons, no jargon dumps.
 6. **Never punish, never score worship.** No XP for prayers, fasting, tasbih or Qur'an (lanterns are a
    private record). Nothing takes XP or coins away unless Bek switched on hard mode himself.
-   XP, coins and fish belong to the cabin world; new life tools don't add more gamification.
+   XP, levels, coins, badges and streaks were removed at Bek's request (Nov 2026): don't add game points back.
+   Rewards are real things: time away from the screen, a journal, finished projects (see Bek's Quest).
 
 ## How to work
 - **Inspect before changing, plan before implementing.** Read the relevant files first; for

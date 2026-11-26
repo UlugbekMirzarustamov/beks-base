@@ -25,11 +25,9 @@ import { Recovery } from '../ui/Recovery';
 import { uid } from '../lib/id';
 import { applyRecurring, formatMoney } from '../lib/money';
 import { createInitialData } from '../lib/seed';
-import { newlyEarned } from '../lib/badges';
-import { unlocksAtLevel } from '../lib/cabin';
 import { buzz, playChime, sfx } from '../lib/sound';
 import type { AppData, Expense } from '../lib/types';
-import { levelInfo, XP } from '../lib/xp';
+import { XP } from '../lib/xp';
 
 export type ToastKind = 'pop' | 'xp' | 'level' | 'warn' | 'error' | 'info';
 export interface Toast {
@@ -223,16 +221,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     for (const e of r.added) toast(`Bill added: ${e.note} ${formatMoney(e.amount)}`, 'info');
   }, [today, loaded, toast]);
 
-  // ----- Badges: award any that were just earned (and celebrate, max 3 pop-ups at once) -----
-  useEffect(() => {
-    if (!data) return;
-    const fresh = newlyEarned(data, today);
-    if (!fresh.length) return;
-    setData((prev) => prev && { ...prev, badges: { ...prev.badges, ...Object.fromEntries(fresh.map((b) => [b.id, today])) } });
-    fresh.slice(0, 3).forEach((b) => toast(`Badge earned: ${b.name}!`, 'level'));
-    if (fresh.length > 3) toast(`…and ${fresh.length - 3} more badges! (More → Badges)`, 'level');
-  }, [data, today, toast]);
-
   const update = useCallback((change: (draft: AppData) => void) => {
     setData((prev) => {
       if (!prev) return prev;
@@ -242,22 +230,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const gainXp = useCallback(
-    (amount: number, reason?: string) => {
-      const before = dataRef.current?.xp ?? 0;
-      const after = Math.max(0, before + amount);
-      setData((prev) => (prev ? { ...prev, xp: Math.max(0, prev.xp + amount) } : prev));
-      if (amount > 0) {
-        toast(`+${amount} XP${reason ? ' · ' + reason : ''}`, 'xp');
-        const newLevel = levelInfo(after).level;
-        if (newLevel > levelInfo(before).level) {
-          toast(`LEVEL UP! You are now level ${newLevel}`, 'level');
-          for (const u of unlocksAtLevel(newLevel)) toast(`New in your cabin: ${u.name}!`, 'level');
-        }
-      }
-    },
-    [toast],
-  );
+  // XP and levels were removed (Bek asked for no game points). Callers still call gainXp, so it is
+  // kept as a no-op; any XP saved before stays untouched in the data.
+  const gainXp = useCallback((_amount: number, _reason?: string) => {}, []);
 
   const value = useMemo<StoreValue | null>(
     () =>

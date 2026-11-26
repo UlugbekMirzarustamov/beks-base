@@ -4,7 +4,7 @@
  * activities and daily gift, and the break timer. Plain functions, so they're easy to test.
  * The rooms are a cosy view of what you already did — no new points or penalties.
  */
-import { BADGES } from './badges';
+import { projectTemplate } from './quests';
 import { addDays } from './dates';
 import { FISH } from './fish';
 import type { AppData } from './types';
@@ -69,17 +69,17 @@ export function gardenYears(d: AppData, today: string): number[] {
 
 export interface Exhibit {
   date: string;
-  kind: 'badge' | 'savings' | 'vision' | 'assignment' | 'campfire' | 'fish' | 'gift';
+  kind: 'project' | 'savings'| 'savings' | 'vision' | 'assignment' | 'campfire' | 'fish' | 'gift';
   title: string;
 }
 
 /** The Life Museum: milestones you've already reached, newest first. Worship is never put on display. */
 export function museum(d: AppData): Exhibit[] {
   const out: Exhibit[] = [];
-  for (const [id, date] of Object.entries(d.badges)) {
-    const b = BADGES.find((x) => x.id === id);
-    // Badges about prayer and Qur'an stay private (never scored or shown off).
-    if (b && !['lantern', 'mat', 'quran', 'bead', 'moon'].includes(b.icon)) out.push({ date, kind: 'badge', title: `Badge: ${b.name}` });
+  // Finished Bek's Quest projects (a faith project stays private, like everything about worship).
+  for (const p of Array.isArray(d.quest?.projects) ? d.quest.projects : []) {
+    const t = p?.finished ? projectTemplate(p.templateId) : undefined;
+    if (t && t.category !== 'spiritual') out.push({ date: p.finished!, kind: 'project', title: `Project done: ${t.title}` });
   }
   for (const g of d.goals) if (g.reached) out.push({ date: g.reached, kind: 'savings', title: `Saved up: ${g.name}` });
   for (const v of d.vision) if (v.done) out.push({ date: v.done, kind: 'vision', title: `Dream reached: ${v.title}` });

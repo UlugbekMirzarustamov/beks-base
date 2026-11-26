@@ -149,7 +149,7 @@ function Tonight({ onLit }: { onLit: () => void }) {
           <input className="input" value={log.tomorrow} onChange={(e) => edit({ tomorrow: e.target.value })} placeholder="e.g. Do 2 Pomodoros of Maths before lunch" />
         </Field>
         <button type="button" className={`btn ${log.rewarded ? '' : 'btn--primary'} btn--wide`} onClick={light}>
-          <PixelIcon name="star" size={18} /> {log.rewarded ? 'Star lit — see my sky' : `Light tonight's star (+${STAR_XP} XP)`}
+          <PixelIcon name="star" size={18} /> {log.rewarded ? 'Star lit — see my sky' : "Light tonight's star"}
         </button>
       </Panel>
       <Panel title="Why bother?" icon="telescope">

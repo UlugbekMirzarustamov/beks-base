@@ -104,6 +104,7 @@ export function emptyData(today: string): AppData {
     tasks: [],
     priorities: { date: today, items: ['', '', ''], done: [false, false, false] },
     dayGoals: {},
+    quest: { log: [], active: null, projects: [], swaps: {} },
     timetable: [],
     sessions: [],
     studyBlocks: [],

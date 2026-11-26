@@ -3,11 +3,10 @@
  */
 import { addDays, daysBetween, formatDay, relativeDays, startOfWeek, toMinutes, UK_TZ, weekdayOf, zonedParts } from '../lib/dates';
 import { minsToWait } from '../lib/prayer';
-import { levelInfo } from '../lib/xp';
 import { Cabin } from '../scene/Cabin';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Bar, Empty, Panel, Segmented, Sheet } from '../ui/kit';
+import { Empty, Panel, Segmented, Sheet } from '../ui/kit';
 import { cardsIn, discoverTips, HOME_CARDS, type CardId } from '../lib/home';
 import { Clocks, MoodCheckIn } from './Extras';
 import { InstallCard } from '../ui/AppFeel';
@@ -15,7 +14,8 @@ import { BackupCard, OnePercent, SimbaNeeds, TodayCard, WindDown } from './Daily
 import { CampfireCard } from './Campfire';
 import { FajrRise, GhostRace, MorningPromise } from './Push';
 import { InboxPanel, QuickCapture } from './Capture';
-import { DayFlame, MonthNudge } from './Growth';
+import { MonthNudge } from './Growth';
+import { QuestHome } from './Quest';
 import { RamadanCard, useRamadan } from './Ramadan';
 import { openPhotos, photoOfTheDay, usePhotos } from './Photos';
 import { BossMini } from './Study';
@@ -25,15 +25,13 @@ import { freshness, toUseSoon } from '../lib/kitchen';
 import { adminReminders, progress } from '../lib/admin';
 import { FRIDAY_STEPS, hijriLabel, isFriday } from '../lib/islamic';
 import { openJar } from './Calm';
-import { BadgeSummary } from './Badges';
-import { coins } from '../lib/shop';
 import { potStatus } from '../lib/pot';
 import { SafeToSpendCard, SavingsMini } from './Money';
 import { classesOn, TaskRow, TopThree } from './Planner';
 import { PrayerLanterns, usePrayer } from './Prayer';
 import { useWeather, WeatherCard, windowWeather } from '../ui/Weather';
 import { Fragment, useMemo, useState, useEffect, useRef, type ReactNode } from 'react';
-import { nextUnlock, pick, seasonOf, simbaMood, SIMBA_LINES, SIMBA_PETS, streak, UNLOCKS } from '../lib/cabin';
+import { pick, seasonOf, simbaMood, SIMBA_LINES, SIMBA_PETS, streak, UNLOCKS } from '../lib/cabin';
 import { barLevel, formatMoney, safeToSpend, spentInMonth } from '../lib/money';
 import { buzz, sfx } from '../lib/sound';
 import { PRAYER_INFO, PRAYERS } from '../lib/prayer';
@@ -103,7 +101,7 @@ export default function Home() {
         <InstallCard compact />
       </div>
       <MonthNudge />
-      <DayFlame />
+      <QuestHome />
       <QuickCapture />
       <WindDown />
       <div className="grid grid--home">
@@ -198,8 +196,6 @@ function renderCard(id: CardId): ReactNode {
       return <WeatherCard />;
     case 'clocks':
       return <Clocks />;
-    case 'level':
-      return <LevelCard />;
   }
 }
 
@@ -266,29 +262,6 @@ function WeekCard() {
   );
 }
 
-function LevelCard() {
-  const { data, today } = useStore();
-  const lvl = levelInfo(data.xp);
-  const studiedToday = data.studyLog.filter((x) => x.date === today).reduce((a, x) => a + x.minutes, 0);
-  return (
-    <Panel title={`Level ${lvl.level}`} icon="star" className="level-card">
-      <Bar value={lvl.into} max={lvl.needed} label="XP towards next level" color="var(--xp)" />
-      <p className="bar-caption">
-        {lvl.into} / {lvl.needed} XP to level {lvl.level + 1}
-      </p>
-      <p className="muted small">
-        <PixelIcon name="clock" size={14} /> {studiedToday} min studied today · Tasks +10 · Top 3 +15 · Pomodoro +25
-      </p>
-      <CabinUnlocks level={lvl.level} />
-      <div className="level-links">
-        <BadgeSummary />
-        <a href="#/more/shop" className="badge-summary">
-          <PixelIcon name="coin" size={16} /> {coins(data)} coins · Cabin shop →
-        </a>
-      </div>
-    </Panel>
-  );
-}
 
 /** Features you haven't tried yet, a few at a time. They leave once you use them (or tap "Not now"). */
 function Discover() {
@@ -592,7 +565,8 @@ function useCabinScene() {
     starLit: Boolean(data.nightLogs[today]?.rewarded),
     night: skyAt(new Date()).phase === 'night',
   });
-  const level = levelInfo(data.xp).level;
+  // No levels any more: everything in the cabin is there.
+  const level = Math.max(...UNLOCKS.map((u) => u.level));
   const kind = windowWeather(weather);
   // Real winter: snow in Sheffield now (or in the last 3 days) and near-freezing temperatures.
   const snowingNow = kind === 'snow';
@@ -690,31 +664,4 @@ function useCabinScene() {
   };
 
   return { scene, bubble: petLine ?? autoLine, petSimba, bekLine, tapBek, toggleRadio };
-}
-
-/** What you've unlocked in the cabin, and what's next. */
-function CabinUnlocks({ level }: { level: number }) {
-  const next = nextUnlock(level);
-  const got = UNLOCKS.filter((u) => u.level <= level);
-  return (
-    <div className="unlocks">
-      <p className="field__label">
-        Cabin: {got.length}/{UNLOCKS.length} unlocked
-      </p>
-      {got.length > 0 && (
-        <ul className="unlocks__got">
-          {got.map((u) => (
-            <li key={u.id} title={u.description}>
-              {u.name}
-            </li>
-          ))}
-        </ul>
-      )}
-      {next && (
-        <p className="small">
-          Next at <strong>Lv {next.level}</strong>: {next.name} — <span className="muted">{next.description}</span>
-        </p>
-      )}
-    </div>
-  );
 }

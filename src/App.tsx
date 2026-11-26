@@ -8,7 +8,6 @@
 import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { isNightUK, UK_TZ, zonedParts } from './lib/dates';
 import { applyMixer, setSfxEnabled, sfx } from './lib/sound';
-import { levelInfo } from './lib/xp';
 import Home from './screens/Home';
 import Money, { ExpenseSheet } from './screens/Money';
 import { MorningBriefing } from './screens/Briefing';
@@ -24,6 +23,7 @@ import PrayerPage, { PrayerBar, PrayerCall } from './screens/Prayer';
 import Study from './screens/Study';
 import { EveningCheckin, TopThreeDoor, useDoorShut } from './screens/DayDoor';
 import { FocusMode, QuickAdd } from './screens/Growth';
+import QuestScreen, { QuestOverlays } from './screens/Quest';
 import { SkyWorld } from './ui/SkyWorld';
 import { useStore, useTimer } from './state/store';
 import { PixelIcon, type IconName } from './ui/icons';
@@ -71,7 +71,7 @@ class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolea
   }
 }
 
-const SCREENS = ['home', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire', 'kitchen', 'archive', 'rooms'] as const;
+const SCREENS = ['home', 'quest', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire', 'kitchen', 'archive', 'rooms'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: { id: Screen; label: string; icon: IconName }[] = [
@@ -174,7 +174,6 @@ export default function App() {
   const toggleTheme = () => update((d) => void (d.settings.theme = night ? 'day' : 'night'));
 
   const doorShut = useDoorShut();
-  const lvl = levelInfo(data.xp);
   const [addOpen, setAddOpen] = useState(false);
 
   if (doorShut)
@@ -201,12 +200,6 @@ export default function App() {
         <div className="topbar__right">
           <HardBadge />
           <MiniTimer />
-          <a href="#/home" className="lvl" aria-label={`Level ${lvl.level}, ${lvl.into} of ${lvl.needed} XP`}>
-            <span className="lvl__num">LV{lvl.level}</span>
-            <span className="lvl__bar" aria-hidden="true">
-              <span style={{ width: `${(lvl.into / lvl.needed) * 100}%` }} />
-            </span>
-          </a>
           <button type="button" className="icon-btn icon-btn--bar" onClick={openSearch} aria-label="Search and commands (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K">
             <PixelIcon name="search" size={22} />
           </button>
@@ -239,6 +232,7 @@ export default function App() {
         <ScreenBoundary key={route.screen}>
           <Suspense fallback={<p className="muted center">Opening…</p>}>
             {route.screen === 'home' && <Home />}
+            {route.screen === 'quest' && <QuestScreen sub={route.sub} />}
             {route.screen === 'money' && <Money sub={route.sub} />}
             {route.screen === 'study' && <Study sub={route.sub} />}
             {route.screen === 'planner' && <Planner sub={route.sub} />}
@@ -271,6 +265,7 @@ export default function App() {
 
       <EveningCheckin />
       <FocusMode />
+      <QuestOverlays />
       <ExpenseSheet />
       <MorningBriefing />
       <PotCloseout />

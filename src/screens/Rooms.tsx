@@ -87,7 +87,7 @@ const CHEST: Rows = ['.kkkkkkkk.', 'kwwwwwwwwk', 'kkkkyykkkk', 'kwwwyywwwk', 'kw
 const BUTTERFLY: Rows = ['p.k.p', 'ppkpp', '.pkp.', 'p...p'];
 const FRAME_PAL: Pal = { f: '#c9963a', k: K, a: '#5fa83b', b: '#2a6fa8', c: '#e8c21a', r: '#c0392b', p: '#f27ab8', s: '#9fd4ff' };
 const EXHIBIT_ART: Record<Exhibit['kind'], Rows> = {
-  badge: ['ffffffff', 'fsscsssf', 'fsccccsf', 'fssccssf', 'fscsscsf', 'ffffffff'],
+  project: ['ffffffff', 'fsbrrssf', 'fsbrrrsf', 'fsbsssaf', 'fsbaaaaf', 'ffffffff'],
   savings: ['ffffffff', 'fsskksff', 'fskcckff', 'fskcckff', 'fsskksff', 'ffffffff'],
   vision: ['ffffffff', 'fsssscsf', 'fssssssf', 'fsaasssf', 'faaaaaaf', 'ffffffff'],
   assignment: ['ffffffff', 'fsbbbbsf', 'fsbsssff', 'fsbbbbsf', 'fsbsssff', 'ffffffff'],
@@ -351,7 +351,7 @@ function RoomInfo({ room, stats }: { room: RoomId; stats: RoomStats }) {
         <Panel title="Life Museum" icon="photo">
           <p className="muted small">Milestones you've reached, newest first. Prayer and Qur'an stay private, so they're never on display. Simba's gifts so far: {data.simbaGifts.length}.</p>
           {all.length === 0 ? (
-            <Empty>The museum is waiting for its first exhibit — a badge, a savings jar reached, a dream come true, or one of Simba's gifts.</Empty>
+            <Empty>The museum is waiting for its first exhibit — a finished quest project, a savings jar reached, a dream come true, or one of Simba's gifts.</Empty>
           ) : (
             <ul className="list">
               {all.map((e) => (

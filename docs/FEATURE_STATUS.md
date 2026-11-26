@@ -1,7 +1,7 @@
 # Feature status
 
 What **actually exists** in the codebase, checked against the vision in [MASTER_SPEC.md](MASTER_SPEC.md).
-Last verified: **2026-11-21** — Money plan with rent set aside, Saved reset and wish undo: 236 tests passing, production build passing.
+Last verified: **2026-11-26** — Bek's Quest, and XP/levels/badges removed: 250 tests passing, production build passing.
 Update this file whenever a feature changes (see [../CLAUDE.md](../CLAUDE.md)).
 
 **Statuses**
@@ -26,7 +26,7 @@ Paths are relative to `src/`.
 | Softer look: warm accent per room, more spacing, sleeping-cat empty states, time-of-day light, glowing lit lanterns | Implemented | Cozy layer in `styles.css`; `data-room` and `data-daypart` set in `App.tsx`; `Empty` in `ui/kit.tsx` |
 | Morning briefing (incl. photo, focus, vision goal, quote of the day) | Implemented | `screens/Briefing.tsx`; `QUOTES`, `quoteOfTheDay` in `lib/daily.ts` |
 | Goals: yearly, monthly, weekly (each can support one a level up, year goals a vision-board dream), daily = top 3; carry over unfinished; week progress on Home | Implemented | `screens/Goals.tsx` (Planner → Goals); `lib/goals.ts` (tests in `lib/goals.test.ts`); `goalProgress` in `lib/today.ts` |
-| Today cards (classes now/next, money, weather, next test, top 3, due, mood, level) | Implemented | `screens/Home.tsx` |
+| Today cards (classes now/next, money, weather, next test, top 3, due, mood) | Implemented | `screens/Home.tsx` |
 | 1% quest, word of the day, morning recall | Implemented | `screens/Daily.tsx`, `lib/daily.ts` |
 | Night wind-down | Implemented | `screens/Daily.tsx` (`WindDown`) |
 | UK / Tashkent clocks | Implemented | `screens/Extras.tsx` (`Clocks`) |
@@ -82,7 +82,7 @@ Paths are relative to `src/`.
 | Money plan from today: "money I have now" + money set aside for one big bill (e.g. rent) + last day; (money − set aside) ÷ days = the same allowance each day; each day's leftover goes into **Saved** at the end of the day; "Paid rent" takes from the set-aside money, never from the day. Wishes come true can be removed (with their purchase), and "Set Saved to $0" zeroes Saved (`savedAdjust`). The $15 daily maximum, dream room jar and Dream room screen were removed (the old dream room list stays in saved data) | Implemented | `freshPot`, `potStatus` in `lib/pot.ts` (tests in `lib/money.test.ts`); `PlanSetup`, `SetAsideLine` in `screens/Plan.tsx` |
 | Morning door (top 3 required to enter, typed or suggested) + evening check-in (what you did, how you felt) + week view of goals done and evening words | Implemented | `lib/dayDoor.ts` (tests in `lib/dayDoor.test.ts`); `screens/DayDoor.tsx`; `WeekReflect` in `screens/Extras.tsx` |
 | Living world: sky behind every screen that follows Sheffield sunrise/sunset (sun or moon, clouds, birds, stars, real rain/snow) and a pixel landscape per section (cabin, forest, library, town, peaks, mosque, lake, garden, meadow); panels float like signs; the morning door is a wooden door that swings open | Implemented | `ui/SkyWorld.tsx`; door in `screens/DayDoor.tsx`; `.world`, `.door-*` in `styles.css` |
-| Streak flame (grows each day with top 3 + evening check-in, shrinks on missed days, never back to zero once lit; no XP), yesterday-vs-today line, one-tap Focus button | Implemented | `flame`, `bestSelf` in `lib/growth.ts` (tests in `lib/growth.test.ts`); `DayFlame` in `screens/Growth.tsx` |
+| Streak flame, yesterday-vs-today line | Removed (2026-11-26) | Replaced on Home by the Bek's Quest card (`QuestHome` in `screens/Quest.tsx`); the Focus timer button moved there |
 | Focus mode: dimmed full-screen countdown using the normal study timer, shows your next goal, rain sound toggle | Implemented | `FocusMode` in `screens/Growth.tsx` |
 | Month story (Reflect → Month story): goals done, days with a top 3, evening check-ins, focus time, money spent, usual mood, best day, lines from happiest days; Home nudge on the 1st–3rd | Implemented | `monthStory` in `lib/growth.ts`; `MonthStoryView`, `MonthNudge` in `screens/Growth.tsx` |
 | + button menu: spent money, note/idea, reminder, edit today's top 3 | Implemented | `QuickAdd` in `screens/Growth.tsx`; `QuickCapture({ kind })` in `screens/Capture.tsx` |
@@ -127,7 +127,7 @@ Paths are relative to `src/`.
 | Diary with automatic date and time; add older entries from a private file; searchable | Implemented | `lib/diary.ts`, `screens/Reflect.tsx` (`Diary`), `lib/diary.test.ts` |
 | Gratitude jar, journal, habits | Implemented | `screens/Calm.tsx`, `screens/Extras.tsx` |
 | Morning promise (no penalty unless hard mode), you vs last week, hard mode | Implemented | `lib/push.ts` (tests), `screens/Push.tsx` |
-| XP, levels, coins, 25 badges | Implemented | `lib/xp.ts`, `lib/badges.ts`, `screens/Badges.tsx` |
+| XP, levels, coins, badges | Removed (2026-11-26) at Bek's request: no game points anywhere. `gainXp` in `state/store.tsx` is now a no-op; old XP and badge data stay saved but unused | `lib/xp.ts` (constants only); `lib/badges.ts` and `screens/Badges.tsx` deleted |
 | Adhkar, sadaqah jar, if-then plans, family report card, weekly challenges | Not started | Spec: *Proposed* (good deeds journal covers private sadaqah notes) |
 
 ## Everyday life
@@ -157,13 +157,13 @@ Paths are relative to `src/`.
 | Real winter (snow, snowman, frost, scarf, hot chocolate) | Implemented | `scene/Cabin.tsx`, `screens/Home.tsx` |
 | Winter triggered by real local snow | Needs verification | Checked only with a simulated forecast |
 | Simba moods & petting, Bek avatar & editor | Implemented | `lib/cabin.ts` (tests), `scene/Cabin.tsx`, `screens/More.tsx` (`AvatarEditor`) |
-| Unlocks, cabin shop (10 items), growth (tulips, books, garden, jar) | Implemented | `lib/cabin.ts`, `lib/shop.ts`, `screens/Shop.tsx` |
+| Cabin items (all unlocked), Decorate the cabin (10 items, free to display or put away), growth (tulips, books, garden, jar) | Implemented | `lib/cabin.ts`, `lib/shop.ts`, `screens/Shop.tsx` (More → Cabin → Decorate) |
 | Pond & 15-fish book | Implemented | `lib/fish.ts` (tests), `screens/Pond.tsx` |
 | Sound mixer, lo-fi radio, effects | Implemented | `lib/sound.ts`, `ui/SoundMixer.tsx` |
 | Lo-fi radio sound on a phone | Needs verification | Toggle checked; audio not listened to on a device |
 | More rooms: Library, Kitchen, Workshop, Bedroom, Observatory, Garden of Years, attic Life Museum — each drawn from real data (books = notes/words/cards/recipes, jars = pantry, finished work, last night's bedtime, stars = night logs) | Implemented | `screens/Rooms.tsx` (`#/rooms`, Home → Rooms; loads on demand); `roomStats` in `lib/rooms.ts` (tests in `lib/rooms.test.ts`) |
 | Garden of Years (a flower per month, growing with good days; past years) | Implemented | `gardenOfYear`, `gardenYears` in `lib/rooms.ts` |
-| Life Museum / memory timeline (badges, savings reached, dreams reached, graded work, campfire wins, first catches, Simba's gifts; worship never displayed) | Implemented | `museum()` in `lib/rooms.ts` |
+| Life Museum / memory timeline (finished Bek's Quest projects, savings reached, dreams reached, graded work, campfire wins, first catches, Simba's gifts; worship never displayed) | Implemented | `museum()` in `lib/rooms.ts` |
 | Simba activities per room (reading, waiting by the bowl, batting a bolt, napping, stargazing, chasing a butterfly, exploring), tap reactions, a daily gift | Implemented | `ROOMS`, `giftFor` in `lib/rooms.ts`; `simbaGifts` in `lib/types.ts` |
 | Break reminders after N minutes in the app (off / 30–90 min; waits during Pomodoro; time away counts as a break) | Implemented | `ui/BreakReminder.tsx` (mounted in `App.tsx`); setting in More → Settings and the Bedroom |
 | Break reminder after a real 50 minutes on a phone | Needs verification | Checked in the browser with sped-up timers only |
@@ -195,3 +195,16 @@ Paths are relative to `src/`.
 | Consolidate duplicated helpers (streaks, week stats, clocks) | Planned | See "Known follow-ups" in [CHANGELOG.md](CHANGELOG.md) |
 | Lazy-load screens (with offline prefetch) | Partially implemented | Reflect, More and Pond load on demand and are prefetched for offline (`App.tsx`, `main.tsx`); other screens are imported by Home so stay in the main bundle (~433 KB) |
 | Move vision-board photos out of AppData | Planned | |
+
+## Bek's Quest (real-life side quests)
+| Feature | Status | Evidence |
+|---|---|---|
+| Quest library: 111 quests in six areas (Explorer, Creator, Athlete, Scholar, Spiritual, Human), each with description, minutes, energy, difficulty, place and exact "done when" criteria; Sheffield-specific where it fits | Implemented | `QUESTS` in `lib/questLibrary.ts` (checked in `lib/quests.test.ts`) |
+| "I'm bored" button: time (5/15/30/60/120), energy, optional place → ONE mission (at most two re-rolls); avoids last 3 days, keeps you indoors late at night or in the rain unless you choose outdoors | Implemented | `pickQuest`, `fits` in `lib/quests.ts`; `BoredSheet` in `screens/Quest.tsx` (Home card + Quest screen) |
+| "I'm about to scroll" button: kind, non-shaming message → how much time → one replacement quest, or a 10-minute emergency mission | Implemented | `emergencyQuest` in `lib/quests.ts`; `ScrollSos` in `screens/Quest.tsx` |
+| Daily missions (3 a day: move/explore, think/make, people/faith; swap allowed), weekly challenge (measured in real things), monthly totals | Implemented | `dailyMissions`, `swapMission`, `challengeProgress`, `monthStats` in `lib/quests.ts`; `Today` in `screens/Quest.tsx`; Month story shows quests and time |
+| Rewards without points: time away from the screen (week/month), life totals per area (Spiritual kept private, never counted), scroll moments turned into action, a short celebration after each quest | Implemented | `stats`, `weekStats`, `lifeStats`, `hoursLabel` in `lib/quests.ts`; `Celebration` in `screens/Quest.tsx` |
+| Field journal (one line and an optional photo per quest; the photo also goes on the cabin photo wall), one month at a time | Implemented | `completeQuest`, `removeEntry` in `lib/quests.ts`; `DoneSheet`, `Journal` in `screens/Quest.tsx` |
+| Projects with real results (20 Sheffield green spaces, Peak District days, 60-second film, 5k, a whole book, a program, a surah, five dishes from home); finished ones go in the Life Museum (faith project stays private) | Implemented | `PROJECTS` in `lib/questLibrary.ts`; `startProject`, `toggleStep` in `lib/quests.ts`; `museum()` in `lib/rooms.ts` |
+| One recommended next action (mission in progress → a daily mission → a project step; late at night: sleep) | Implemented | `nextAction` in `lib/quests.ts`; `NextUp` in `screens/Quest.tsx` |
+| Saved with everything else (in `AppData.quest`, in snapshots, backups and import checks; old data gets an empty quest record) | Implemented | `QuestState` in `lib/types.ts`; `emptyData()` in `lib/seed.ts`; persistence tests in `lib/quests.test.ts` |

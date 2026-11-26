@@ -2,7 +2,7 @@
  * 💪 The "push me" features:
  *  - Fajr rise: tap "I'm up" each morning. Sleep through Fajr and you get the
  *    brutal wake-up call (OversleptCall): harsh on purpose, because you asked.
- *  - Morning promise: promise Simba one hard thing. Keep it → XP. Break it → coins.
+ *  - Morning promise: promise Simba one hard thing, then say honestly if you kept it (nothing is taken away).
  *  - You vs last week: race last week's ghost, day by day.
  *  - Hard mode: stricter rules (see HARD_RULES).
  *  - Vision board: your big goals with a picture and a "why".
@@ -20,7 +20,6 @@ import {
   oversleptRecently,
   PROMISE_XP,
   promiseIdeas,
-  promisePenalty,
   riseOnTime,
   riseStreak,
   unresolvedPromise,
@@ -151,15 +150,12 @@ export function OversleptCall() {
 export function MorningPromise() {
   const { data, update, today, gainXp, toast } = useStore();
   const [text, setText] = useState('');
-  const hard = data.settings.hardMode;
-  const penalty = promisePenalty(hard);
   const pending = unresolvedPromise(data, today);
   const promise = data.promises[today];
 
   const answer = (day: string, kept: boolean) => {
     update((d) => {
       d.promises[day] = { ...d.promises[day], kept };
-      if (!kept && penalty > 0) d.shop.spent += penalty;
     });
     if (kept) {
       sfx('levelup');
@@ -167,7 +163,7 @@ export function MorningPromise() {
       toast('Simba: "You kept your word. I knew you would."', 'level');
     } else {
       buzz([40, 60, 40]);
-      toast(penalty > 0 ? `−${penalty} coins (hard mode). Simba: "You promised me…"` : 'Simba: "Okay. Tomorrow, then. I believe in you."', penalty > 0 ? 'warn' : 'info');
+      toast('Simba: "Okay. Tomorrow, then. I believe in you."', 'info');
     }
   };
   const make = (e: FormEvent) => {
@@ -184,7 +180,7 @@ export function MorningPromise() {
         I kept it ✓
       </button>
       <button type="button" className="btn btn--danger grow" onClick={() => answer(day, false)}>
-        {penalty > 0 ? `I broke it (−${penalty} coins)` : 'I broke it'}
+        I broke it
       </button>
     </div>
   );
@@ -202,7 +198,7 @@ export function MorningPromise() {
     return (
       <Panel title="Today's promise" icon="cat" className={`promise-card ${promise.kept === undefined ? '' : promise.kept ? 'is-kept' : 'is-broken'}`}>
         <p className="promise-card__text">“{promise.text}”</p>
-        {promise.kept === undefined ? buttons(today) : <p className="muted small">{promise.kept ? `Kept. +${PROMISE_XP} XP. Simba is proud.` : 'Broken. Tomorrow, make it count.'}</p>}
+        {promise.kept === undefined ? buttons(today) : <p className="muted small">{promise.kept ? 'Kept. Simba is proud.' : 'Broken. Tomorrow, make it count.'}</p>}
       </Panel>
     );
   }
@@ -210,7 +206,7 @@ export function MorningPromise() {
     <Panel title="Promise Simba one hard thing" icon="cat" className="promise-card">
       <form className="form" onSubmit={make}>
         <p className="muted small">
-          Keep it: +{PROMISE_XP} XP.{penalty > 0 ? ` Break it: −${penalty} coins (hard mode).` : ''} Pick something a bit hard.
+          Pick something a bit hard.
         </p>
         <div className="chips">
           {promiseIdeas(data, today).map((idea) => (

@@ -14,6 +14,7 @@ type Scene = 'hills' | 'forest' | 'library' | 'town' | 'peaks' | 'mosque' | 'lak
 /** Which landscape each section shows at the bottom of the sky. */
 const SCENE_OF: Record<string, Scene> = {
   home: 'hills',
+  quest: 'peaks',
   money: 'forest',
   study: 'library',
   planner: 'town',

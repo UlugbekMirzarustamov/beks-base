@@ -18,8 +18,8 @@ describe('calm Home', () => {
     expect(placeOf('promise', none, 9)).toBe('now');
     expect(placeOf('promise', none, 15)).toBe('more');
     expect(placeOf('promise', none, 1)).toBe('more');
-    const home = { pinned: ['weather', 'level'], hidden: ['ghost', 'quest'], dismissed: [] };
-    expect(cardsIn('now', home, 9).slice(0, 2)).toEqual(['weather', 'level']);
+    const home = { pinned: ['weather', 'clocks'], hidden: ['ghost', 'quest'], dismissed: [] };
+    expect(cardsIn('now', home, 9).slice(0, 2)).toEqual(['weather', 'clocks']);
     expect(placeOf('ghost', home, 9)).toBe('hidden');
     expect(cardsIn('now', home, 9)).not.toContain('quest');
     expect(cardsIn('more', home, 9)).not.toContain('weather');

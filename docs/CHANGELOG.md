@@ -4,6 +4,15 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Bek's Quest:** real-life side quests instead of scrolling. On Home: **I'm bored** (pick time, energy and
+  place → ONE mission) and **I'm about to scroll** (a kind message, then one replacement quest or a 10-minute emergency
+  mission). 111 quests in six areas, each with an exact "done when". The Quest screen (`#/quest`) has three daily missions,
+  a weekly challenge, real projects (20 Sheffield green spaces, a 5k, a 60-second film…), a field journal with optional
+  photos (also on the cabin photo wall), and plain totals: time away from the screen, things done per area. No points,
+  no streaks, nothing lost on a missed day; Spiritual quests are never counted.
+- **No more game points:** XP, levels (the LV bar), badges, coins and the streak flame are gone at Bek's request. All cabin
+  items are unlocked and every decoration is free to display (More → Cabin → Decorate). Old XP and badge data stay saved.
+  Tests: 250 passing.
 - **Undo a wish and reset Saved:** each wish under "Wishes come true" has a bin button that removes the wish and the purchase
   it made (the money goes back). The Saved card has **Set Saved to $0**: Saved starts from zero again, then each day's
   leftover adds up as before.

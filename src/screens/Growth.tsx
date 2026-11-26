@@ -1,6 +1,5 @@
 /**
  * Getting a bit better every day:
- *  - <DayFlame>      the streak flame + "yesterday vs today" + a one-tap Focus button (Home)
  *  - <FocusMode>     a dimmed full-screen focus timer (uses the normal study timer)
  *  - <MonthStory>    a look back over a month (Reflect → Month)
  *  - <MonthNudge>    on the 1st–3rd, a card on Home saying last month's story is ready
@@ -8,7 +7,8 @@
  */
 import { useEffect, useState } from 'react';
 import { addMonths, formatDay, formatMonth, monthOf } from '../lib/dates';
-import { bestSelf, flame, MOOD_NAMES, monthStory } from '../lib/growth';
+import { MOOD_NAMES, monthStory } from '../lib/growth';
+import { hoursLabel, monthStats } from '../lib/quests';
 import { formatMoney } from '../lib/money';
 import type { CaptureKind } from '../lib/capture';
 import type { Mood } from '../lib/types';
@@ -18,57 +18,9 @@ import { Empty, Panel, Sheet } from '../ui/kit';
 import { QuickCapture } from './Capture';
 import { TopThree } from './Planner';
 
-const FLAME_WORDS = ['Not lit yet', 'A tiny spark', 'A small flame', 'A steady fire', 'A big fire', 'Blazing!'];
 const mins = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60 ? `${m % 60}m` : ''}`.trim() : `${m} min`);
 
 export const openFocus = () => window.dispatchEvent(new Event('beks:focus'));
-
-// ---------------------------------------------------------------- Home: flame + best self + focus
-export function DayFlame() {
-  const { data, today } = useStore();
-  const { timer, running } = useTimer();
-  const focusLabel = running && timer.mode === 'work' ? 'Back to focus' : `Focus ${timer.mode === 'work' ? Math.ceil(timer.remaining / 60) : data.settings.pomodoroWork} min`;
-  const f = flame(data, today);
-  const b = bestSelf(data, today);
-  const todo = [!f.goalsToday && 'set your top 3', !f.eveningToday && 'write tonight’s check-in'].filter(Boolean);
-
-  return (
-    <section className="day-flame" aria-label="Your flame">
-      <div className="day-flame__fire">
-        <span className={`flame flame--${f.size}`} aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </span>
-        <span className="day-flame__logs" aria-hidden="true" />
-      </div>
-      <div className="day-flame__text">
-        <p className="day-flame__title">{FLAME_WORDS[f.size]}</p>
-        <p className="small">
-          {todo.length ? `To grow it today: ${todo.join(' and ')}.` : 'Fed for today. See you tomorrow!'}
-          {f.heat > 0 && ` Heat ${f.heat}.`}
-        </p>
-        {b && (
-          <p className="day-flame__vs small">
-            <PixelIcon name="star" size={14} />{' '}
-            {b.beaten ? (
-              <strong>You’ve beaten yesterday. Keep going!</strong>
-            ) : (
-              <>
-                Yesterday: <strong>{b.yesterday.goalsDone}/3 goals</strong>
-                {b.yesterday.focusMin > 0 && <>, {mins(b.yesterday.focusMin)} focus</>}. Today: {b.today.goalsDone}/3
-                {b.today.focusMin > 0 && <>, {mins(b.today.focusMin)}</>}. Beat it?
-              </>
-            )}
-          </p>
-        )}
-        <button type="button" className="btn btn--primary day-flame__focus" onClick={openFocus}>
-          <PixelIcon name="clock" size={16} /> {focusLabel}
-        </button>
-      </div>
-    </section>
-  );
-}
 
 // ---------------------------------------------------------------- focus mode
 export function FocusMode() {
@@ -133,6 +85,7 @@ export function MonthStoryView() {
   const thisMonth = monthOf(today);
   const [month, setMonth] = useState(() => (Number(today.slice(8)) <= 3 ? addMonths(thisMonth, -1) : thisMonth));
   const s = monthStory(data, month, today);
+  const q = monthStats(data, month);
   const moodTotal = (Object.values(s.moods) as number[]).reduce((a, b) => a + b, 0);
   const pct = s.goalsSet ? Math.round((s.goalsDone / s.goalsSet) * 100) : 0;
 
@@ -151,7 +104,7 @@ export function MonthStoryView() {
         </>
       }
     >
-      {!s.daysWithGoals && !s.evenings && !moodTotal && !s.focusMin ? (
+      {!s.daysWithGoals && !s.evenings && !moodTotal && !s.focusMin && !q.count ? (
         <Empty>Nothing written this month yet. Your story fills in as you set goals and do evening check-ins.</Empty>
       ) : (
         <>
@@ -181,6 +134,14 @@ export function MonthStoryView() {
             <div>
               <strong>{s.usualMood ? MOOD_NAMES[s.usualMood] : '–'}</strong>
               <span>usual mood</span>
+            </div>
+            <div>
+              <strong>{q.count}</strong>
+              <span>quests done</span>
+            </div>
+            <div>
+              <strong>{hoursLabel(q.minutes)}</strong>
+              <span>away from the screen</span>
             </div>
           </div>
           {moodTotal > 0 && (

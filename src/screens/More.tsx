@@ -19,11 +19,10 @@ import { BreakSetting } from '../ui/BreakReminder';
 import { InstallCard } from '../ui/AppFeel';
 import { BEK_H, BEK_W, drawBek } from '../scene/Cabin';
 import type { BekPose } from '../lib/cabin';
-import { BadgeShelf } from './Badges';
 import { CabinShop } from './Shop';
 import { Habits, Journal, MoodCheckIn, MoodWeek, Vocab } from './Extras';
 
-const TABS = ['shop', 'badges', 'words', 'habits', 'mood', 'journal', 'settings'] as const;
+const TABS = ['shop', 'words', 'habits', 'mood', 'journal', 'settings'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function More({ sub }: { sub?: string }) {
@@ -59,10 +58,9 @@ export default function More({ sub }: { sub?: string }) {
           {
             id: 'cabin',
             label: 'Cabin',
-            icon: 'coin',
+            icon: 'house',
             tabs: [
-              { id: 'shop', label: 'Shop' },
-              { id: 'badges', label: 'Badges' },
+              { id: 'shop', label: 'Decorate' },
             ],
           },
           {
@@ -76,7 +74,6 @@ export default function More({ sub }: { sub?: string }) {
         ]}
       />
       {tab === 'shop' && <CabinShop />}
-      {tab === 'badges' && <BadgeShelf />}
       {tab === 'words' && <Vocab />}
       {tab === 'habits' && <Habits />}
       {tab === 'mood' && (

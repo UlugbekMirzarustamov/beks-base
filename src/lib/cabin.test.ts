@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { nextUnlock, plantStage, seasonOf, simbaMood, streak, unlockedIds } from './cabin';
 import { juzOfPage } from './quran';
 import { parseWeather, weatherKind } from './weather';
-import { newlyEarned } from './badges';
-import { coins, SHOP_ITEMS } from './shop';
+import { SHOP_ITEMS, SLOT_NAMES } from './shop';
 import { moneyInsights, todaysQuest } from './daily';
 import { addDays } from './dates';
 import { emptyData } from './seed';
@@ -74,30 +73,10 @@ describe('quran', () => {
   });
 });
 
-describe('badges', () => {
-  it('awards badges when you earn them, and only once', () => {
-    const d = emptyData('2026-11-04');
-    expect(newlyEarned(d, '2026-11-04').map((b) => b.id)).toEqual([]);
-    d.prayers['2026-11-04'] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-    const ids = newlyEarned(d, '2026-11-04').map((b) => b.id);
-    expect(ids).toContain('first-lantern');
-    expect(ids).toContain('five-lanterns');
-    expect(ids).not.toContain('steadfast'); // needs 7 days in a row
-    d.badges = Object.fromEntries(ids.map((id) => [id, '2026-11-04']));
-    expect(newlyEarned(d, '2026-11-04')).toEqual([]);
-  });
-});
-
 describe('cabin shop', () => {
-  it('turns XP into coins and subtracts what you spend', () => {
-    const d = emptyData('2026-11-04');
-    d.xp = 101;
-    expect(coins(d)).toBe(50);
-    d.shop.spent = 40;
-    expect(coins(d)).toBe(10);
-    d.shop.spent = 999;
-    expect(coins(d)).toBe(0); // never negative
+  it('has unique decorations, each with a spot in the room', () => {
     expect(new Set(SHOP_ITEMS.map((i) => i.id)).size).toBe(SHOP_ITEMS.length);
+    for (const i of SHOP_ITEMS) expect(SLOT_NAMES[i.slot]).toBeTruthy();
   });
 });
 
