@@ -976,7 +976,7 @@ interface Station {
 function stations(W: number): Station[] {
   const { telescopeX, tableX, win } = layout(W);
   return [
-    { href: '#/pond', label: 'Pond', sub: 'Window', icon: 'fish', x: win.x - 2, y: 10, w: win.w + 4, h: 25 },
+    { href: '#/quest', label: 'Quest', sub: 'Window', icon: 'sword', x: win.x - 2, y: 10, w: win.w + 4, h: 25 },
     { href: '#/study', label: 'Study', sub: 'Bookshelf', icon: 'shelf', x: 6, y: 24, w: 30, h: 50 },
     { href: '#/money', label: 'Money', sub: 'Chest', icon: 'chest', x: 35, y: 55, w: 24, h: 24, sign: 'bottom' },
     { href: '#/reflect', label: 'Reflect', sub: 'Telescope', icon: 'telescope', x: telescopeX - 3, y: 49, w: 21, h: 32 },

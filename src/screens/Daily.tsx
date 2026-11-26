@@ -1,18 +1,13 @@
 /**
- * Home's "Today's 1%" panel (quest · word of the day · morning recall), the
- * night-time wind-down card, "Simba needs you" (meals, water, sleep) and the
- * Sunday backup card.
+ * Home's Today card, the night-time wind-down card and the Sunday backup card.
  */
 import { useState } from 'react';
 import { backupFileName, exportJson, isLessonFile, type Photo } from '../lib/backup';
 import { loadFileList } from '../lib/db';
-import { careStatus, MEAL_GOAL, WATER_GOAL } from '../lib/care';
 import type { AppData, DayCheckin } from '../lib/types';
 import { usePhotos } from './Photos';
-import { recallPick, todaysQuest, wordOfTheDay } from '../lib/daily';
 import { addDays, formatDay, fromMinutes, toMinutes, UK_TZ, zonedParts } from '../lib/dates';
 import { minsToClock, PRAYER_INFO, prayerTimes } from '../lib/prayer';
-import { buzz, sfx } from '../lib/sound';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Panel } from '../ui/kit';
@@ -21,110 +16,7 @@ import { usePrayer } from './Prayer';
 import { deadlinesSoon, goalProgress, moneyToday, sleptHours } from '../lib/today';
 import { formatMoney } from '../lib/money';
 
-const QUEST_XP = 20;
 
-export function OnePercent() {
-  const { data, update, today, gainXp } = useStore();
-  const quest = todaysQuest(data, today);
-  const done = data.quests[today]?.done ?? false;
-  const word = wordOfTheDay(data, today);
-  const mistake = recallPick(data, today);
-  const recallResult = data.recall[today]?.result;
-  const [showWord, setShowWord] = useState(false);
-  const [showAnswer, setShowAnswer] = useState(false);
-
-  const toggleQuest = () => {
-    update((d) => void (d.quests[today] = { id: quest.id, done: !done }));
-    if (!done) {
-      sfx('twinkle');
-      buzz(15);
-    }
-    gainXp(done ? -QUEST_XP : QUEST_XP, done ? undefined : "today's 1%");
-  };
-  const recall = (result: 'got' | 'again') => {
-    if (!mistake) return;
-    update((d) => {
-      d.recall[today] = { id: mistake.id, result };
-      const m = d.mistakes.find((x) => x.id === mistake.id);
-      if (m) m.reviewAgain = result === 'again';
-    });
-    if (result === 'got') gainXp(5, 'remembered it');
-  };
-
-  return (
-    <Panel title="Today's 1%" icon="star" className="one-percent">
-      <div className={`quest ${done ? 'is-done' : ''}`}>
-        <p className="field__label">Today's quest</p>
-        <p className="quest__text">{quest.text}</p>
-        <button type="button" className={`btn btn--small ${done ? '' : 'btn--primary'}`} onClick={toggleQuest} aria-pressed={done}>
-          {done ? 'Done ✓ (tap to undo)' : 'I did it'}
-        </button>
-      </div>
-
-      <div className="daily-row">
-        <p className="field__label">Word of the day</p>
-        {word ? (
-          <>
-            <p>
-              <strong className="daily-word">{word.word.replace(' (example)', '')}</strong> — do you remember what it means?
-            </p>
-            {showWord ? (
-              <p className="daily-reveal">
-                {word.meaning}
-                {word.sentence && <em className="muted"> “{word.sentence}”</em>}
-              </p>
-            ) : (
-              <button type="button" className="btn btn--small" onClick={() => setShowWord(true)}>
-                Show meaning
-              </button>
-            )}
-          </>
-        ) : (
-          <p className="muted small">
-            Add physics/maths words in <a href="#/more/words">More → Words</a> and one will show up here each day.
-          </p>
-        )}
-      </div>
-
-      <div className="daily-row">
-        <p className="field__label">Morning recall</p>
-        {mistake ? (
-          <>
-            <p>
-              <strong>Q:</strong> {mistake.question}
-            </p>
-            {recallResult ? (
-              <p className="muted small">{recallResult === 'got' ? 'Remembered ✓ — it’s off your review list.' : 'Still tricky — it will come back another day.'}</p>
-            ) : showAnswer ? (
-              <>
-                <p className="daily-reveal">
-                  <PixelIcon name="check" size={14} /> {mistake.correctAnswer || '—'}
-                  {mistake.why && <span className="muted"> · {mistake.why}</span>}
-                </p>
-                <div className="form__actions">
-                  <button type="button" className="btn btn--small btn--primary" onClick={() => recall('got')}>
-                    I got it right
-                  </button>
-                  <button type="button" className="btn btn--small" onClick={() => recall('again')}>
-                    Still tricky
-                  </button>
-                </div>
-              </>
-            ) : (
-              <button type="button" className="btn btn--small" onClick={() => setShowAnswer(true)}>
-                Answer it in your head, then show
-              </button>
-            )}
-          </>
-        ) : (
-          <p className="muted small">
-            Log mistakes in <a href="#/study/mistakes">Study → Mistakes</a>; each morning one comes back for a quick recall.
-          </p>
-        )}
-      </div>
-    </Panel>
-  );
-}
 
 /** From 22:00 to 03:00: tomorrow at a glance, a suggested bedtime, and "going to sleep". */
 export function WindDown() {
@@ -182,56 +74,6 @@ export function WindDown() {
 }
 
 // ---------------------------------------------------------------- Simba needs you
-export function SimbaNeeds() {
-  const { data, update, today, gainXp, toast } = useStore();
-  const hour = zonedParts(new Date(), UK_TZ).hour;
-  const c = careStatus(data, today, hour);
-  const add = (key: 'meals' | 'water') => {
-    const max = key === 'meals' ? MEAL_GOAL + 1 : WATER_GOAL;
-    if (c[key] >= max) return;
-    update((d) => {
-      const now = d.care[today] ?? { meals: 0, water: 0 };
-      d.care[today] = { ...now, [key]: now[key] + 1 };
-    });
-    sfx(key === 'meals' ? 'pop' : 'bead');
-    buzz(10);
-    if (key === 'meals' && c.meals < MEAL_GOAL) gainXp(3, 'a proper meal');
-    if (key === 'meals' && c.meals === 0) toast('Simba: "Finally! My bowl is full too."', 'info');
-    if (key === 'water' && c.water + 1 === WATER_GOAL) gainXp(5, '8 glasses of water');
-  };
-  const line =
-    c.hungry
-      ? 'Mrow… no meal yet today. Eat something proper, Bek, then I can eat too.'
-      : c.slept === false
-        ? 'You went to bed late last night. Early night tonight? I’ll sleep on your feet.'
-        : c.hearts === 3
-          ? 'Purrr… you’re looking after yourself today. I’m a happy cat.'
-          : c.water < 3 && hour >= 12
-            ? 'Have a glass of water. Brains are mostly water, you know.'
-            : 'I’m fine if you’re fine. Eat, drink, sleep on time.';
-  return (
-    <Panel title="Simba needs you" icon="cat" className="simba-needs">
-      <p className="simba-needs__hearts" aria-label={`${c.hearts} of 3 hearts`}>
-        {[0, 1, 2].map((i) => (
-          <PixelIcon key={i} name="heart" size={22} className={i < c.hearts ? '' : 'is-empty'} />
-        ))}
-      </p>
-      <p className="simba-needs__line">{line}</p>
-      <div className="simba-needs__rows">
-        <button type="button" className="btn" onClick={() => add('meals')}>
-          <PixelIcon name="apple" size={16} /> Ate a meal <strong>{c.meals}/{MEAL_GOAL}</strong>
-        </button>
-        <button type="button" className="btn" onClick={() => add('water')}>
-          <PixelIcon name="rain" size={16} /> Glass of water <strong>{c.water}/{WATER_GOAL}</strong>
-        </button>
-      </div>
-      <p className="muted small">
-        <PixelIcon name="moon" size={14} /> Last night:{' '}
-        {c.slept === null ? 'not logged (tap “I’m going to sleep now” tonight)' : c.slept ? 'in bed on time ✓' : 'late night'}
-      </p>
-    </Panel>
-  );
-}
 
 // ---------------------------------------------------------------- backups
 const BACKUP_KEY = 'beks-last-backup';

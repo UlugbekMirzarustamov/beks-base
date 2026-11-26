@@ -7,7 +7,6 @@
  *   - dated school classes (`sessions`) and weekly classes (`timetable`);
  *   - exams (`tests`), task and assignment deadlines, and study blocks;
  *   - bill and subscription payments and free-trial ends (`recurring`) — the financial calendar;
- *   - student admin key dates and checklist step dates (`admin`).
  * Plain functions, so they're easy to test.
  */
 import { addDays, daysBetween, daysInMonth, fromMinutes, toMinutes, weekdayOf } from './dates';
@@ -118,12 +117,6 @@ export function itemsOn(d: AppData, date: string): CalItem[] {
   for (const b of d.recurring) {
     if (billDueOn(b, date)) items.push({ key: `bill-${b.id}`, id: b.id, source: 'bill', kind: 'bill', title: `${b.name} · ${formatMoney(b.amount)}`, date, start: '', end: '', location: '' });
     if (b.trialEnds === date) items.push({ key: `trial-${b.id}`, id: b.id, source: 'bill', kind: 'bill', title: `Free trial ends: ${b.name}`, date, start: '', end: '', location: '' });
-  }
-  for (const a of d.admin) {
-    if (a.date === date && !a.finished) items.push({ key: `admin-${a.id}`, id: a.id, source: 'admin', kind: 'admin', title: `${a.dateLabel}: ${a.title}`, date, start: '', end: '', location: '' });
-    for (const st of a.steps) {
-      if (st.due === date && !a.finished) items.push({ key: `admin-${a.id}-${st.id}`, id: a.id, source: 'admin', kind: 'admin', title: `${st.text} (${a.title})`, date, start: '', end: '', location: '', done: st.done });
-    }
   }
   return items.sort(byTime);
 }

@@ -1,7 +1,7 @@
 /**
  * The morning briefing: the first time you open the app each day, one cosy
  * card with today at a glance — a family photo, weather, classes, prayers,
- * Ramadan times, money, tests, this week's focus, your top 3, Qur'an goal,
+ * Ramadan times, money, tests, your top 3, Qur'an goal,
  * and a word from Simba. Also opens from Home.
  */
 import { useEffect, useState } from 'react';
@@ -17,8 +17,6 @@ import { PixelIcon } from '../ui/icons';
 import { useWeather } from '../ui/Weather';
 import { classesOn } from './Planner';
 import { usePrayer } from './Prayer';
-import { weekFocus } from './Campfire';
-import { visionOfTheDay } from './Push';
 import { photoOfTheDay, usePhotos } from './Photos';
 import { useRamadan } from './Ramadan';
 
@@ -85,8 +83,6 @@ export function MorningBriefing() {
   const test = data.tests.filter((t) => t.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
   const top = data.priorities.items.filter((x) => x.trim());
   const photo = photoOfTheDay(photos, today);
-  const focus = weekFocus(data, today);
-  const vision = visionOfTheDay(data, today);
   const quote = quoteOfTheDay(today);
   const fastTimes = prayerTimes(today, data.settings.prayer);
   const prayedToday = Object.keys(PRAYER_INFO).filter((p) => data.prayers[today]?.includes(p as never)).length;
@@ -178,23 +174,6 @@ export function MorningBriefing() {
               <PixelIcon name="calendar" size={26} />
               <span>
                 <strong>{test.name}</strong> in {daysBetween(today, test.date)} day{daysBetween(today, test.date) === 1 ? '' : 's'}
-              </span>
-            </li>
-          )}
-          {vision && (
-            <li className="briefing__vision">
-              {vision.photo ? <img src={vision.photo} alt="" /> : <PixelIcon name="star" size={26} />}
-              <span>
-                <strong>Why you're doing this:</strong> {vision.title}
-                {vision.why ? ` · ${vision.why}` : ''}
-              </span>
-            </li>
-          )}
-          {focus && (
-            <li>
-              <PixelIcon name="flame" size={26} />
-              <span>
-                <strong>This week's focus:</strong> {focus}
               </span>
             </li>
           )}

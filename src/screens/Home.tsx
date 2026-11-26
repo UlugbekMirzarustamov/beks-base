@@ -7,26 +7,21 @@ import { Cabin } from '../scene/Cabin';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
 import { Empty, Panel, Segmented, Sheet } from '../ui/kit';
-import { cardsIn, discoverTips, HOME_CARDS, type CardId } from '../lib/home';
-import { Clocks, MoodCheckIn } from './Extras';
+import { cardsIn, HOME_CARDS, type CardId } from '../lib/home';
 import { InstallCard } from '../ui/AppFeel';
-import { BackupCard, OnePercent, SimbaNeeds, TodayCard, WindDown } from './Daily';
-import { CampfireCard } from './Campfire';
-import { FajrRise, GhostRace, MorningPromise } from './Push';
+import { BackupCard, TodayCard, WindDown } from './Daily';
+import { FajrRise } from './Push';
 import { InboxPanel, QuickCapture } from './Capture';
 import { MonthNudge } from './Growth';
 import { QuestHome } from './Quest';
 import { RamadanCard, useRamadan } from './Ramadan';
 import { openPhotos, photoOfTheDay, usePhotos } from './Photos';
-import { BossMini } from './Study';
 import { careStatus } from '../lib/care';
 import { conflicts, dateReminders, itemsOn, KIND_INFO, upcoming } from '../lib/calendar';
-import { freshness, toUseSoon } from '../lib/kitchen';
-import { adminReminders, progress } from '../lib/admin';
 import { FRIDAY_STEPS, hijriLabel, isFriday } from '../lib/islamic';
 import { openJar } from './Calm';
 import { potStatus } from '../lib/pot';
-import { SafeToSpendCard, SavingsMini } from './Money';
+import { SafeToSpendCard } from './Money';
 import { classesOn, TaskRow, TopThree } from './Planner';
 import { PrayerLanterns, usePrayer } from './Prayer';
 import { useWeather, WeatherCard, windowWeather } from '../ui/Weather';
@@ -87,12 +82,6 @@ export default function Home() {
             <button type="button" className="home-place" onClick={() => window.dispatchEvent(new Event('beks:briefing'))}>
               <PixelIcon name="sun" size={18} /> Briefing
             </button>
-            <a href="#/rooms" className="home-place">
-              <PixelIcon name="house" size={18} /> Rooms
-            </a>
-            <a href="#/kitchen" className="home-place">
-              <PixelIcon name="apple" size={18} /> Kitchen
-            </a>
             <a href="#/calm" className="home-place">
               <PixelIcon name="lantern" size={18} /> A minute
             </a>
@@ -119,7 +108,6 @@ export default function Home() {
           </div>
         )}
       </details>
-      <Discover />
       <p className="center">
         <button type="button" className="btn btn--small btn--ghost" onClick={() => setArranging(true)}>
           <PixelIcon name="gear" size={14} /> Arrange Home
@@ -139,8 +127,6 @@ function renderCard(id: CardId): ReactNode {
   switch (id) {
     case 'today':
       return <TodayCard />;
-    case 'quest':
-      return <OnePercent />;
     case 'dates':
       return <ImportantDates />;
     case 'friday':
@@ -149,10 +135,6 @@ function renderCard(id: CardId): ReactNode {
       return <FajrRise />;
     case 'ramadan':
       return <RamadanCard />;
-    case 'promise':
-      return <MorningPromise />;
-    case 'campfire':
-      return <CampfireCard />;
     case 'week':
       return <WeekCard />;
     case 'backup':
@@ -171,31 +153,12 @@ function renderCard(id: CardId): ReactNode {
       );
     case 'due':
       return <DueCard />;
-    case 'kitchen':
-      return <KitchenCard />;
     case 'inbox':
       return <InboxPanel compact />;
     case 'money':
       return <SafeToSpendCard />;
-    case 'savings':
-      return <SavingsMini />;
-    case 'mood':
-      return (
-        <Panel title="How are you today?" icon="heart">
-          <MoodCheckIn />
-          <a href="#/more/mood" className="more-link">
-            This week →
-          </a>
-        </Panel>
-      );
-    case 'simba':
-      return <SimbaNeeds />;
-    case 'ghost':
-      return <GhostRace />;
     case 'weather':
       return <WeatherCard />;
-    case 'clocks':
-      return <Clocks />;
   }
 }
 
@@ -216,7 +179,6 @@ function NextTestCard() {
           <small className="muted">{formatDay(nextTest.date)}</small>
         </span>
       </a>
-      <BossMini test={nextTest} />
       {upcoming.length > 1 && (
         <ul className="mini-list">
           {upcoming.slice(1, 3).map((t) => (
@@ -263,34 +225,6 @@ function WeekCard() {
 }
 
 
-/** Features you haven't tried yet, a few at a time. They leave once you use them (or tap "Not now"). */
-function Discover() {
-  const { data, update } = useStore();
-  const tips = discoverTips(data);
-  if (!tips.length) return null;
-  return (
-    <section className="discover" aria-label="Discover">
-      <p className="discover__title">Discover</p>
-      <ul className="discover__list">
-        {tips.map((t) => (
-          <li key={t.id} className="discover__tip">
-            <PixelIcon name={t.icon} size={22} />
-            <span className="grow">
-              <strong>{t.title}</strong>
-              <small>{t.pitch}</small>
-            </span>
-            <a href={t.href} className="btn btn--small btn--primary">
-              Open
-            </a>
-            <button type="button" className="icon-btn" onClick={() => update((d) => void d.settings.home.dismissed.push(t.id))} aria-label={`Not now: ${t.title}`}>
-              ✕
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
 
 /** Pin cards to the top of Home, or hide them. Nothing is deleted. */
 function ArrangeHome() {
@@ -336,32 +270,14 @@ function ArrangeHome() {
   );
 }
 
-/** Birthdays and important dates coming soon (each event's "remind me" setting, with its notes, e.g. gift ideas) and admin due soon. */
+/** Birthdays and important dates coming soon (each event's "remind me" setting, with its notes, e.g. gift ideas). */
 function ImportantDates() {
   const { data, today } = useStore();
   const soon = useMemo(() => dateReminders(data, today), [data, today]);
-  const admin = useMemo(() => adminReminders(data.admin, today), [data.admin, today]);
-  if (!soon.length && !admin.length) return null;
+  if (!soon.length) return null;
   return (
     <Panel title="Important dates" icon="gift">
       <ul className="mini-list coming-up">
-        {admin.map(({ item, daysLeft }) => {
-          const p = progress(item);
-          return (
-            <li key={item.id}>
-              <span className="cal-dot" style={{ background: KIND_INFO.admin.colour }} aria-hidden="true" />
-              <span className="coming-up__text">
-                <a href="#/planner/admin">
-                  <strong>{item.title}</strong>
-                </a>{' '}
-                <small className={daysLeft < 0 ? 'pantry-warn' : 'muted'}>
-                  · {item.dateLabel.toLowerCase()} {daysLeft < 0 ? `${-daysLeft} days ago` : daysLeft === 0 ? 'today!' : relativeDays(daysLeft)}
-                  {p.total ? ` · ${p.done}/${p.total} steps` : ''}
-                </small>
-              </span>
-            </li>
-          );
-        })}
         {soon.map(({ event, date, daysLeft }) => (
           <li key={event.id}>
             <span className="cal-dot" style={{ background: KIND_INFO[event.kind].colour }} aria-hidden="true" />
@@ -410,50 +326,12 @@ function FridayCard() {
   );
 }
 
-const MEAL_SLOTS = [
-  { id: 'breakfast', label: 'Breakfast' },
-  { id: 'lunch', label: 'Lunch' },
-  { id: 'dinner', label: 'Dinner' },
-] as const;
-
-/** Today's planned meals and food to use up soon. Hidden when there's nothing to say. */
-function KitchenCard() {
-  const { data, today } = useStore();
-  const meals = MEAL_SLOTS.flatMap((s) => {
-    const m = data.meals[today]?.[s.id];
-    return m ? [{ label: s.label, text: m.text }] : [];
-  });
-  const soon = toUseSoon(data.pantry, today, 2);
-  const toBuy = data.groceries.filter((g) => !g.done).length;
-  if (!meals.length && !soon.length) return null;
-  return (
-    <Panel title="Kitchen" icon="apple">
-      {meals.length > 0 && (
-        <ul className="mini-list">
-          {meals.map((m) => (
-            <li key={m.label}>
-              <small className="muted">{m.label}:</small> <strong>{m.text}</strong>
-            </li>
-          ))}
-        </ul>
-      )}
-      {soon.length > 0 && (
-        <p className="small">
-          Use soon: {soon.map((p) => `${p.name} (${freshness(p, today) === 'expired' ? 'past its date' : relativeDays(daysBetween(today, p.expires))})`).join(', ')}
-        </p>
-      )}
-      <a href={toBuy ? '#/kitchen/groceries' : '#/kitchen/meals'} className="more-link">
-        {toBuy ? `Shopping list (${toBuy}) →` : 'Kitchen →'}
-      </a>
-    </Panel>
-  );
-}
 
 /** The next important dates from the calendar (exams, deadlines, trips, birthdays…) and today's overlaps. */
 function ComingUp() {
   const { data, today } = useStore();
   // Dates already shown by the Important dates card aren't repeated here.
-  const reminded = new Set([...dateReminders(data, today).map((r) => `event-${r.event.id}`), ...adminReminders(data.admin, today).map((r) => `admin-${r.item.id}`)]);
+  const reminded = new Set([...dateReminders(data, today).map((r) => `event-${r.event.id}`)]);
   const next = upcoming(data, today, 14).filter((i) => !reminded.has(i.key)).slice(0, 5);
   const clashes = conflicts(itemsOn(data, today));
   if (!next.length && !clashes.length) return null;

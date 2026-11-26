@@ -4,6 +4,12 @@ Important milestones, newest first. Feature-level status: [FEATURE_STATUS.md](FE
 Vision: [MASTER_SPEC.md](MASTER_SPEC.md). Working rules: [../CLAUDE.md](../CLAUDE.md).
 
 ## Unreleased
+- **Much simpler app:** removed what was only decoration or never used. Study is now just the **Focus timer** and
+  **Exams** (no notes, topics, formulas, mistakes, mock exams, assignments, tools or exam "bosses"). Planner: Today, Goals
+  (three simple lists), Calendar, Timetable (Student admin and Week plan removed). Money: Today, Spending, Bills, Wishes.
+  Reflect: Tonight, Diary, Week, Month. More: Settings, Decorate. Kitchen, Rooms and the Life Museum, the fishing pond, the
+  Friday campfire, Promise to Simba, "You vs last week", hard mode and the vision board are gone, and Home has fewer cards.
+  Nothing saved was deleted: the old data stays in your backups. The cabin window now opens Bek's Quest. Tests: 217 passing.
 - **Bek's Quest:** real-life side quests instead of scrolling. On Home: **I'm bored** (pick time, energy and
   place → ONE mission) and **I'm about to scroll** (a kind message, then one replacement quest or a 10-minute emergency
   mission). 111 quests in six areas, each with an exact "done when". The Quest screen (`#/quest`) has three daily missions,

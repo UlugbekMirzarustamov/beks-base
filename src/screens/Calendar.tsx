@@ -35,12 +35,12 @@ const FORM_KINDS: { value: FormKind; label: string }[] = [
 const SOURCE_LINK: Record<Exclude<CalItem['source'], 'event'>, { href: string; label: string }> = {
   session: { href: '#/planner/timetable', label: 'School timetable' },
   timetable: { href: '#/planner/timetable', label: 'Weekly timetable' },
-  test: { href: '#/study/tests', label: 'Study → Tests' },
+  test: { href: '#/study/tests', label: 'Study → Exams' },
   task: { href: '#/planner/today', label: 'Tasks' },
-  assignment: { href: '#/study/assignments', label: 'Study → Assignments' },
-  study: { href: '#/planner/week', label: 'Week plan' },
+  assignment: { href: '#/planner/calendar', label: 'Calendar' },
+  study: { href: '#/planner/calendar', label: 'Calendar' },
   bill: { href: '#/money/bills', label: 'Money → Bills' },
-  admin: { href: '#/planner/admin', label: 'Planner → Admin' },
+  admin: { href: '#/planner/calendar', label: 'Calendar' },
 };
 
 const Dot = ({ kind }: { kind: CalItem['kind'] }) => <span className="cal-dot" style={{ background: KIND_INFO[kind].colour }} aria-hidden="true" />;

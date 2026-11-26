@@ -5,18 +5,17 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { occursOn } from '../lib/calendar';
 import { InboxPanel } from './Capture';
-import { addDays, daysBetween, formatDay, fromMinutes, relativeDays, startOfWeek, toMinutes, weekdayOf, WEEKDAYS, WEEKDAYS_LONG } from '../lib/dates';
+import { daysBetween, formatDay, relativeDays, toMinutes, weekdayOf, WEEKDAYS, WEEKDAYS_LONG } from '../lib/dates';
 import { uid } from '../lib/id';
 import type { AppData, Task, Weekday } from '../lib/types';
 import { XP } from '../lib/xp';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { Empty, Field, GroupedTabs, Panel, Segmented, useConfirm, useSubRoute } from '../ui/kit';
+import { Empty, Field, Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
-const TABS = ['today', 'goals', 'calendar', 'week', 'timetable', 'admin'] as const;
+const TABS = ['today', 'goals', 'calendar', 'timetable'] as const;
 // The calendar loads on first open (it's prefetched for offline use in App.tsx).
 const CalendarTab = lazy(() => import('./Calendar'));
-const AdminTab = lazy(() => import('./Admin'));
 const GoalsTab = lazy(() => import('./Goals'));
 type Tab = (typeof TABS)[number];
 
@@ -27,38 +26,15 @@ export default function Planner({ sub }: { sub?: string }) {
       <h1 className="screen__title">
         <PixelIcon name="table" size={28} /> The Crafting Table
       </h1>
-      <GroupedTabs<Tab>
+      <Tabs<Tab>
         label="Planner sections"
         active={tab}
         onChange={setTab}
-        groups={[
-          {
-            id: 'today',
-            label: 'Today',
-            icon: 'check',
-            tabs: [
-              { id: 'today', label: 'Today' },
-              { id: 'goals', label: 'Goals' },
-            ],
-          },
-          {
-            id: 'calendar',
-            label: 'Calendar',
-            icon: 'calendar',
-            tabs: [
-              { id: 'calendar', label: 'Calendar' },
-              { id: 'week', label: 'Week plan' },
-              { id: 'timetable', label: 'Timetable' },
-            ],
-          },
-          {
-            id: 'admin',
-            label: 'Admin',
-            icon: 'scroll',
-            tabs: [
-              { id: 'admin', label: 'Admin' },
-            ],
-          },
+        tabs={[
+          { id: 'today', label: 'Today', icon: 'check' },
+          { id: 'goals', label: 'Goals', icon: 'star' },
+          { id: 'calendar', label: 'Calendar', icon: 'calendar' },
+          { id: 'timetable', label: 'Timetable', icon: 'table' },
         ]}
       />
       {tab === 'today' && (
@@ -75,16 +51,10 @@ export default function Planner({ sub }: { sub?: string }) {
           <CalendarTab />
         </Suspense>
       )}
-      {tab === 'week' && <Week />}
       {tab === 'timetable' && <Timetable />}
       {tab === 'goals' && (
         <Suspense fallback={<p className="muted center">Opening…</p>}>
           <GoalsTab />
-        </Suspense>
-      )}
-      {tab === 'admin' && (
-        <Suspense fallback={<p className="muted center">Opening…</p>}>
-          <AdminTab />
         </Suspense>
       )}
     </div>
@@ -244,182 +214,6 @@ function Tasks() {
         </details>
       )}
     </Panel>
-  );
-}
-
-// ---------------------------------------------------------------- Week view
-const DAY_START = 8 * 60; // 08:00
-const DAY_END = 22 * 60; // 22:00
-const pct = (mins: number) => ((Math.min(DAY_END, Math.max(DAY_START, mins)) - DAY_START) / (DAY_END - DAY_START)) * 100;
-
-interface Block {
-  id: string;
-  start: number;
-  end: number;
-  title: string;
-  sub?: string;
-  kind: 'class' | 'study' | 'free';
-}
-
-/** Gaps of 30+ minutes between busy blocks (08:00–22:00) = your free time. */
-function freeGaps(busy: Block[]): Block[] {
-  const sorted = [...busy].sort((a, b) => a.start - b.start);
-  const gaps: Block[] = [];
-  let cursor = DAY_START;
-  for (const b of sorted) {
-    if (b.start - cursor >= 30) gaps.push({ id: `free-${cursor}`, start: cursor, end: b.start, title: 'Free', kind: 'free' });
-    cursor = Math.max(cursor, b.end);
-  }
-  if (DAY_END - cursor >= 30) gaps.push({ id: `free-${cursor}`, start: cursor, end: DAY_END, title: 'Free', kind: 'free' });
-  return gaps;
-}
-
-const duration = (mins: number) => (mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`);
-
-function Week() {
-  const ask = useConfirm();
-  const { data, today, update, toast } = useStore();
-  const [weekStart, setWeekStart] = useState(startOfWeek(today));
-  const [selected, setSelected] = useState(weekdayOf(today));
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const [form, setForm] = useState({ date: '', start: '16:00', end: '17:00', title: '' });
-
-  const addBlock = (e: FormEvent) => {
-    e.preventDefault();
-    const date = form.date || days[selected];
-    if (toMinutes(form.end) <= toMinutes(form.start)) {
-      toast('End time must be after start time', 'error');
-      return;
-    }
-    update((d) => {
-      d.studyBlocks.push({ id: uid(), date, start: form.start, end: form.end, title: form.title.trim() || 'Study' });
-    });
-    toast('Study block added', 'pop');
-    setForm({ ...form, title: '' });
-  };
-  const removeBlock = async (id: string, title: string) => {
-    if (!(await ask(`Delete study block "${title}"?`))) return;
-    update((d) => {
-      d.studyBlocks = d.studyBlocks.filter((b) => b.id !== id);
-    });
-  };
-
-  return (
-    <>
-      <Panel
-        title="Your week"
-        icon="calendar"
-        actions={
-          <div className="month-picker">
-            <button type="button" className="btn btn--small" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Previous week">
-              <PixelIcon name="arrowL" size={16} />
-            </button>
-            <button type="button" className="btn btn--small" onClick={() => setWeekStart(startOfWeek(today))}>
-              This week
-            </button>
-            <button type="button" className="btn btn--small" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Next week">
-              <PixelIcon name="arrowR" size={16} />
-            </button>
-          </div>
-        }
-      >
-        <div className="day-chips" role="group" aria-label="Choose a day">
-          {days.map((d, i) => (
-            <button key={d} type="button" className={`day-chip ${d === today ? 'is-today' : ''}`} aria-pressed={i === selected} onClick={() => setSelected(i as Weekday)}>
-              <span>{WEEKDAYS[i]}</span>
-              <strong>{Number(d.slice(8))}</strong>
-            </button>
-          ))}
-        </div>
-        <div className="legend" aria-hidden="true">
-          <span className="legend__item legend__item--class">Class</span>
-          <span className="legend__item legend__item--study">Study</span>
-          <span className="legend__item legend__item--free">Free</span>
-          <span className="legend__item legend__item--due">Deadline</span>
-        </div>
-        <div className="week">
-          <div className="week__hours" aria-hidden="true">
-            {Array.from({ length: 8 }, (_, i) => DAY_START + i * 120).map((m) => (
-              <span key={m} style={{ top: `${pct(m)}%` }}>
-                {fromMinutes(m)}
-              </span>
-            ))}
-          </div>
-          {days.map((date, i) => {
-            const classes: Block[] = classesOn(data, date).map((c) => ({
-              id: c.id,
-              start: toMinutes(c.start),
-              end: toMinutes(c.end),
-              title: c.name,
-              sub: c.room,
-              kind: 'class',
-            }));
-            const study: Block[] = data.studyBlocks
-              .filter((b) => b.date === date)
-              .map((b) => ({ id: b.id, start: toMinutes(b.start), end: toMinutes(b.end), title: b.title, kind: 'study' }));
-            const blocks = [...freeGaps([...classes, ...study]), ...classes, ...study];
-            const deadlines = [
-              ...data.tasks.filter((t) => t.due === date && !t.done).map((t) => ({ id: t.id, text: t.title })),
-              ...data.tests.filter((t) => t.date === date).map((t) => ({ id: t.id, text: `TEST: ${t.name}` })),
-            ];
-            return (
-              <section key={date} className={`week__day ${i === selected ? 'is-selected' : ''} ${date === today ? 'is-today' : ''}`} aria-label={`${WEEKDAYS_LONG[i]} ${formatDay(date)}`}>
-                <h3 className="week__head">{formatDay(date)}</h3>
-                <ul className="week__due">
-                  {deadlines.map((dl) => (
-                    <li key={dl.id}>{dl.text}</li>
-                  ))}
-                </ul>
-                <div className="week__track">
-                  {blocks.map((b) => {
-                    const style = { top: `${pct(b.start)}%`, height: `${pct(b.end) - pct(b.start)}%` };
-                    const text = (
-                      <>
-                        <strong>{b.kind === 'free' ? `Free ${duration(b.end - b.start)}` : b.title}</strong>
-                        <small>
-                          {fromMinutes(b.start)}–{fromMinutes(b.end)}
-                          {b.sub ? ` · ${b.sub}` : ''}
-                        </small>
-                      </>
-                    );
-                    return b.kind === 'study' ? (
-                      <button key={b.id} type="button" className="block block--study" style={style} onClick={() => removeBlock(b.id, b.title)} title="Tap to delete">
-                        {text}
-                      </button>
-                    ) : (
-                      <div key={b.id} className={`block block--${b.kind}`} style={style}>
-                        {text}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      </Panel>
-      <Panel title="Plan a study block" icon="plus">
-        <form className="form" onSubmit={addBlock}>
-          <div className="form__row form__row--wrap">
-            <Field label="Day" className="grow">
-              <input className="input" type="date" value={form.date || days[selected]} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-            </Field>
-            <Field label="From">
-              <input className="input" type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
-            </Field>
-            <Field label="To">
-              <input className="input" type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
-            </Field>
-          </div>
-          <Field label="What will you study?">
-            <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Physics: momentum questions" />
-          </Field>
-          <button type="submit" className="btn btn--primary">
-            Add study block
-          </button>
-        </form>
-      </Panel>
-    </>
   );
 }
 

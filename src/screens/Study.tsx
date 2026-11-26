@@ -1,102 +1,37 @@
 /**
- * 📚 STUDY — "the Bookshelf".
- * Tabs: Tests · Assignments (coursework + grades) · Topics · Mistakes · Cards · Timer
+ * 📚 STUDY: the focus timer and exam countdowns. That's all, on purpose.
  */
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { daysBetween, formatDay, startOfWeek } from '../lib/dates';
 import { uid } from '../lib/id';
-import type { Confidence, Flashcard, Mistake, Test, Topic } from '../lib/types';
-import { XP } from '../lib/xp';
+import type { Test } from '../lib/types';
 import { useStore, useTimer } from '../state/store';
-import { PixelArt, PixelIcon } from '../ui/icons';
-import { bossFor, POMODORO_HIT, type Boss, type BossKind } from '../lib/boss';
-import { Bar, Empty, Field, GroupedTabs, Panel, Segmented, Sheet, useConfirm, useSubRoute } from '../ui/kit';
+import { PixelIcon } from '../ui/icons';
+import { Bar, Empty, Field, Panel, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 
-const TABS = ['tests', 'mock', 'assignments', 'notes', 'topics', 'mistakes', 'cards', 'timer', 'tools'] as const;
-// Loads on first open (prefetched for offline use in App.tsx).
-const AssignmentsTab = lazy(() => import('./Assignments'));
-const ToolsTab = lazy(() => import('./Toolbox'));
-const NotesTab = lazy(() => import('./Notes'));
-const MockTab = lazy(() => import('./Mock'));
-const RevisionPlanner = lazy(() => import('./Revision'));
+const TABS = ['timer', 'tests'] as const;
 type Tab = (typeof TABS)[number];
 
+/** Study, kept simple: the focus timer and exam dates. (Notes, topics, formulas, mistakes, mock exams,
+ *  assignments and tools were removed at Bek's request; anything saved there is still in the data.) */
 export default function Study({ sub }: { sub?: string }) {
   const [tab, setTab] = useSubRoute<Tab>('study', sub, TABS);
   return (
     <div className="screen">
       <h1 className="screen__title">
-        <PixelIcon name="shelf" size={28} /> The Bookshelf
+        <PixelIcon name="shelf" size={28} /> Study
       </h1>
-      <GroupedTabs<Tab>
+      <Tabs<Tab>
         label="Study sections"
         active={tab}
         onChange={setTab}
-        groups={[
-          {
-            id: 'today',
-            label: 'Exams & work',
-            icon: 'calendar',
-            tabs: [
-              { id: 'tests', label: 'Exams' },
-              { id: 'assignments', label: 'Assignments' },
-            ],
-          },
-          {
-            id: 'learn',
-            label: 'Learn',
-            icon: 'book',
-            tabs: [
-              { id: 'notes', label: 'Notes' },
-              { id: 'topics', label: 'Topics' },
-              { id: 'cards', label: 'Formulas' },
-              { id: 'mistakes', label: 'Mistakes' },
-            ],
-          },
-          {
-            id: 'practice',
-            label: 'Practice',
-            icon: 'sword',
-            tabs: [
-              { id: 'mock', label: 'Mock exam' },
-              { id: 'timer', label: 'Focus timer' },
-            ],
-          },
-          {
-            id: 'tools',
-            label: 'Tools',
-            icon: 'table',
-            tabs: [
-              { id: 'tools', label: 'Tools' },
-            ],
-          },
+        tabs={[
+          { id: 'timer', label: 'Focus timer', icon: 'clock' },
+          { id: 'tests', label: 'Exams', icon: 'calendar' },
         ]}
       />
-      {tab === 'tests' && <Tests />}
-      {tab === 'assignments' && (
-        <Suspense fallback={<p className="muted center">Opening…</p>}>
-          <AssignmentsTab />
-        </Suspense>
-      )}
-      {tab === 'topics' && <Topics />}
-      {tab === 'mistakes' && <Mistakes />}
-      {tab === 'cards' && <Cards />}
-      {tab === 'mock' && (
-        <Suspense fallback={<p className="muted center">Opening…</p>}>
-          <MockTab />
-        </Suspense>
-      )}
-      {tab === 'notes' && (
-        <Suspense fallback={<p className="muted center">Opening…</p>}>
-          <NotesTab />
-        </Suspense>
-      )}
       {tab === 'timer' && <Timer />}
-      {tab === 'tools' && (
-        <Suspense fallback={<p className="muted center">Opening…</p>}>
-          <ToolsTab />
-        </Suspense>
-      )}
+      {tab === 'tests' && <Tests />}
     </div>
   );
 }
@@ -202,16 +137,6 @@ function Tests() {
 
   return (
     <div className="grid grid--2">
-      {upcoming.length > 0 && (
-        <Panel title="Boss battles" icon="sword" className="bosses">
-          <p className="muted small">Every test is a boss. Beat it before test day: turn its topics green and study for it.</p>
-          <ul className="boss-list">
-            {upcoming.slice(0, 3).map((t) => (
-              <BossCard key={t.id} test={t} />
-            ))}
-          </ul>
-        </Panel>
-      )}
       <Panel title="Countdowns" icon="calendar">
         {upcoming.length === 0 && <Empty>No tests coming up. Add one →</Empty>}
         <ul className="test-list">{upcoming.map(row)}</ul>
@@ -222,11 +147,6 @@ function Tests() {
           </details>
         )}
       </Panel>
-      {upcoming.length > 0 && (
-        <Suspense fallback={null}>
-          <RevisionPlanner />
-        </Suspense>
-      )}
       <Panel title={editing ? 'Edit test' : 'Add a test'} icon="plus">
         <form className="form" onSubmit={save}>
           <Field label="Test name">
@@ -274,512 +194,8 @@ function Tests() {
   );
 }
 
-// ---------------------------------------------------------------- Exam bosses
-/** 12×12 boss sprites. a = body, b = shade, e = eyes, w = white, k = outline. */
-const BOSS_ART: Record<BossKind, string[]> = {
-  golem: ['...kkkkkk...', '..kaaaaaak..', '..kaeaaeak..', '..kaaaaaak..', 'kkkbbbbbbkkk', 'kaakaaaakaak', 'kaakaaaakaak', 'kbbkaaaakbbk', '.kkkbbbbkkk.', '...kaakaak..', '...kaakaak..', '..kkk..kkk..'],
-  dragon: ['.k.......k..', 'kak.....kak.', 'kaakkkkkaak.', '.kaaaaaaak..', '.kaeaaaeak.k', '.kaaawaaakkb', '..kaaaaaakbk', '.kbkaaaakbk.', 'kbbkaaaakk..', '.k.kaaaak...', '...kak.kak..', '...kk...kk..'],
-  slime: ['.....kk.....', '....kwwk....', '...kaaaak...', '..kaaaaaak..', '.kaeaaaaeak.', '.kaaaaaaaak.', 'kaaawwwwaaak', 'kaaaaaaaaaak', 'kbaaaaaaaabk', 'kbbaaaaaabbk', '.kbbbbbbbbk.', '..kkkkkkkk..'],
-  knight: ['...kkkkkk...', '..kaaaaaak..', '..kakkkkak..', '..kaeaaeak..', '..kaaaaaak..', '.kkbbbbbbkk.', 'kaakbbbbkaak', 'kaakbbbbkaak', '.kkkbbbbkkk.', '...kbbbbk...', '...kbkkbk...', '..kkk..kkk..'],
-};
-const BOSS_COLOURS: Record<BossKind, [string, string]> = { golem: ['#8c8c8c', '#5f6b5a'], dragon: ['#5fa83b', '#c0392b'], slime: ['#7ed957', '#3f7a26'], knight: ['#4a4a6a', '#7a4fa3'] };
-
-export function BossSprite({ boss, size = 64 }: { boss: Boss; size?: number }) {
-  const [a, b] = BOSS_COLOURS[boss.kind];
-  const beaten = boss.hp === 0;
-  return (
-    <span className={`boss-sprite ${beaten ? 'is-beaten' : ''}`}>
-      <PixelArt rows={BOSS_ART[boss.kind]} palette={{ a, b, e: beaten ? '#2b1d0e' : '#ff3b3b', w: '#ffffff', k: '#1a1110' }} size={size} label={boss.name} />
-    </span>
-  );
-}
-
-/** The boss for one upcoming test: health bar, what hurts it, and its weak spots. */
-function BossCard({ test }: { test: Test }) {
-  const { data, today } = useStore();
-  const boss = bossFor(test, data);
-  const days = daysBetween(today, test.date);
-  const pct = boss.maxHp ? boss.hp / boss.maxHp : 0;
-  return (
-    <li className="boss-card">
-      <BossSprite boss={boss} />
-      <div className="boss-card__info">
-        <strong>{boss.name}</strong>
-        <small className="muted">
-          {test.name} · {daysLeftLabel(days)}
-        </small>
-        <span className="hp-bar" role="img" aria-label={`${boss.hp} of ${boss.maxHp} HP left`}>
-          <span className={`hp-bar__fill ${pct > 0.6 ? '' : pct > 0.25 ? 'is-mid' : 'is-low'}`} style={{ width: `${pct * 100}%` }} />
-          <span className="hp-bar__text">
-            {boss.hp === 0 ? 'DEFEATED!' : `${boss.hp} / ${boss.maxHp} HP`}
-          </span>
-        </span>
-        {boss.hp > 0 ? (
-          <small>
-            Each Pomodoro{test.subjectId ? ` on ${data.subjects.find((s) => s.id === test.subjectId)?.name}` : ''} = −{POMODORO_HIT} HP ({boss.pomodoros} so far). Each topic you turn green = −10 HP.
-            {boss.weakSpots.length > 0 && (
-              <>
-                {' '}
-                Weak spots: <strong>{boss.weakSpots.slice(0, 3).join(', ')}</strong>
-                {boss.weakSpots.length > 3 ? ` +${boss.weakSpots.length - 3} more` : ''}.
-              </>
-            )}
-          </small>
-        ) : (
-          <small>You're ready. Sleep well before the test and go get it!</small>
-        )}
-      </div>
-    </li>
-  );
-}
-
-/** A small HP line for Home's "Next test" card. */
-export function BossMini({ test }: { test: Test }) {
-  const { data } = useStore();
-  const boss = bossFor(test, data);
-  return (
-    <a href="#/study/tests" className="boss-mini">
-      <BossSprite boss={boss} size={36} />
-      <span className="hp-bar hp-bar--small" role="img" aria-label={`${boss.name}: ${boss.hp} of ${boss.maxHp} HP`}>
-        <span className="hp-bar__fill" style={{ width: `${boss.maxHp ? (boss.hp / boss.maxHp) * 100 : 0}%` }} />
-        <span className="hp-bar__text">{boss.hp === 0 ? 'DEFEATED' : `${boss.name.replace(/^The /, '')} · ${boss.hp} HP`}</span>
-      </span>
-    </a>
-  );
-}
-
-// ---------------------------------------------------------------- Topics (red / amber / green)
-const RAG: { value: Exclude<Confidence, null>; label: string }[] = [
-  { value: 'red', label: "Don't get it" },
-  { value: 'amber', label: 'Getting there' },
-  { value: 'green', label: 'Confident' },
-];
-
-function Topics() {
-  const ask = useConfirm();
-  const { data, update, gainXp, toast } = useStore();
-  const [subjectId, setSubjectId] = useState(data.subjects[0]?.id ?? '');
-  const [newTopic, setNewTopic] = useState('');
-  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
-
-  const topics = data.topics.filter((t) => t.subjectId === subjectId);
-  const counts = { red: 0, amber: 0, green: 0, none: 0 };
-  for (const t of topics) counts[t.confidence ?? 'none']++;
-
-  const setConfidence = (t: Topic, value: Confidence) => {
-    const next = t.confidence === value ? null : value; // tap again to clear
-    update((d) => {
-      const item = d.topics.find((x) => x.id === t.id);
-      if (item) item.confidence = next;
-    });
-    if (next === 'green' && t.confidence !== 'green') gainXp(XP.topicGreen, `${t.name} mastered`);
-  };
-
-  const add = (e: FormEvent) => {
-    e.preventDefault();
-    if (!newTopic.trim() || !subjectId) return;
-    update((d) => {
-      d.topics.push({ id: uid(), subjectId, name: newTopic.trim(), confidence: null });
-    });
-    setNewTopic('');
-  };
-
-  const saveRename = () => {
-    if (!renaming) return;
-    const name = renaming.name.trim();
-    if (name)
-      update((d) => {
-        const item = d.topics.find((x) => x.id === renaming.id);
-        if (item) item.name = name;
-      });
-    setRenaming(null);
-  };
-
-  const remove = async (t: Topic) => {
-    if (!(await ask(`Delete topic "${t.name}"?`))) return;
-    update((d) => {
-      d.topics = d.topics.filter((x) => x.id !== t.id);
-    });
-  };
-
-  // null = the "new subject" box is hidden
-  const [newSubject, setNewSubject] = useState<string | null>(null);
-  const addSubject = (e: FormEvent) => {
-    e.preventDefault();
-    const name = newSubject?.trim();
-    if (!name) return;
-    const id = uid();
-    update((d) => {
-      d.subjects.push({ id, name });
-    });
-    setSubjectId(id);
-    setNewSubject(null);
-    toast(`Added ${name}`, 'pop');
-  };
-
-  return (
-    <Panel title="Topic checklist" icon="book">
-      <div className="toolbar">
-        <Segmented label="Subject" value={subjectId} onChange={setSubjectId} options={data.subjects.map((s) => ({ value: s.id, label: s.name }))} />
-        <button type="button" className="btn btn--small" onClick={() => setNewSubject(newSubject === null ? '' : null)} aria-expanded={newSubject !== null}>
-          + Subject
-        </button>
-      </div>
-      {newSubject !== null && (
-        <form className="form__row" onSubmit={addSubject}>
-          <input className="input grow" aria-label="New subject name" placeholder="e.g. English" value={newSubject} onChange={(e) => setNewSubject(e.target.value)} autoFocus />
-          <button type="submit" className="btn btn--primary">
-            Add
-          </button>
-        </form>
-      )}
-      <div className="rag-summary" aria-label="Confidence summary">
-        <span className="rag-pill rag-pill--green">{counts.green} green</span>
-        <span className="rag-pill rag-pill--amber">{counts.amber} amber</span>
-        <span className="rag-pill rag-pill--red">{counts.red} red</span>
-        <span className="rag-pill">{counts.none} not rated</span>
-      </div>
-      {topics.length > 0 && <Bar value={counts.green} max={topics.length} label="Topics rated green" color="var(--grass)" />}
-      <ul className="topic-list">
-        {topics.map((t) => (
-          <li key={t.id} className={`topic topic--${t.confidence ?? 'none'}`}>
-            {renaming?.id === t.id ? (
-              <input
-                className="input grow"
-                aria-label="Topic name"
-                value={renaming.name}
-                autoFocus
-                onChange={(e) => setRenaming({ id: t.id, name: e.target.value })}
-                onBlur={saveRename}
-                onKeyDown={(e: KeyboardEvent) => {
-                  if (e.key === 'Enter') saveRename();
-                  if (e.key === 'Escape') setRenaming(null);
-                }}
-              />
-            ) : (
-              <button type="button" className="topic__name" onClick={() => setRenaming({ id: t.id, name: t.name })} title="Tap to rename">
-                {t.name}
-              </button>
-            )}
-            <div className="rag" role="radiogroup" aria-label={`Confidence for ${t.name}`}>
-              {RAG.map((r) => (
-                <button
-                  key={r.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={t.confidence === r.value}
-                  aria-label={r.label}
-                  title={r.label}
-                  className={`rag__btn rag__btn--${r.value}`}
-                  onClick={() => setConfidence(t, r.value)}
-                />
-              ))}
-            </div>
-            <button type="button" className="icon-btn" onClick={() => remove(t)} aria-label={`Delete ${t.name}`}>
-              <PixelIcon name="trash" size={16} />
-            </button>
-          </li>
-        ))}
-      </ul>
-      <form className="form__row" onSubmit={add}>
-        <input className="input grow" aria-label="New topic" placeholder="Add a topic…" value={newTopic} onChange={(e) => setNewTopic(e.target.value)} />
-        <button type="submit" className="btn">
-          Add
-        </button>
-      </form>
-    </Panel>
-  );
-}
-
-// ---------------------------------------------------------------- Mistake notebook
-function topicOptions(data: ReturnType<typeof useStore>['data']) {
-  return data.subjects.map((s) => (
-    <optgroup key={s.id} label={s.name}>
-      {data.topics
-        .filter((t) => t.subjectId === s.id)
-        .map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name}
-          </option>
-        ))}
-    </optgroup>
-  ));
-}
-
-function Mistakes() {
-  const ask = useConfirm();
-  const { data, update, gainXp } = useStore();
-  const [show, setShow] = useState<'review' | 'all'>('review');
-  const [sheet, setSheet] = useState<{ open: boolean; editing: Mistake | null }>({ open: false, editing: null });
-
-  const toReview = data.mistakes.filter((m) => m.reviewAgain);
-  const list = (show === 'review' ? toReview : data.mistakes).slice().sort((a, b) => b.date.localeCompare(a.date));
-  const topicName = (id: string | null) => data.topics.find((t) => t.id === id)?.name;
-
-  const setReview = (m: Mistake, reviewAgain: boolean) => {
-    update((d) => {
-      const item = d.mistakes.find((x) => x.id === m.id);
-      if (item) item.reviewAgain = reviewAgain;
-    });
-    if (!reviewAgain) gainXp(XP.mistakeReviewed, 'mistake reviewed');
-  };
-  const remove = async (m: Mistake) => {
-    if (!(await ask('Delete this mistake?'))) return;
-    update((d) => {
-      d.mistakes = d.mistakes.filter((x) => x.id !== m.id);
-    });
-  };
-
-  return (
-    <Panel
-      title="Mistake notebook"
-      icon="cross"
-      actions={
-        <button type="button" className="btn btn--primary btn--small" onClick={() => setSheet({ open: true, editing: null })}>
-          + Log a mistake
-        </button>
-      }
-    >
-      <p className="muted small">Every mistake is a lesson in disguise. Write down WHY, then review it before the test.</p>
-      <Segmented
-        label="Show"
-        value={show}
-        onChange={setShow}
-        options={[
-          { value: 'review', label: `To review (${toReview.length})` },
-          { value: 'all', label: `All (${data.mistakes.length})` },
-        ]}
-      />
-      {list.length === 0 && <Empty>{show === 'review' ? 'Nothing to review. Nice!' : 'No mistakes logged yet.'}</Empty>}
-      <ul className="mistakes">
-        {list.map((m) => (
-          <li key={m.id} className="mistake">
-            <p className="mistake__q">
-              <strong>Q:</strong> {m.question}
-            </p>
-            <p className="mistake__wrong">
-              <PixelIcon name="cross" size={14} /> {m.wrongAnswer || '—'}
-            </p>
-            <p className="mistake__right">
-              <PixelIcon name="check" size={14} /> {m.correctAnswer || '—'}
-            </p>
-            {m.why && (
-              <p className="mistake__why">
-                <strong>Why:</strong> {m.why}
-              </p>
-            )}
-            <div className="mistake__foot">
-              <small className="muted">
-                {formatDay(m.date)}
-                {topicName(m.topicId) ? ` · ${topicName(m.topicId)}` : ''}
-              </small>
-              <div className="mistake__actions">
-                {m.reviewAgain ? (
-                  <button type="button" className="btn btn--small btn--primary" onClick={() => setReview(m, false)}>
-                    Reviewed ✓
-                  </button>
-                ) : (
-                  <button type="button" className="btn btn--small" onClick={() => setReview(m, true)}>
-                    Review again
-                  </button>
-                )}
-                <button type="button" className="icon-btn" onClick={() => setSheet({ open: true, editing: m })} aria-label="Edit mistake">
-                  <PixelIcon name="pencil" size={16} />
-                </button>
-                <button type="button" className="icon-btn" onClick={() => remove(m)} aria-label="Delete mistake">
-                  <PixelIcon name="trash" size={16} />
-                </button>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <Sheet open={sheet.open} onClose={() => setSheet({ open: false, editing: null })} title={sheet.editing ? 'Edit mistake' : 'Log a mistake'}>
-        <MistakeForm editing={sheet.editing} onDone={() => setSheet({ open: false, editing: null })} />
-      </Sheet>
-    </Panel>
-  );
-}
-
-function MistakeForm({ editing, onDone }: { editing: Mistake | null; onDone: () => void }) {
-  const { data, update, today, toast } = useStore();
-  const [m, setM] = useState({
-    question: editing?.question ?? '',
-    wrongAnswer: editing?.wrongAnswer ?? '',
-    correctAnswer: editing?.correctAnswer ?? '',
-    why: editing?.why ?? '',
-    topicId: editing?.topicId ?? '',
-  });
-  const set = (key: keyof typeof m) => (e: { target: { value: string } }) => setM({ ...m, [key]: e.target.value });
-
-  const save = (e: FormEvent) => {
-    e.preventDefault();
-    if (!m.question.trim()) {
-      toast('Write the question first', 'error');
-      return;
-    }
-    update((d) => {
-      const value = { ...m, topicId: m.topicId || null };
-      if (editing) Object.assign(d.mistakes.find((x) => x.id === editing.id) ?? {}, value);
-      else d.mistakes.push({ id: uid(), ...value, reviewAgain: true, date: today });
-    });
-    toast(editing ? 'Mistake updated' : 'Mistake logged — review it later!', 'pop');
-    onDone();
-  };
-
-  return (
-    <form className="form" onSubmit={save}>
-      <Field label="Question">
-        <textarea className="input" rows={2} value={m.question} onChange={set('question')} data-autofocus />
-      </Field>
-      <Field label="My wrong answer">
-        <input className="input" value={m.wrongAnswer} onChange={set('wrongAnswer')} />
-      </Field>
-      <Field label="Correct answer">
-        <input className="input" value={m.correctAnswer} onChange={set('correctAnswer')} />
-      </Field>
-      <Field label="WHY did I get it wrong?">
-        <textarea className="input" rows={2} value={m.why} onChange={set('why')} placeholder="e.g. used cos instead of sin" />
-      </Field>
-      <Field label="Topic">
-        <select className="input" value={m.topicId} onChange={set('topicId')}>
-          <option value="">—</option>
-          {topicOptions(data)}
-        </select>
-      </Field>
-      <button type="submit" className="btn btn--primary">
-        Save
-      </button>
-    </form>
-  );
-}
-
-// ---------------------------------------------------------------- Formula flashcards
-/** Order cards: least-known first, shuffled inside each group so it doesn't get boring. */
-function makeDeck(cards: Flashcard[]): string[] {
-  return cards
-    .map((c) => ({ id: c.id, key: c.box + Math.random() * 0.9 }))
-    .sort((a, b) => a.key - b.key)
-    .map((c) => c.id);
-}
-
-function Cards() {
-  const ask = useConfirm();
-  const { data, update, gainXp } = useStore();
-  const [deck, setDeck] = useState(() => makeDeck(data.flashcards));
-  const [index, setIndex] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const [front, setFront] = useState('');
-  const [back, setBack] = useState('');
-
-  const card = data.flashcards.find((c) => c.id === deck[index]) ?? null;
-  const known = data.flashcards.filter((c) => c.box >= 2).length;
-
-  const next = () => {
-    setFlipped(false);
-    if (index + 1 >= deck.length) {
-      setDeck(makeDeck(data.flashcards));
-      setIndex(0);
-    } else setIndex(index + 1);
-  };
-  const answer = (gotIt: boolean) => {
-    if (!card) return;
-    update((d) => {
-      const c = d.flashcards.find((x) => x.id === card.id);
-      if (c) c.box = gotIt ? Math.min(5, c.box + 1) : 0;
-    });
-    if (gotIt) gainXp(XP.flashcardGot);
-    next();
-  };
-  const add = (e: FormEvent) => {
-    e.preventDefault();
-    if (!front.trim() || !back.trim()) return;
-    const id = uid();
-    update((d) => {
-      d.flashcards.push({ id, front: front.trim(), back: back.trim(), box: 0 });
-    });
-    setDeck([...deck, id]);
-    setFront('');
-    setBack('');
-  };
-  const edit = (id: string, change: Partial<Flashcard>) =>
-    update((d) => {
-      const c = d.flashcards.find((x) => x.id === id);
-      if (c) Object.assign(c, change);
-    });
-  const remove = async (c: Flashcard) => {
-    if (!(await ask(`Delete card "${c.front}"?`))) return;
-    update((d) => {
-      d.flashcards = d.flashcards.filter((x) => x.id !== c.id);
-    });
-    setDeck(deck.filter((id) => id !== c.id));
-    setIndex(0);
-  };
-
-  return (
-    <div className="grid grid--2">
-      <Panel title="Formula cards" icon="card">
-        <p className="muted small">
-          Known well: {known} / {data.flashcards.length}. Tap the card to flip it.
-        </p>
-        {card ? (
-          <>
-            <button type="button" className={`flashcard ${flipped ? 'is-flipped' : ''}`} onClick={() => setFlipped(!flipped)} aria-pressed={flipped} aria-label={flipped ? `Answer: ${card.back}` : `Question: ${card.front}. Tap to show answer.`}>
-              <span className="flashcard__inner">
-                <span className="flashcard__face flashcard__front">
-                  <small>What is…</small>
-                  {card.front}
-                </span>
-                <span className="flashcard__face flashcard__back">{card.back}</span>
-              </span>
-            </button>
-            <div className="form__actions">
-              <button type="button" className="btn btn--danger grow" onClick={() => answer(false)}>
-                Again
-              </button>
-              <button type="button" className="btn btn--primary grow" onClick={() => answer(true)}>
-                Got it!
-              </button>
-            </div>
-            <p className="muted small center">
-              Card {index + 1} of {deck.length}
-            </p>
-          </>
-        ) : (
-          <Empty>No cards. Add one →</Empty>
-        )}
-      </Panel>
-      <Panel title="Edit cards" icon="pencil">
-        <form className="form" onSubmit={add}>
-          <div className="form__row">
-            <input className="input grow" aria-label="Front (question)" placeholder="Front, e.g. Weight" value={front} onChange={(e) => setFront(e.target.value)} />
-            <input className="input grow" aria-label="Back (answer)" placeholder="Back, e.g. W = mg" value={back} onChange={(e) => setBack(e.target.value)} />
-            <button type="submit" className="btn">
-              Add
-            </button>
-          </div>
-        </form>
-        <details className="details">
-          <summary>All cards ({data.flashcards.length})</summary>
-          <ul className="card-edit">
-            {data.flashcards.map((c) => (
-              <li key={c.id} className="card-edit__row">
-                <input className="input" aria-label="Front" value={c.front} onChange={(e) => edit(c.id, { front: e.target.value })} />
-                <input className="input" aria-label="Back" value={c.back} onChange={(e) => edit(c.id, { back: e.target.value })} />
-                <button type="button" className="icon-btn" onClick={() => remove(c)} aria-label={`Delete ${c.front}`}>
-                  <PixelIcon name="trash" size={16} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </details>
-      </Panel>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------- Pomodoro timer
-const FOCUS_TIPS = ['Phone face down. You\'ve got this.', 'One thing at a time.', 'Stuck? Write the question in your Mistake notebook later.', 'Sip some water.'];
+const FOCUS_TIPS = ['Phone face down. You\'ve got this.', 'One thing at a time.', 'Stuck? Write the question down and ask it later.', 'Sip some water.'];
 
 /** Big full-screen countdown: nothing else on screen while you study. Esc or "Exit" closes it. */
 function FocusScreen({ onExit }: { onExit: () => void }) {
@@ -931,7 +347,7 @@ function Timer() {
             <input className="input" type="number" min={1} max={60} value={data.settings.pomodoroBreak} onChange={(e) => setLen('pomodoroBreak', Number(e.target.value))} />
           </Field>
         </div>
-        <p className="muted small">Finishing a focus round gives +{XP.pomodoro} XP and logs the minutes. The timer keeps running on other screens.</p>
+        <p className="muted small">Finishing a focus round logs the minutes. The timer keeps running on other screens.</p>
       </Panel>
       <Panel title="Study minutes" icon="star">
         <p className="big-number big-number--small">{stats.todayMins} min today</p>

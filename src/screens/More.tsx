@@ -6,23 +6,21 @@ import { useEffect, useRef, useState } from 'react';
 import { backupPhotos, parseBackup } from '../lib/backup';
 import { lastBackup, shareBackup } from './Daily';
 import { setPhotos, usePhotos } from './Photos';
-import { HardModeToggle } from './Push';
 import { idb } from '../lib/db';
 import { listAllSnapshots, type SnapshotInfo } from '../lib/persist';
 import { createInitialData, upgrade } from '../lib/seed';
 import type { Settings } from '../lib/types';
 import { useStore } from '../state/store';
 import { PixelIcon } from '../ui/icons';
-import { GroupedTabs, Panel, Segmented, useConfirm, useSubRoute } from '../ui/kit';
+import { Panel, Segmented, Tabs, useConfirm, useSubRoute } from '../ui/kit';
 import { SoundMixer } from '../ui/SoundMixer';
 import { BreakSetting } from '../ui/BreakReminder';
 import { InstallCard } from '../ui/AppFeel';
 import { BEK_H, BEK_W, drawBek } from '../scene/Cabin';
 import type { BekPose } from '../lib/cabin';
 import { CabinShop } from './Shop';
-import { Habits, Journal, MoodCheckIn, MoodWeek, Vocab } from './Extras';
 
-const TABS = ['shop', 'words', 'habits', 'mood', 'journal', 'settings'] as const;
+const TABS = ['settings', 'shop'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function More({ sub }: { sub?: string }) {
@@ -32,61 +30,16 @@ export default function More({ sub }: { sub?: string }) {
       <h1 className="screen__title">
         <PixelIcon name="scroll" size={28} /> The Lantern Corner
       </h1>
-      <GroupedTabs<Tab>
+      <Tabs<Tab>
         label="More sections"
         active={tab}
         onChange={setTab}
-        groups={[
-          {
-            id: 'me',
-            label: 'Me',
-            icon: 'heart',
-            tabs: [
-              { id: 'mood', label: 'Mood' },
-              { id: 'habits', label: 'Habits' },
-              { id: 'journal', label: 'Journal' },
-            ],
-          },
-          {
-            id: 'words',
-            label: 'Words',
-            icon: 'book',
-            tabs: [
-              { id: 'words', label: 'Words' },
-            ],
-          },
-          {
-            id: 'cabin',
-            label: 'Cabin',
-            icon: 'house',
-            tabs: [
-              { id: 'shop', label: 'Decorate' },
-            ],
-          },
-          {
-            id: 'settings',
-            label: 'Settings',
-            icon: 'gear',
-            tabs: [
-              { id: 'settings', label: 'Settings' },
-            ],
-          },
+        tabs={[
+          { id: 'settings', label: 'Settings', icon: 'gear' },
+          { id: 'shop', label: 'Decorate', icon: 'house' },
         ]}
       />
       {tab === 'shop' && <CabinShop />}
-      {tab === 'words' && <Vocab />}
-      {tab === 'habits' && <Habits />}
-      {tab === 'mood' && (
-        <div className="grid grid--2">
-          <Panel title="Today's mood" icon="heart">
-            <MoodCheckIn />
-          </Panel>
-          <Panel title="This week" icon="calendar">
-            <MoodWeek />
-          </Panel>
-        </div>
-      )}
-      {tab === 'journal' && <Journal />}
       {tab === 'settings' && <SettingsPanel />}
     </div>
   );
@@ -147,8 +100,6 @@ export function SettingsPanel() {
         <p className="field__label">Breaks</p>
         <BreakSetting />
       </Panel>
-
-      <HardModeToggle />
 
       <AvatarEditor />
 

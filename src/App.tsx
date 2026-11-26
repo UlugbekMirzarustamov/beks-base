@@ -13,9 +13,8 @@ import Money, { ExpenseSheet } from './screens/Money';
 import { MorningBriefing } from './screens/Briefing';
 import CalmCorner, { JarOverlay } from './screens/Calm';
 import { PotCloseout } from './screens/Plan';
-import Campfire from './screens/Campfire';
 import { PhotoWall } from './screens/Photos';
-import { HardBadge, OversleptCall } from './screens/Push';
+import { OversleptCall } from './screens/Push';
 import { ReminderWatcher } from './screens/Capture';
 import { CommandPalette, openSearch } from './screens/Search';
 import Planner from './screens/Planner';
@@ -36,18 +35,12 @@ import { SoundMixer } from './ui/SoundMixer';
 // fetches them in the background once the app is idle, so they're cached for offline use.
 const loadReflect = () => import('./screens/Reflect');
 const loadMore = () => import('./screens/More');
-const loadPond = () => import('./screens/Pond');
-const loadKitchen = () => import('./screens/Kitchen');
 const loadArchive = () => import('./screens/Archive');
-const loadRooms = () => import('./screens/Rooms');
 const Reflect = lazy(loadReflect);
 const More = lazy(loadMore);
-const Pond = lazy(loadPond);
-const Kitchen = lazy(loadKitchen);
 const Archive = lazy(loadArchive);
-const Rooms = lazy(loadRooms);
 export function prefetchScreens() {
-  void Promise.all([loadReflect(), loadMore(), loadPond(), loadKitchen(), loadArchive(), loadRooms(), import('./screens/Calendar'), import('./screens/Assignments'), import('./screens/Admin'), import('./screens/Toolbox'), import('./screens/Notes'), import('./screens/Revision'), import('./screens/Deen'), import('./screens/Goals'), import('./screens/IslamicLibrary'), import('./screens/Mock')]).catch(() => {
+  void Promise.all([loadReflect(), loadMore(), loadArchive(), import('./screens/Calendar'), import('./screens/Deen'), import('./screens/Goals'), import('./screens/IslamicLibrary')]).catch(() => {
     /* offline: they'll be fetched next time */
   });
 }
@@ -71,7 +64,7 @@ class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolea
   }
 }
 
-const SCREENS = ['home', 'quest', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'pond', 'campfire', 'kitchen', 'archive', 'rooms'] as const;
+const SCREENS = ['home', 'quest', 'money', 'study', 'planner', 'reflect', 'more', 'prayer', 'calm', 'archive'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: { id: Screen; label: string; icon: IconName }[] = [
@@ -198,7 +191,6 @@ export default function App() {
           <span>BEK'S BASE</span>
         </a>
         <div className="topbar__right">
-          <HardBadge />
           <MiniTimer />
           <button type="button" className="icon-btn icon-btn--bar" onClick={openSearch} aria-label="Search and commands (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K">
             <PixelIcon name="search" size={22} />
@@ -240,11 +232,7 @@ export default function App() {
             {route.screen === 'more' && <More sub={route.sub} />}
             {route.screen === 'prayer' && <PrayerPage sub={route.sub} />}
             {route.screen === 'calm' && <CalmCorner />}
-            {route.screen === 'pond' && <Pond />}
-            {route.screen === 'kitchen' && <Kitchen sub={route.sub} />}
-            {route.screen === 'rooms' && <Rooms sub={route.sub} />}
             {route.screen === 'archive' && <Archive key={route.sub ?? ''} sub={route.sub} />}
-            {route.screen === 'campfire' && <Campfire />}
           </Suspense>
         </ScreenBoundary>
       </main>

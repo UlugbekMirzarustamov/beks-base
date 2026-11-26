@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { exportJson, parseBackup } from './backup';
-import { guessColumns, parseCsv, rowsToPurchases } from './csv';
 import { daysBetween, startOfWeek, todayUK, weekdayOf } from './dates';
 import { clearExampleData, createInitialData, emptyData, hasExampleData, upgrade } from './seed';
 import { sessionsFromWeeks, type Row, type Week } from './timetable';
@@ -87,19 +86,6 @@ describe('upgrading saved data', () => {
     const data = emptyData(TODAY);
     data.settings.sound = 'fire';
     expect(upgrade(data, TODAY).settings.mixer).toEqual({ rain: 0, fire: 4, wind: 0, lofi: 0 });
-  });
-});
-
-describe('csv import', () => {
-  it('reads a bank CSV and keeps only spending', () => {
-    const text = 'Date,Name,Amount\n03/11/2026,"Tesco, Sheffield",-12.50\n04/11/2026,Salary,500\n05/11/2026,Bus,-2.60\n';
-    const rows = parseCsv(text);
-    const cols = guessColumns(rows[0]);
-    const purchases = rowsToPurchases(rows.slice(1), cols);
-    expect(purchases).toEqual([
-      { date: '2026-11-03', amount: 12.5, description: 'Tesco, Sheffield' },
-      { date: '2026-11-05', amount: 2.6, description: 'Bus' },
-    ]);
   });
 });
 
